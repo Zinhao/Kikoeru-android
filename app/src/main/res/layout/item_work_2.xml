@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:padding="5dp"
+    android:background="@color/teal_700"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/ivCover"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scaleType="fitStart"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:adjustViewBounds="true"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:srcCompat="@tools:sample/avatars" />
+
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:maxLines="2"
+        android:text="ドン引きしながらもご奉仕してくれる押しに弱いえちえちカノジョ【フォーリ"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/ivCover"
+        app:layout_constraintTop_toBottomOf="@+id/ivCover" />
+
+    <TextView
+        android:id="@+id/tvCom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="EXcute"
+        app:layout_constraintStart_toStartOf="@+id/tvTitle"
+        app:layout_constraintTop_toBottomOf="@+id/tvTitle" />
+
+    <TextView
+        android:id="@+id/tvRjNumber"
+        android:layout_margin="5dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="RJ23435"
+        android:textSize="12sp"
+        android:textColor="@color/white"
+        android:background="@color/black"
+        app:layout_constraintStart_toStartOf="@+id/ivCover"
+        app:layout_constraintTop_toTopOf="@+id/ivCover" />
+
+    <TextView
+        android:id="@+id/tvDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:text="2022-01-02"
+        android:textSize="12sp"
+        android:background="@color/black"
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toBottomOf="@+id/ivCover"
+        app:layout_constraintEnd_toEndOf="@+id/ivCover" />
+
+    <TextView
+        android:id="@+id/tvPrice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="1210 日元"
+        android:textColor="@android:color/holo_red_dark"
+        app:layout_constraintStart_toStartOf="@+id/tvCom"
+        app:layout_constraintTop_toBottomOf="@+id/tvCom" />
+
+    <TextView
+        android:id="@+id/tvTags"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:background="@color/black"
+        android:text="手交,内射,中出,口交,巨乳,爆乳,ASMR,舔耳"
+        android:textColor="@color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/tvPrice"
+        app:layout_constraintTop_toBottomOf="@+id/tvPrice" />
+
+    <TextView
+        android:id="@+id/tvArt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="こやまはる"
+        app:layout_constraintStart_toStartOf="@+id/tvTags"
+        app:layout_constraintTop_toBottomOf="@+id/tvTags" />
+
+    <TextView
+        android:id="@+id/tvSaleCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="售出数: 2247"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@+id/tvPrice"
+        app:layout_constraintStart_toEndOf="@+id/tvPrice" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
