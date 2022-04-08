@@ -90,6 +90,23 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
 
+    private AsyncHttpClient.StringCallback lrcTextCallback = new AsyncHttpClient.StringCallback() {
+        @Override
+        public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, String s) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if(ctrlBinder.getLrcText().equals(s)){
+                        LrcShowActivity.start(WorkActivity.this,ctrlBinder.getLrcText(),true);
+                    }else {
+                        LrcShowActivity.start(WorkActivity.this,s,false);
+                    }
+
+                }
+            });
+        }
+    };
+
     @SuppressLint("DefaultLocale")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -182,9 +199,8 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
         JSONObject item = (JSONObject) v.getTag();
         try {
             if("image".equals(item.getString("type"))){
-//                TODO 点击图片 初始化
-            }else if("audio".equals(item.getString("type"))){
 
+            }else if("audio".equals(item.getString("type"))){
                 List<JSONObject> musicArray = new ArrayList<>();
                 int index = 0;
                 workTreeAdapter.getData().forEach(new Consumer<JSONObject>() {
@@ -222,9 +238,10 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
                     e.printStackTrace();
                 }
 
-            }else if("text".equals(item.getString("type"))){
+            } else if("text".equals(item.getString("type"))){
                 if(item.getString("title").toLowerCase(Locale.ROOT).endsWith("lrc")){
-
+                    AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(App.HOST+String.format("/media/stream/%s",item.getInt("hash"))),"GET");
+                    AsyncHttpClient.getDefaultInstance().executeString(request, lrcTextCallback);
                 }
             }
         } catch (JSONException e) {

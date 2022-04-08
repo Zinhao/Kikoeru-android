@@ -7,7 +7,7 @@ public class Lrc {
     private String text;
     private List<LrcRow> lrcRows;
 
-    private int currentIndex = 0;
+    private int currentIndex = -1;
     private LrcRow current;
 
     public Lrc(String text) {
@@ -36,7 +36,7 @@ public class Lrc {
         return Long.parseLong(m) *60*1000 + Long.parseLong(s)*1000 + Long.parseLong(ms);
     }
 
-    public LrcRow getRow(long seek){
+    public LrcRow update(long seek){
         if(currentIndex == lrcRows.size()-1)
             return current;
 
@@ -67,6 +67,14 @@ public class Lrc {
             }
         }
         return current;
+    }
+
+    public int getCurrentIndex() {
+        return currentIndex;
+    }
+
+    public List<LrcRow> getLrcRows() {
+        return lrcRows;
     }
 
     public static class LrcRow{

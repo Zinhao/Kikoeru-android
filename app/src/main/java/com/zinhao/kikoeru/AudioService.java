@@ -21,10 +21,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.Request;
 import com.bumptech.glide.request.target.SimpleTarget;
-import com.bumptech.glide.request.target.SizeReadyCallback;
-import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.MediaItem;
@@ -378,7 +375,7 @@ public class AudioService extends Service {
             if(mLrc == null){
                 return "无歌词";
             }
-            Lrc.LrcRow row = mLrc.getRow(mediaPlayer.getCurrentPosition());
+            Lrc.LrcRow row = mLrc.update(mediaPlayer.getCurrentPosition());
             if (row!=null){
                 return row.content;
             }
