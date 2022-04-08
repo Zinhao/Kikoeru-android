@@ -43,7 +43,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 ((SimpleViewHolder) holder).tvTitle.setText(jsonObject.getString("title"));
                 ((SimpleViewHolder) holder).tvComArt.setText(jsonObject.getString("name"));
                 ((SimpleViewHolder) holder).tvTags.setText(App.getTagsStr(jsonObject));
-                Glide.with(holder.itemView.getContext()).load(MainActivity.HOST+String.format("/api/cover/%d?type=sam",jsonObject.getInt("id"))).into(((SimpleViewHolder) holder).ivCover);
+                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d?type=sam",jsonObject.getInt("id"))).into(((SimpleViewHolder) holder).ivCover);
                 holder.itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -59,7 +59,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if(holder instanceof GirdViewHolder){
             GirdViewHolder girdHolder = (GirdViewHolder) holder;
             try {
-                Glide.with(holder.itemView.getContext()).load(MainActivity.HOST+String.format("/api/cover/%d",jsonObject.getInt("id"))).into(girdHolder.ivCover);
+                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d",jsonObject.getInt("id"))).into(girdHolder.ivCover);
                 girdHolder.tvTitle.setText(jsonObject.getString("title"));
                 girdHolder.tvArt.setText(App.getArtStr(jsonObject));
                 girdHolder.tvCom.setText(jsonObject.getString("name"));

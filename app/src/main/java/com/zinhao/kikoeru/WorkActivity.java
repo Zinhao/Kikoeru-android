@@ -9,7 +9,6 @@ import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.media.session.PlaybackStateCompat;
@@ -20,12 +19,9 @@ import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.koushikdutta.async.http.AsyncHttpClient;
-import com.koushikdutta.async.http.AsyncHttpRequest;
 import com.koushikdutta.async.http.AsyncHttpResponse;
 
 import org.json.JSONArray;
@@ -36,10 +32,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.function.Consumer;
 
-public class WorkActivity extends AppCompatActivity implements View.OnClickListener,MusicChangeListener,ServiceConnection {
+public class WorkActivity extends AppCompatActivity implements View.OnClickListener,MusicChangeListener,ServiceConnection,LrcRowChangeListener {
     /**
      * http://localhost:8888/api/tracks/357844
      * @param savedInstanceState
@@ -64,7 +59,7 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
 
     private Timer timer;
 
-    private AsyncHttpClient.StringCallback apisCallback = new AsyncHttpClient.StringCallback() {
+    private AsyncHttpClient.StringCallback docTreeCallback = new AsyncHttpClient.StringCallback() {
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, String s) {
             Log.d(TAG, "onCompleted: "+s);
@@ -78,7 +73,7 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void run() {
                         workTreeAdapter = new WorkTreeAdapter(workTrees);
-                        workTreeAdapter.setMusicClickListener(WorkActivity.this);
+                        workTreeAdapter.setItemClickListener(WorkActivity.this);
                         workTreeAdapter.setHeaderInfo(work);
                         recyclerView.setLayoutManager(new LinearLayoutManager(WorkActivity.this));
                         recyclerView.setAdapter(workTreeAdapter);
@@ -93,10 +88,14 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
     private AsyncHttpClient.StringCallback lrcTextCallback = new AsyncHttpClient.StringCallback() {
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, String s) {
+            if(asyncHttpResponse ==null || asyncHttpResponse.code() !=200){
+                Log.d(TAG, "onCompleted: lrcTextCallback err!");
+                return;
+            }
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if(ctrlBinder.getLrcText().equals(s)){
+                    if(ctrlBinder.getLrc()!=null && ctrlBinder.getLrc().getText().equals(s)){
                         LrcShowActivity.start(WorkActivity.this,ctrlBinder.getLrcText(),true);
                     }else {
                         LrcShowActivity.start(WorkActivity.this,s,false);
@@ -154,10 +153,8 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
             }
         };
         recyclerView.addOnScrollListener(scrollListener);
-        AsyncHttpRequest request = null;
         try {
-            request = new AsyncHttpRequest(Uri.parse(MainActivity.HOST+String.format("/api/tracks/%d",work.getInt("id"))),"GET");
-            AsyncHttpClient.getDefaultInstance().executeString(request, apisCallback);
+            Api.doGetDocTree(work.getInt("id"), docTreeCallback);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -240,8 +237,7 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
 
             } else if("text".equals(item.getString("type"))){
                 if(item.getString("title").toLowerCase(Locale.ROOT).endsWith("lrc")){
-                    AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(App.HOST+String.format("/media/stream/%s",item.getInt("hash"))),"GET");
-                    AsyncHttpClient.getDefaultInstance().executeString(request, lrcTextCallback);
+                    Api.doGetMediaString(item.getString("hash"),lrcTextCallback);
                 }
             }
         } catch (JSONException e) {
@@ -252,7 +248,10 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onAlbumChange(int rjNumber) {
-        Glide.with(this).load(MainActivity.HOST+String.format("/api/cover/%d?type=sam",rjNumber)).into(ivCover);
+        if(!isDestroyed()){
+            Glide.with(this).load(Api.HOST+String.format("/api/cover/%d?type=sam",rjNumber)).into(ivCover);
+        }
+
     }
 
     @Override
@@ -277,17 +276,20 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        ctrlBinder.removeMusicChangeListener(this);
+        ctrlBinder.removeLrcRowChangeListener(this);
         unbindService(this);
-        ctrlBinder.removeListener(this);
     }
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         ctrlBinder = (AudioService.CtrlBinder)service;
-        ctrlBinder.addListener(WorkActivity.this);
+        ctrlBinder.addMusicChangeListener(WorkActivity.this);
         ibStatus.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if(ctrlBinder.getCtrl().getPlaybackState() == null)
+                    return;
                 if(ctrlBinder.getCtrl().getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING){
                     ctrlBinder.getCtrl().getTransportControls().pause();
                 }else {
@@ -309,27 +311,22 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }
         });
-        timer = new Timer();
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                if(ctrlBinder.getCtrl().getPlaybackState() == null){
-                    return;
-                }
-                if(ctrlBinder.getCtrl().getPlaybackState().getState()== PlaybackStateCompat.STATE_PLAYING){
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            setTitle(ctrlBinder.getLrcText());
-                        }
-                    });
-                }
-            }
-        },200,200);
+        ctrlBinder.addMusicChangeListener(this);
+        ctrlBinder.addLrcRowChangeListener(this);
     }
 
     @Override
     public void onServiceDisconnected(ComponentName name) {
-        timer.cancel();
+
+    }
+
+    @Override
+    public void onChange(Lrc.LrcRow currentRow) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                setTitle(currentRow.content);
+            }
+        });
     }
 }

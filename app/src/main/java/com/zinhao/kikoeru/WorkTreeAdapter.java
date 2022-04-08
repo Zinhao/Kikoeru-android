@@ -23,7 +23,7 @@ import java.util.List;
 
 public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private List<JSONObject> data;
-    private View.OnClickListener musicClickListener;
+    private View.OnClickListener itemClickListener;
     private List<List<JSONObject>> parentData;
     private JSONObject headerInfo;
     private static final int TYPE_HEADER = 295;
@@ -33,8 +33,8 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         this.headerInfo = headerInfo;
     }
 
-    public void setMusicClickListener(View.OnClickListener musicClickListener) {
-        this.musicClickListener = musicClickListener;
+    public void setItemClickListener(View.OnClickListener itemClickListener) {
+        this.itemClickListener = itemClickListener;
     }
 
     public List<JSONObject> getData() {
@@ -116,9 +116,11 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                             notifyDataSetChanged();
                         }
                     });
-                }else if("audio".equals(jsonObject.getString("type")) || "image".equals(jsonObject.getString("type"))){
+                }else if("audio".equals(jsonObject.getString("type")) ||
+                        "image".equals(jsonObject.getString("type")) ||
+                        "text".equals(jsonObject.getString("type"))){
                     holder.itemView.setTag(jsonObject);
-                    holder.itemView.setOnClickListener(musicClickListener);
+                    holder.itemView.setOnClickListener(itemClickListener);
                 } else {
                     holder.itemView.setOnClickListener(null);
                 }
@@ -128,7 +130,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         } else if(holder instanceof DetailViewHolder){
             DetailViewHolder girdHolder = (DetailViewHolder) holder;
             try {
-                Glide.with(holder.itemView.getContext()).load(MainActivity.HOST+String.format("/api/cover/%d",jsonObject.getInt("id"))).into(girdHolder.ivCover);
+                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d",jsonObject.getInt("id"))).into(girdHolder.ivCover);
                 girdHolder.tvTitle.setText(jsonObject.getString("title"));
                 girdHolder.tvArt.setText(App.getArtStr(jsonObject));
                 girdHolder.tvCom.setText(jsonObject.getString("name"));

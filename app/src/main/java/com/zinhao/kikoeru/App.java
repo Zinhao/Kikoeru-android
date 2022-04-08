@@ -4,6 +4,7 @@ import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Build;
 
 import org.json.JSONArray;
@@ -12,11 +13,15 @@ import org.json.JSONObject;
 
 public class App extends Application {
     public static final String ID_PLAY_SERVICE = "com.zinhao.kikoeru.play_control";
-    public static final String HOST = "http://192.168.1.47:8888";
+    private static App instance;
+    public static App getInstance() {
+        return instance;
+    }
 
     @Override
     public void onCreate() {
         super.onCreate();
+        instance = this;
         NotificationChannel channelMusicService =
                 new NotificationChannel(
                         ID_PLAY_SERVICE,
@@ -49,5 +54,17 @@ public class App extends Application {
             stringBuilder.append(" ");
         }
         return stringBuilder.toString();
+    }
+
+    public void setValue(String key, String value){
+        SharedPreferences sharedPreferences = getSharedPreferences("app.config",MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(key,value);
+        editor.apply();
+    }
+
+    public String getValue(String key,String def){
+        SharedPreferences sharedPreferences = getSharedPreferences("app.config",MODE_PRIVATE);
+        return sharedPreferences.getString(key,def);
     }
 }

@@ -27,13 +27,13 @@ public class VideoPlayerActivity extends AppCompatActivity implements ServiceCon
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         ctrlBinder = (AudioService.CtrlBinder)service;
-        ctrlBinder.addListener(VideoPlayerActivity.this);
+        ctrlBinder.addMusicChangeListener(VideoPlayerActivity.this);
         playerView.setPlayer(ctrlBinder.getExoPlayer());
     }
 
     @Override
     public void onServiceDisconnected(ComponentName name) {
-        ctrlBinder.removeListener(VideoPlayerActivity.this);
+        ctrlBinder.removeMusicChangeListener(VideoPlayerActivity.this);
     }
 
     @Override

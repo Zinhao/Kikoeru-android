@@ -1,10 +1,13 @@
 package com.zinhao.kikoeru;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class Lrc {
     private String text;
+    private static final String TAG = "Lrc";
     private List<LrcRow> lrcRows;
 
     private int currentIndex = -1;
@@ -21,12 +24,25 @@ public class Lrc {
             int timeEnd = row.indexOf(']');
             if(timeStart != -1 && timeEnd != -1){
                 String timeStr = row.substring(timeStart+1,timeEnd);
-                long timeLong = transToLong(timeStr);
-                String content = row.substring(timeEnd+1);
-                LrcRow lrcRow = new LrcRow(timeStr,timeLong,content);
-                lrcRows.add(lrcRow);
+                try{
+                    long timeLong = transToLong(timeStr);
+                    String content = row.substring(timeEnd+1);
+                    LrcRow lrcRow = new LrcRow(timeStr,timeLong,content);
+                    lrcRows.add(lrcRow);
+                }catch (Exception e){
+                    Log.e(TAG, "Lrc: err lrc row:" + timeStr);
+                    continue;
+                }
             }
         }
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public LrcRow getCurrent() {
+        return current;
     }
 
     private static long transToLong(String timeStr){

@@ -7,8 +7,8 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
@@ -28,14 +28,17 @@ import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.Timeline;
 import com.koushikdutta.async.http.AsyncHttpClient;
-import com.koushikdutta.async.http.AsyncHttpRequest;
 import com.koushikdutta.async.http.AsyncHttpResponse;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.function.Consumer;
 
 public class AudioService extends Service {
@@ -44,6 +47,7 @@ public class AudioService extends Service {
     private static final String ACTION_PLAY = "com.zinhao.kikoeru.ACTION_PLAY";
     private static final String ACTION_PREVIOUS = "com.zinhao.kikoeru.ACTION_PREVIOUS";
     private static final String ACTION_NEXT="com.zinhao.kikoeru.ACTION_NEXT";
+    private Handler mHandler;
     private ExoPlayer mediaPlayer;
     private MediaSessionCompat mediaSession;
     private MediaSessionCompat.Callback callback = new MediaSessionCompat.Callback() {
@@ -95,9 +99,9 @@ public class AudioService extends Service {
         super.onCreate();
         mediaSession = new MediaSessionCompat(this,getClass().getSimpleName());
         mediaSession.setCallback(callback);
+        mHandler = new Handler(getMainLooper());
         ctrlBinder = new CtrlBinder();
         mediaPlayer = new ExoPlayer.Builder(this).build();
-
         mediaPlayer.addListener(new Player.Listener() {
             @Override
             public void onTimelineChanged(Timeline timeline, int reason) {
@@ -145,7 +149,7 @@ public class AudioService extends Service {
                     .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, null)
                     .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, null)
                     .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, null)
-                    .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, MainActivity.HOST+ctrlBinder.current.getString("mediaStreamUrl"))
+                    .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, Api.HOST+ctrlBinder.current.getString("mediaStreamUrl"))
                     .putLong(MediaMetadataCompat.METADATA_KEY_DURATION,mediaPlayer.getDuration())
                     .build();
         } catch (JSONException e) {
@@ -216,7 +220,7 @@ public class AudioService extends Service {
             notificationBuilder.setShowWhen(true);
             notificationBuilder.setColorized(true);
             notificationBuilder.setContentIntent(null);
-            Glide.with(this).asBitmap().load(MainActivity.HOST+String.format("/api/cover/%d?type=sam",ctrlBinder.currentAlbumId)).into(new SimpleTarget<Bitmap>() {
+            Glide.with(this).asBitmap().load(Api.HOST+String.format("/api/cover/%d?type=sam",ctrlBinder.currentAlbumId)).into(new SimpleTarget<Bitmap>() {
                 @Override
                 public void onResourceReady(@NonNull Bitmap bitmap, @Nullable Transition<? super Bitmap> transition) {
                     notificationBuilder.setLargeIcon(bitmap);
@@ -231,7 +235,7 @@ public class AudioService extends Service {
                 }
             });
             notificationBuilder.setColor(Color.WHITE);
-            ctrlBinder.listeners.forEach(new Consumer<MusicChangeListener>() {
+            ctrlBinder.musicChangeListeners.forEach(new Consumer<MusicChangeListener>() {
                 @Override
                 public void accept(MusicChangeListener listener) {
                     listener.onAudioChange(ctrlBinder.current);
@@ -261,12 +265,42 @@ public class AudioService extends Service {
 
     private CtrlBinder ctrlBinder;
 
-    public class CtrlBinder extends Binder{
+    public class CtrlBinder extends Binder implements Closeable {
         private List<JSONObject> playList;
         private JSONObject current;
         private int currentIndex;
         private int currentAlbumId;
         private Lrc mLrc;
+        private Timer mLrcUpdateTimer;
+
+        public CtrlBinder() {
+            mLrcUpdateTimer = new Timer();
+            mLrcUpdateTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    if(mLrc == null){
+                        return;
+                    }
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if(mediaPlayer!=null && mediaPlayer.isPlaying() && mLrc!=null){
+                                ctrlBinder.mLrc.update(mediaPlayer.getCurrentPosition());
+                            }
+                        }
+                    });
+                    lrcRowChangeListeners.forEach(new Consumer<LrcRowChangeListener>() {
+                        @Override
+                        public void accept(LrcRowChangeListener listener) {
+                            if(mLrc.getCurrent() == null)
+                                return;
+                            listener.onChange(mLrc.getCurrent());
+                        }
+                    });
+                }
+            },0,500);
+        }
+
         private AsyncHttpClient.StringCallback checkLrcCallBack = new AsyncHttpClient.StringCallback() {
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, String s) {
@@ -274,7 +308,7 @@ public class AudioService extends Service {
                     JSONObject lrcResult = new JSONObject(s);
                     boolean exist = lrcResult.getBoolean("result");
                     if(exist){
-                        downLoadLrc(lrcResult.getString("hash"));
+                        Api.doGetMediaString(lrcResult.getString("hash"),lrcCallBack);
                     }else{
                         mLrc = null;
                     }
@@ -290,8 +324,8 @@ public class AudioService extends Service {
                 if(asyncHttpResponse == null)
                     return;
                 if(asyncHttpResponse.code() == 200){
-                    mLrc = new Lrc(s);
                     Log.d(TAG, "onCompleted: "+s);
+                    mLrc = new Lrc(s);
                 }else {
                     Log.d(TAG, "onCompleted: "+asyncHttpResponse.code());
                 }
@@ -302,49 +336,50 @@ public class AudioService extends Service {
             return mediaPlayer;
         }
 
-        private List<MusicChangeListener> listeners = new ArrayList<>();
+        private List<MusicChangeListener> musicChangeListeners = new ArrayList<>();
+        private List<LrcRowChangeListener> lrcRowChangeListeners = new ArrayList<>();
 
         public MediaControllerCompat getCtrl(){
             return mediaSession.getController();
         }
 
-        public void addListener(MusicChangeListener listener){
-            listeners.add(listener);
+        public void addMusicChangeListener(MusicChangeListener listener){
+            musicChangeListeners.add(listener);
             if(current != null)
                 updateLastBottomView(listener);
         }
 
-        public void removeListener(MusicChangeListener listener){
-            listeners.remove(listener);
+        public void removeMusicChangeListener(MusicChangeListener listener){
+            musicChangeListeners.remove(listener);
+        }
+
+        public void addLrcRowChangeListener(LrcRowChangeListener listener){
+            lrcRowChangeListeners.add(listener);
+        }
+
+        public void removeLrcRowChangeListener(LrcRowChangeListener listener){
+            lrcRowChangeListeners.remove(listener);
         }
 
         public void play(JSONObject music) throws JSONException {
             current = music;
-            mediaPlayer.setMediaItem(MediaItem.fromUri(MainActivity.HOST+ current.getString("mediaStreamUrl")));
+            String path =current.getString("mediaStreamUrl");
+            if(path.startsWith("http")){
+                path = path + "?token=" + Api.token;
+            }else {
+                path = Api.HOST + path + "?token=" + Api.token;
+            }
+            Log.d(TAG, "play: "+path);
+            MediaItem mediaItem = MediaItem.fromUri(path);
+            mediaPlayer.setMediaItem(mediaItem);
             mediaPlayer.prepare();
             mediaPlayer.play();
-            checkLrc();
-        }
-
-        private void checkLrc() throws JSONException {
-            //检查歌词 http://localhost:8888/api/media/check-lrc/363822/5
-            AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(App.HOST+String.format("/api/media/check-lrc/%s",current.getString("hash"))),"GET");
-            Log.d(TAG, "checkLrc: "+request.getUri());
-            request.setTimeout(5000);
-            AsyncHttpClient.getDefaultInstance().executeString(request, checkLrcCallBack);
-        }
-
-        private void downLoadLrc(String hash){
-            // http://localhost:8888/api/media/stream/363822/4
-            AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(App.HOST+String.format("/api/media/stream/%s",hash)),"GET");
-            Log.d(TAG, "downLoadLrc: "+request.getUri());
-            request.setTimeout(5000);
-            AsyncHttpClient.getDefaultInstance().executeString(request, lrcCallBack);
+            Api.checkLrc(current.getString("hash"),checkLrcCallBack);
         }
 
         public void setCurrentAlbumId(int currentAlbumId) {
             this.currentAlbumId = currentAlbumId;
-            ctrlBinder.listeners.forEach(new Consumer<MusicChangeListener>() {
+            ctrlBinder.musicChangeListeners.forEach(new Consumer<MusicChangeListener>() {
                 @Override
                 public void accept(MusicChangeListener listener) {
                     listener.onAlbumChange(currentAlbumId);
@@ -375,7 +410,7 @@ public class AudioService extends Service {
             if(mLrc == null){
                 return "无歌词";
             }
-            Lrc.LrcRow row = mLrc.update(mediaPlayer.getCurrentPosition());
+            Lrc.LrcRow row = mLrc.getCurrent();
             if (row!=null){
                 return row.content;
             }
@@ -421,5 +456,20 @@ public class AudioService extends Service {
             listener.onAudioChange(current);
         }
 
+
+        @Override
+        public void close() throws IOException {
+            mLrcUpdateTimer.cancel();
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        try {
+            ctrlBinder.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

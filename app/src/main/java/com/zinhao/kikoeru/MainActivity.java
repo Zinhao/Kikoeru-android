@@ -1,19 +1,11 @@
 package com.zinhao.kikoeru;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.media.session.PlaybackState;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.View;
@@ -22,12 +14,14 @@ import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.google.android.exoplayer2.Player;
 import com.koushikdutta.async.http.AsyncHttpClient;
-import com.koushikdutta.async.http.AsyncHttpRequest;
 import com.koushikdutta.async.http.AsyncHttpResponse;
 
 import org.json.JSONArray;
@@ -37,9 +31,8 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements MusicChangeListener {
+public class MainActivity extends AppCompatActivity implements MusicChangeListener,ServiceConnection,LrcRowChangeListener {
     private static final String TAG = "MainActivity";
-    public static final String HOST = "http://192.168.1.47:8888";
     private RecyclerView recyclerView;
     private WorkAdapter workAdapter;
     private List<JSONObject> works;
@@ -124,42 +117,8 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
                 toggleBottom();
             }
         });
-
         startService(new Intent(this,AudioService.class));
-        bindService(new Intent(this, AudioService.class), new ServiceConnection() {
-            @Override
-            public void onServiceConnected(ComponentName name, IBinder service) {
-                ctrlBinder = (AudioService.CtrlBinder)service;
-                ctrlBinder.addListener(MainActivity.this);
-                ibStatus.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        if(ctrlBinder.getCtrl().getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING){
-                            ctrlBinder.getCtrl().getTransportControls().pause();
-                        }else {
-                            ctrlBinder.getCtrl().getTransportControls().play();
-                        }
-                    }
-                });
-                bottomLayout.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        try {
-                            if(ctrlBinder.getCurrentTitle().endsWith("mp4")){
-                                startActivity(new Intent(MainActivity.this,VideoPlayerActivity.class));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                });
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName name) {
-
-            }
-        },BIND_AUTO_CREATE);
+        bindService(new Intent(this, AudioService.class), this,BIND_AUTO_CREATE);
         outAnim = AnimationUtils.loadAnimation(this,R.anim.move_bottom_out);
         inAnim = AnimationUtils.loadAnimation(this,R.anim.move_bottom_in);
         scrollListener = new RecyclerView.OnScrollListener() {
@@ -186,9 +145,16 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
                 }
             }
         };
+        App app = (App) getApplication();
+        String token = app.getValue("token","");
+        if(token.isEmpty()){
+            Api.doGetToken();
+        }else {
+            token = app.getValue("token","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FzbXIub25lIiwic3ViIjoiZ3Vlc3QiLCJhdWQiOiJodHRwczovL2FzbXIub25lL2FwaSIsIm5hbWUiOiJndWVzdCIsImdyb3VwIjoidXNlciIsImlhdCI6MTY0OTM4NzYyMCwiZXhwIjoxNjUwNTk3MjIwfQ.VlaW0xXSWPKq_1bgDo6Ry-VezunW06F-YrdmUq102BM");
+            Api.init(token);
+        }
         works = new ArrayList<>();
-        AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST+"/api/works?order=id&sort=desc&page=1&seed=35"),"GET");
-        AsyncHttpClient.getDefaultInstance().executeString(request, apisCallback);
+        Api.doGetWorks(1,apisCallback);
     }
 
     private void toggleBottom(){
@@ -216,16 +182,13 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
     }
 
     public void getNextPage() {
-        AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST+String.format("/api/works?order=release&sort=desc&page=%d&seed=35",page)),"GET");
-        Log.d(TAG, "getNextPage: "+request.getUri());
-        request.setTimeout(5000);
-        AsyncHttpClient.getDefaultInstance().executeString(request, apisCallback);
+        Api.doGetWorks(page,apisCallback);
     }
 
     @SuppressLint("DefaultLocale")
     @Override
     public void onAlbumChange(int rjNumber) {
-        Glide.with(this).load(HOST+String.format("/api/cover/%d?type=sam",rjNumber)).into(ivCover);
+        Glide.with(this).load(Api.HOST+String.format("/api/cover/%d?type=sam",rjNumber)).into(ivCover);
     }
 
     @Override
@@ -248,8 +211,57 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
     }
 
     @Override
+    public void onServiceConnected(ComponentName name, IBinder service) {
+        ctrlBinder = (AudioService.CtrlBinder)service;
+        ctrlBinder.addMusicChangeListener(MainActivity.this);
+        ibStatus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(ctrlBinder.getCtrl().getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING){
+                    ctrlBinder.getCtrl().getTransportControls().pause();
+                }else {
+                    ctrlBinder.getCtrl().getTransportControls().play();
+                }
+            }
+        });
+        bottomLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    if(ctrlBinder.getCurrentTitle().endsWith("mp4")){
+                        startActivity(new Intent(MainActivity.this,VideoPlayerActivity.class));
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        ctrlBinder.addMusicChangeListener(this);
+        ctrlBinder.addLrcRowChangeListener(this);
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName name) {
+
+    }
+
+    @Override
+    public void onChange(Lrc.LrcRow currentRow) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                setTitle(currentRow.content);
+            }
+        });
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
-        ctrlBinder.removeListener(this);
+        ctrlBinder.removeMusicChangeListener(this);
+        ctrlBinder.removeLrcRowChangeListener(this);
+        unbindService(this);
     }
+
+
 }
