@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
 
+import com.bumptech.glide.request.RequestOptions;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -14,14 +16,26 @@ import org.json.JSONObject;
 public class App extends Application {
     public static final String ID_PLAY_SERVICE = "com.zinhao.kikoeru.play_control";
     private static App instance;
+    public static final String CONFIG_UPDATE_TIME = "update_time";
+    public static final String CONFIG_TOKEN = "token";
+    public static final String CONFIG_USER_ACCOUNT = "user";
+    public static final String CONFIG_USER_PASSWORD = "password";
+
     public static App getInstance() {
         return instance;
+    }
+
+    private RequestOptions defaultPic;
+
+    public RequestOptions getDefaultPic() {
+        return defaultPic;
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
         instance = this;
+        defaultPic = new RequestOptions().placeholder(R.drawable.ic_no_cover);
         NotificationChannel channelMusicService =
                 new NotificationChannel(
                         ID_PLAY_SERVICE,
@@ -63,8 +77,36 @@ public class App extends Application {
         editor.apply();
     }
 
+    public void setValue(String key, long value){
+        SharedPreferences sharedPreferences = getSharedPreferences("app.config",MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putLong(key,value);
+        editor.apply();
+    }
+
     public String getValue(String key,String def){
         SharedPreferences sharedPreferences = getSharedPreferences("app.config",MODE_PRIVATE);
         return sharedPreferences.getString(key,def);
+    }
+
+    public long getValue(String key,long def){
+        SharedPreferences sharedPreferences = getSharedPreferences("app.config",MODE_PRIVATE);
+        return sharedPreferences.getLong(key,def);
+    }
+
+    public void savePosition(float x,float y){
+        SharedPreferences sharedPreferences = getSharedPreferences("config",MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putFloat("WINDOW_X",x);
+        editor.putFloat("WINDOW_Y",y);
+        editor.apply();
+    }
+
+    public float[] getPosition(){
+        float[] position = new float[2];
+        SharedPreferences sharedPreferences = getSharedPreferences("config",MODE_PRIVATE);
+        position[0] = sharedPreferences.getFloat("WINDOW_X",145);
+        position[1] = sharedPreferences.getFloat("WINDOW_Y",160);
+        return position;
     }
 }

@@ -8,12 +8,16 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -28,6 +32,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,7 +54,6 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
     private TextView tvTitle;
     private TextView tvWorkTitle;
     private ImageButton ibStatus;
-    private ImageButton ibCloseOrOpen;
 
     private AsyncHttpClient.StringCallback apisCallback = new AsyncHttpClient.StringCallback() {
         @Override
@@ -80,10 +84,9 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
                     @SuppressLint("DefaultLocale")
                     @Override
                     public void run() {
-                        setTitle(String.format("下次加载第%d页 ,当前已加载%d项",page,works.size()));
                         if(workAdapter == null){
                             workAdapter = new WorkAdapter(works);
-                            recyclerView.setLayoutManager(new GridLayoutManager(MainActivity.this,2));
+                            recyclerView.setLayoutManager(new GridLayoutManager(MainActivity.this,3));
                             recyclerView.setAdapter(workAdapter);
                             recyclerView.addOnScrollListener(scrollListener);
                         }else {
@@ -110,13 +113,6 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
         tvTitle = bottomLayout.findViewById(R.id.textView);
         tvWorkTitle = bottomLayout.findViewById(R.id.textView2);
         ibStatus = bottomLayout.findViewById(R.id.button);
-        ibCloseOrOpen = bottomLayout.findViewById(R.id.imageButton);
-        ibCloseOrOpen.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                toggleBottom();
-            }
-        });
         startService(new Intent(this,AudioService.class));
         bindService(new Intent(this, AudioService.class), this,BIND_AUTO_CREATE);
         outAnim = AnimationUtils.loadAnimation(this,R.anim.move_bottom_out);
@@ -138,23 +134,36 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                if (dy > 0 && shouldShowAnim && bottomLayout.getVisibility() == View.VISIBLE){
-                    toggleBottom();
-                }else if(dy<0 && shouldShowAnim && bottomLayout.getVisibility() == View.GONE){
-                    toggleBottom();
-                }
+//                if (dy > 0 && shouldShowAnim && bottomLayout.getVisibility() == View.VISIBLE){
+//                    toggleBottom();
+//                }else if(dy<0 && shouldShowAnim && bottomLayout.getVisibility() == View.GONE){
+//                    toggleBottom();
+//                }
             }
         };
-        App app = (App) getApplication();
-        String token = app.getValue("token","");
-        if(token.isEmpty()){
-            Api.doGetToken();
-        }else {
-            token = app.getValue("token","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FzbXIub25lIiwic3ViIjoiZ3Vlc3QiLCJhdWQiOiJodHRwczovL2FzbXIub25lL2FwaSIsIm5hbWUiOiJndWVzdCIsImdyb3VwIjoidXNlciIsImlhdCI6MTY0OTM4NzYyMCwiZXhwIjoxNjUwNTk3MjIwfQ.VlaW0xXSWPKq_1bgDo6Ry-VezunW06F-YrdmUq102BM");
-            Api.init(token);
-        }
+        checkToken();
         works = new ArrayList<>();
         Api.doGetWorks(1,apisCallback);
+    }
+
+    private void checkToken(){
+        App app = (App) getApplication();
+
+        String userName = app.getValue(App.CONFIG_USER_ACCOUNT,"guest");
+        String password = app.getValue(App.CONFIG_USER_PASSWORD,"guest");
+        if(userName.equals("guest")&& password.equals("guest")){
+            setTitle("当前处于游客用户，速度可能受到限制！");
+        }else {
+            setTitle(userName);
+        }
+        String token = app.getValue(App.CONFIG_TOKEN,"");
+        long updateTime= app.getValue(App.CONFIG_UPDATE_TIME,0);
+        if(token.isEmpty() || System.currentTimeMillis() - updateTime > 24*60*60*1000){
+            Api.doGetToken();
+            Toast.makeText(this,"Update token.",Toast.LENGTH_SHORT).show();
+        }else {
+            Api.init(token);
+        }
     }
 
     private void toggleBottom(){
@@ -213,10 +222,13 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         ctrlBinder = (AudioService.CtrlBinder)service;
-        ctrlBinder.addMusicChangeListener(MainActivity.this);
         ibStatus.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if(ctrlBinder.getCtrl().getPlaybackState() == null){
+                    ctrlBinder.getCtrl().getTransportControls().play();
+                    return;
+                }
                 if(ctrlBinder.getCtrl().getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING){
                     ctrlBinder.getCtrl().getTransportControls().pause();
                 }else {
@@ -230,6 +242,8 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
                 try {
                     if(ctrlBinder.getCurrentTitle().endsWith("mp4")){
                         startActivity(new Intent(MainActivity.this,VideoPlayerActivity.class));
+                    }else {
+                        startActivity(new Intent(MainActivity.this,MusicPlayerActivity.class));
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -256,11 +270,31 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuItem menuItem = menu.add(0,0,0,"setting");
+        menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if(item.getItemId() == 0){
+//            startActivity(new Intent(this,MainHomeActivity.class));
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     protected void onDestroy() {
-        super.onDestroy();
         ctrlBinder.removeMusicChangeListener(this);
         ctrlBinder.removeLrcRowChangeListener(this);
+        try {
+            ctrlBinder.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         unbindService(this);
+        super.onDestroy();
     }
 
 

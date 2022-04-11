@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:padding="2dp"
+    android:layout_margin="5dp"
+    android:elevation="18dp"
+    android:background="@drawable/card_bg_work"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/ivCover"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scaleType="fitStart"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:adjustViewBounds="true"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:srcCompat="@tools:sample/avatars" />
+
+    <TextView
+        android:id="@+id/tvRjNumber"
+        android:layout_margin="5dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="RJ23435"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp"
+        android:textSize="12sp"
+        android:textColor="@color/white"
+        android:background="@drawable/card_bg_text"
+        app:layout_constraintStart_toStartOf="@+id/ivCover"
+        app:layout_constraintTop_toTopOf="@+id/ivCover" />
+
+    <TextView
+        android:id="@+id/tvDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:text="2022-01-02"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp"
+        android:textSize="12sp"
+        android:background="@drawable/card_bg_text"
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toBottomOf="@+id/ivCover"
+        app:layout_constraintEnd_toEndOf="@+id/ivCover" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

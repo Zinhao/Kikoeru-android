@@ -13,6 +13,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -130,7 +131,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         } else if(holder instanceof DetailViewHolder){
             DetailViewHolder girdHolder = (DetailViewHolder) holder;
             try {
-                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d",jsonObject.getInt("id"))).into(girdHolder.ivCover);
+                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d",jsonObject.getInt("id"))).apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
                 girdHolder.tvTitle.setText(jsonObject.getString("title"));
                 girdHolder.tvArt.setText(App.getArtStr(jsonObject));
                 girdHolder.tvCom.setText(jsonObject.getString("name"));
@@ -139,14 +140,6 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 girdHolder.tvDate.setText(jsonObject.getString("release"));
                 girdHolder.tvPrice.setText(String.format("%d 日元",jsonObject.getInt("price")));
                 girdHolder.tvSaleCount.setText(String.format("售出：%d",jsonObject.getInt("dl_count")));
-                holder.itemView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent intent = new Intent(v.getContext(),WorkActivity.class);
-                        intent.putExtra("work_json_str",jsonObject.toString());
-                        ActivityCompat.startActivity(v.getContext(),intent,null);
-                    }
-                });
             } catch (JSONException e) {
                 e.printStackTrace();
             }

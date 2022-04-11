@@ -30,8 +30,8 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_2,parent,false);
-        return new GirdViewHolder(v);
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_3,parent,false);
+        return new SmallGirdViewHolder(v);
     }
 
     @SuppressLint("DefaultLocale")
@@ -59,7 +59,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if(holder instanceof GirdViewHolder){
             GirdViewHolder girdHolder = (GirdViewHolder) holder;
             try {
-                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d",jsonObject.getInt("id"))).into(girdHolder.ivCover);
+                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d",jsonObject.getInt("id"))).apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
                 girdHolder.tvTitle.setText(jsonObject.getString("title"));
                 girdHolder.tvArt.setText(App.getArtStr(jsonObject));
                 girdHolder.tvCom.setText(jsonObject.getString("name"));
@@ -68,17 +68,37 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 girdHolder.tvDate.setText(jsonObject.getString("release"));
                 girdHolder.tvPrice.setText(String.format("%d 日元",jsonObject.getInt("price")));
                 girdHolder.tvSaleCount.setText(String.format("售出：%d",jsonObject.getInt("dl_count")));
-                holder.itemView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent intent = new Intent(v.getContext(),WorkActivity.class);
-                        intent.putExtra("work_json_str",jsonObject.toString());
-                        ActivityCompat.startActivity(v.getContext(),intent,null);
-                    }
-                });
+
             } catch (JSONException e) {
                 e.printStackTrace();
             }
+            holder.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(v.getContext(),WorkActivity.class);
+                    intent.putExtra("work_json_str",jsonObject.toString());
+                    ActivityCompat.startActivity(v.getContext(),intent,null);
+                }
+            });
+        }
+
+        if(holder instanceof SmallGirdViewHolder){
+            SmallGirdViewHolder girdHolder = (SmallGirdViewHolder) holder;
+            try {
+                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d",jsonObject.getInt("id"))).apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
+                girdHolder.tvRjNumber.setText(String.format("RJ%d",jsonObject.getInt("id")));
+                girdHolder.tvDate.setText(jsonObject.getString("release"));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            holder.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(v.getContext(),WorkActivity.class);
+                    intent.putExtra("work_json_str",jsonObject.toString());
+                    ActivityCompat.startActivity(v.getContext(),intent,null);
+                }
+            });
         }
     }
 
@@ -125,6 +145,19 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             tvDate = itemView.findViewById(R.id.tvDate);
             tvPrice = itemView.findViewById(R.id.tvPrice);
             tvSaleCount = itemView.findViewById(R.id.tvSaleCount);
+        }
+    }
+
+    public static class SmallGirdViewHolder extends RecyclerView.ViewHolder{
+        private ImageView ivCover;
+        private TextView tvRjNumber;
+        private TextView tvDate;
+
+        public SmallGirdViewHolder(@NonNull View itemView) {
+            super(itemView);
+            ivCover = itemView.findViewById(R.id.ivCover);
+            tvRjNumber = itemView.findViewById(R.id.tvRjNumber);
+            tvDate = itemView.findViewById(R.id.tvDate);
         }
     }
 }

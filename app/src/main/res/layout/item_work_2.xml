@@ -3,8 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:padding="5dp"
-    android:background="@color/teal_700"
+    android:padding="2dp"
+    android:layout_margin="10dp"
+    android:elevation="10dp"
+    android:background="@drawable/card_bg_work"
     android:layout_height="wrap_content">
 
     <ImageView
@@ -45,9 +47,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="RJ23435"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp"
         android:textSize="12sp"
         android:textColor="@color/white"
-        android:background="@color/black"
+        android:background="@drawable/card_bg_text"
         app:layout_constraintStart_toStartOf="@+id/ivCover"
         app:layout_constraintTop_toTopOf="@+id/ivCover" />
 
@@ -57,8 +63,12 @@
         android:layout_height="wrap_content"
         android:layout_margin="5dp"
         android:text="2022-01-02"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp"
         android:textSize="12sp"
-        android:background="@color/black"
+        android:background="@drawable/card_bg_text"
         android:textColor="@color/white"
         app:layout_constraintBottom_toBottomOf="@+id/ivCover"
         app:layout_constraintEnd_toEndOf="@+id/ivCover" />
@@ -78,7 +88,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:background="@color/black"
+        android:background="@drawable/card_bg_text"
+        android:padding="4dp"
         android:text="手交,内射,中出,口交,巨乳,爆乳,ASMR,舔耳"
         android:textColor="@color/white"
         app:layout_constraintEnd_toEndOf="parent"

@@ -2,6 +2,7 @@ package com.zinhao.kikoeru;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -31,7 +32,6 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Timer;
 import java.util.function.Consumer;
 
 public class WorkActivity extends AppCompatActivity implements View.OnClickListener,MusicChangeListener,ServiceConnection,LrcRowChangeListener {
@@ -55,14 +55,15 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
     private TextView tvTitle;
     private TextView tvWorkTitle;
     private ImageButton ibStatus;
-    private ImageButton ibCloseOrOpen;
-
-    private Timer timer;
 
     private AsyncHttpClient.StringCallback docTreeCallback = new AsyncHttpClient.StringCallback() {
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, String s) {
             Log.d(TAG, "onCompleted: "+s);
+            if(asyncHttpResponse==null || asyncHttpResponse.code() != 200 || s==null || s.isEmpty()){
+                Log.d(TAG, "onCompleted: docTreeCallback err ");
+                return;
+            }
             workTrees = new ArrayList<>();
             try {
                 JSONArray jsonArray = new JSONArray(s);
@@ -75,6 +76,8 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
                         workTreeAdapter = new WorkTreeAdapter(workTrees);
                         workTreeAdapter.setItemClickListener(WorkActivity.this);
                         workTreeAdapter.setHeaderInfo(work);
+                        RecyclerView.ItemDecoration itemDecoration = new DividerItemDecoration(WorkActivity.this,DividerItemDecoration.VERTICAL);
+                        recyclerView.addItemDecoration(itemDecoration);
                         recyclerView.setLayoutManager(new LinearLayoutManager(WorkActivity.this));
                         recyclerView.setAdapter(workTreeAdapter);
                     }
@@ -96,7 +99,7 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
                 @Override
                 public void run() {
                     if(ctrlBinder.getLrc()!=null && ctrlBinder.getLrc().getText().equals(s)){
-                        LrcShowActivity.start(WorkActivity.this,ctrlBinder.getLrcText(),true);
+                        LrcShowActivity.start(WorkActivity.this,ctrlBinder.getLrc().getText(),true);
                     }else {
                         LrcShowActivity.start(WorkActivity.this,s,false);
                     }
@@ -119,19 +122,16 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
                 e.printStackTrace();
             }
         }
+//        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+//        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+//        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+//        getWindow().setStatusBarColor(Color.TRANSPARENT);
         recyclerView = findViewById(R.id.recyclerView);
         bottomLayout = findViewById(R.id.bottomLayout);
         ivCover = bottomLayout.findViewById(R.id.imageView);
         tvTitle = bottomLayout.findViewById(R.id.textView);
         tvWorkTitle = bottomLayout.findViewById(R.id.textView2);
         ibStatus = bottomLayout.findViewById(R.id.button);
-        ibCloseOrOpen = bottomLayout.findViewById(R.id.imageButton);
-        ibCloseOrOpen.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                toggleBottom();
-            }
-        });
 
         bindService(new Intent(this, AudioService.class),this,BIND_AUTO_CREATE);
         outAnim = AnimationUtils.loadAnimation(this,R.anim.move_bottom_out);
@@ -145,11 +145,11 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                if (dy > 0 && shouldShowAnim && bottomLayout.getVisibility() == View.VISIBLE){
-                    toggleBottom();
-                }else if(dy<0 && shouldShowAnim && bottomLayout.getVisibility() == View.GONE){
-                    toggleBottom();
-                }
+//                if (dy > 0 && shouldShowAnim && bottomLayout.getVisibility() == View.VISIBLE){
+//                    toggleBottom();
+//                }else if(dy<0 && shouldShowAnim && bottomLayout.getVisibility() == View.GONE){
+//                    toggleBottom();
+//                }
             }
         };
         recyclerView.addOnScrollListener(scrollListener);
@@ -225,11 +225,18 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
                 }
 
                 try {
-                    ctrlBinder.setReap();
-                    ctrlBinder.setCurrentAlbumId(work.getInt("id"));
-                    ctrlBinder.play(musicArray,index);
+                    if(ctrlBinder.getCurrent()!=null && ctrlBinder.getCurrent().getString("mediaStreamUrl").equals(item.getString("mediaStreamUrl"))){
+
+                    }else {
+                        ctrlBinder.setReap();
+                        ctrlBinder.setCurrentAlbumId(work.getInt("id"));
+                        ctrlBinder.play(musicArray,index);
+                    }
+
                     if(item.getString("title").toLowerCase(Locale.ROOT).endsWith("mp4")){
                         startActivity(new Intent(this,VideoPlayerActivity.class));
+                    }else {
+                        startActivity(new Intent(this, MusicPlayerActivity.class));
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -248,10 +255,7 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onAlbumChange(int rjNumber) {
-        if(!isDestroyed()){
-            Glide.with(this).load(Api.HOST+String.format("/api/cover/%d?type=sam",rjNumber)).into(ivCover);
-        }
-
+        Glide.with(this).load(Api.HOST+String.format("/api/cover/%d?type=sam",rjNumber)).into(ivCover);
     }
 
     @Override
@@ -284,7 +288,6 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         ctrlBinder = (AudioService.CtrlBinder)service;
-        ctrlBinder.addMusicChangeListener(WorkActivity.this);
         ibStatus.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -325,7 +328,7 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                setTitle(currentRow.content);
+//                setTitle(currentRow.content);
             }
         });
     }

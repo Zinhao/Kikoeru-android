@@ -4,8 +4,11 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public class Lrc {
+    public static final Lrc NONE = new Lrc("");
     private String text;
     private static final String TAG = "Lrc";
     private List<LrcRow> lrcRows;
@@ -35,6 +38,11 @@ public class Lrc {
                 }
             }
         }
+        for (int i = 1; i < lrcRows.size() - 1; i++) {
+            LrcRow lrcRow = lrcRows.get(i);
+            lrcRow.upRow = lrcRows.get(i-1);
+            lrcRow.nextRow = lrcRows.get(i+1);
+        }
     }
 
     public String getText() {
@@ -42,6 +50,9 @@ public class Lrc {
     }
 
     public LrcRow getCurrent() {
+        if(current == null){
+            return LrcRow.NONE;
+        }
         return current;
     }
 
@@ -94,6 +105,9 @@ public class Lrc {
     }
 
     public static class LrcRow{
+        public static final LrcRow NONE = new LrcRow("00:00",0,"无歌词");
+        public LrcRow upRow = NONE;
+        public LrcRow nextRow = NONE;
         public String strTime;
         public long time ;
         public String content ;
@@ -102,6 +116,19 @@ public class Lrc {
             this.strTime = strTime;
             this.time = time;
             this.content = content;
+        }
+
+        public LrcRow getUpRow() {
+            if(upRow == null)
+                return NONE;
+            return upRow;
+        }
+
+        public LrcRow getNextRow() {
+            if(nextRow == null){
+                return NONE;
+            }
+            return nextRow;
         }
     }
 

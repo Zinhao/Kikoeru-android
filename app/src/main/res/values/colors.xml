@@ -6,5 +6,10 @@
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
+    <color name="black_tran">#40000000</color>
+    <color name="black_tran_dark">#B3000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="white_tran">#40FFFFFF</color>
+    <color name="pine_200">#E5917C</color>
+    <color name="pine_700">#974D3A</color>
 </resources>

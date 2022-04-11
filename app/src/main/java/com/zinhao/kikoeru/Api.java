@@ -17,9 +17,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Api {
-//    public static final String HOST = "http://192.168.1.47:8888";
+    public static final String HOST = "http://192.168.1.47:8888";
     private static final String TAG = "Api";
-    public static final String HOST = "https://api.asmr.one";
+//    public static final String HOST = "https://api.asmr.one";
     public static String authorization = "";
     public static String token = "";
 
@@ -62,8 +62,10 @@ public class Api {
         AsyncHttpRequest request =new AsyncHttpRequest(Uri.parse(HOST+"/api/auth/me"),"POST");
         JSONObject pwd = new JSONObject();
         try {
-            pwd.put("name","zinhao");
-            pwd.put("password", "zinhao1513");
+            String userName = App.getInstance().getValue(App.CONFIG_USER_ACCOUNT,"guest");
+            String password = App.getInstance().getValue(App.CONFIG_USER_PASSWORD,"guest");
+            pwd.put("name", userName);
+            pwd.put("password", password);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -72,14 +74,16 @@ public class Api {
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
                 if(asyncHttpResponse==null || asyncHttpResponse.code() != 200 || jsonObject == null){
-                    Log.d(TAG, "onCompleted: err ");
-                    doGetToken();
+                    Log.d(TAG, "onCompleted: get token err ");
+//                    doGetToken();
                     return;
                 }
                 try {
                     token = jsonObject.getString("token");
+                    Log.d(TAG, "onCompleted: "+token);
                     init(token);
-                    App.getInstance().setValue("token",token);
+                    App.getInstance().setValue(App.CONFIG_TOKEN,token);
+                    App.getInstance().setValue(App.CONFIG_UPDATE_TIME,System.currentTimeMillis());
                 } catch (JSONException jsonException) {
                     jsonException.printStackTrace();
                 }

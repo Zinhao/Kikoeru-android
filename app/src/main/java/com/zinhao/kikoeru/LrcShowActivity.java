@@ -8,6 +8,7 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
+import android.view.View;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -69,6 +70,15 @@ public class LrcShowActivity extends AppCompatActivity implements ServiceConnect
         ctrlBinder = (AudioService.CtrlBinder)iBinder;
         mLrc = ctrlBinder.getLrc();
         adapter = new LrcAdapter(mLrc);
+        adapter.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(ctrlBinder!=null){
+                    Lrc.LrcRow lrcRow = (Lrc.LrcRow) v.getTag();
+                    ctrlBinder.getCtrl().getTransportControls().seekTo(lrcRow.time);
+                }
+            }
+        });
         mRecyclerView.setAdapter(adapter);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 

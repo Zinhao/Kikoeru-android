@@ -11,6 +11,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 public class LrcAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private Lrc lrc;
+    private View.OnClickListener onClickListener;
+
+    public void setOnClickListener(View.OnClickListener onClickListener) {
+        this.onClickListener = onClickListener;
+    }
 
     public LrcAdapter(Lrc lrc) {
         this.lrc = lrc;
@@ -26,7 +31,9 @@ public class LrcAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         Lrc.LrcRow lrcRow = lrc.getLrcRows().get(position);
         if(holder instanceof LrcRowHolder){
-            ((LrcRowHolder) holder).textView.setText(lrcRow.content);
+            ((LrcRowHolder) holder).textView.setText(String.format("[%s] %s",lrcRow.strTime, lrcRow.content));
+            holder.itemView.setTag(lrcRow);
+            holder.itemView.setOnClickListener(onClickListener);
             if(lrc.getCurrentIndex() == position){
                 holder.itemView.setBackgroundColor(Color.GREEN);
             }else {
