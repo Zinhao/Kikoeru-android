@@ -264,22 +264,32 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                setTitle(currentRow.content);
+//                setTitle(currentRow.content);
             }
         });
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuItem menuItem = menu.add(0,0,0,"setting");
-        menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        MenuItem menuItem = menu.add(0,0,0,"use local server");
+        menu.add(0,1,1,"use remote server");
+        menu.add(0,2,2,"setting");
+//        menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(item.getItemId() == 0){
-//            startActivity(new Intent(this,MainHomeActivity.class));
+            Api.HOST = Api.LOCAL_HOST;
+            App.getInstance().setValue("host",Api.HOST);
+            Toast.makeText(this,Api.HOST,Toast.LENGTH_SHORT).show();
+        }else if(item.getItemId() == 1){
+            Api.HOST = Api.REMOTE_HOST;
+            App.getInstance().setValue("host",Api.HOST);
+            Toast.makeText(this,Api.HOST,Toast.LENGTH_SHORT).show();
+        }else if(item.getItemId() == 2){
+
         }
         return super.onOptionsItemSelected(item);
     }

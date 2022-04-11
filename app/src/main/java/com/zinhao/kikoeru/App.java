@@ -41,6 +41,7 @@ public class App extends Application {
                         ID_PLAY_SERVICE,
                         getString(R.string.channel_description), NotificationManager.IMPORTANCE_LOW
                 );
+        Api.HOST = getValue("host",Api.REMOTE_HOST);
         channelMusicService.setDescription(getString(R.string.channel_description));
         channelMusicService.enableLights(false);
         channelMusicService.enableVibration(false);

@@ -17,9 +17,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Api {
-    public static final String HOST = "http://192.168.1.47:8888";
+    public static String HOST = "http://192.168.1.47:8888";
     private static final String TAG = "Api";
-//    public static final String HOST = "https://api.asmr.one";
+    public static final String REMOTE_HOST = "https://api.asmr.one";
+    public static final String LOCAL_HOST = "http://192.168.1.47:8888";
     public static String authorization = "";
     public static String token = "";
 
