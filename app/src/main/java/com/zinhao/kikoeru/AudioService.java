@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
+import android.media.ExifInterface;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
@@ -525,6 +526,8 @@ public class AudioService extends Service{
             Log.d(TAG, "save: ");
             JSONObject jsonObject = new JSONObject();
             JSONArray jsonArray = new JSONArray();
+            if(playList == null)
+                return;
             playList.forEach(new Consumer<JSONObject>() {
                 @Override
                 public void accept(JSONObject jsonObject) {

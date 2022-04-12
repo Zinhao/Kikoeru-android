@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class WorkActivity extends AppCompatActivity implements View.OnClickListener,MusicChangeListener,ServiceConnection,LrcRowChangeListener {
     /**
@@ -196,7 +197,39 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
         JSONObject item = (JSONObject) v.getTag();
         try {
             if("image".equals(item.getString("type"))){
-
+                List<String> imageList = new ArrayList<>();
+                int index = 0;
+                workTreeAdapter.getData().stream().filter(new Predicate<JSONObject>() {
+                    @Override
+                    public boolean test(JSONObject jsonObject) {
+                        try {
+                            return "image".equals(jsonObject.getString("type"));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        return false;
+                    }
+                }).forEach(new Consumer<JSONObject>() {
+                    @Override
+                    public void accept(JSONObject jsonObject) {
+                        try {
+                            imageList.add(jsonObject.getString("mediaStreamUrl"));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+                for (int i = 0; i < imageList.size(); i++) {
+                    try {
+                        if(imageList.get(i).equals(item.getString("mediaStreamUrl"))){
+                            index = i;
+                            break;
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+                ImageBrowserActivity.start(this,imageList,index);
             }else if("audio".equals(item.getString("type"))){
                 List<JSONObject> musicArray = new ArrayList<>();
                 int index = 0;

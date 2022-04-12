@@ -91,13 +91,14 @@ public class LrcFloatWindow extends AppCompatActivity implements ServiceConnecti
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             dialog.dismiss();
+                            finish();
                         }
                     }).setPositiveButton("去开启", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse(String.format("package:%s",getPackageName()))),1);
                 }
-            }).create().show();
+            }).setCancelable(false).create().show();
         } else {
             ctrlBinder.showOrHideLrcFloatWindow();
             finish();

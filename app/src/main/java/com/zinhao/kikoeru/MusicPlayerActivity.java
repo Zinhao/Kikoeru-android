@@ -60,7 +60,9 @@ public class MusicPlayerActivity extends AppCompatActivity implements ServiceCon
                     return;
                 if(ctrlBinder.getCtrl() == null || ctrlBinder.getCtrl().getTransportControls() == null)
                     return;
-                if(ctrlBinder.getCtrl().getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING){
+                PlaybackStateCompat playbackStateCompat;
+                playbackStateCompat = ctrlBinder.getCtrl().getPlaybackState();
+                if(playbackStateCompat != null && playbackStateCompat.getState() == PlaybackStateCompat.STATE_PLAYING){
                     ctrlBinder.getCtrl().getTransportControls().pause();
                 }else {
                     ctrlBinder.getCtrl().getTransportControls().play();

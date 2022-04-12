@@ -33,6 +33,7 @@
             android:theme="@style/Theme.AppCompat.NoActionBar" />
         <activity android:name=".MusicPlayerActivity" />
         <activity android:name=".LrcFloatWindow" android:theme="@style/Theme.AppCompat.Dialog.MinWidth"/>
+        <activity android:name=".ImageBrowserActivity" android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
 
         <service android:name=".AudioService" />
     </application>
