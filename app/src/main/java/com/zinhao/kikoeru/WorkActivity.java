@@ -14,12 +14,16 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.koushikdutta.async.http.AsyncHttpClient;
@@ -121,12 +125,10 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
                 work = new JSONObject(workStr);
             } catch (JSONException e) {
                 e.printStackTrace();
+                finish();
+                return;
             }
         }
-//        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-//        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-//        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
-//        getWindow().setStatusBarColor(Color.TRANSPARENT);
         recyclerView = findViewById(R.id.recyclerView);
         bottomLayout = findViewById(R.id.bottomLayout);
         ivCover = bottomLayout.findViewById(R.id.imageView);
@@ -191,6 +193,62 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
             super.onBackPressed();
         }
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        SubMenu subMenu = menu.addSubMenu(0,0,0,"action");
+        subMenu.add(1,1,1,Api.FILTER_MARKED);
+        subMenu.add(1,2,2,Api.FILTER_LISTENING);
+        subMenu.add(1,3,3,Api.FILTER_LISTENED);
+        subMenu.add(1,4,4,Api.FILTER_REPLAY);
+        subMenu.add(1,5,5,Api.FILTER_POSTPONED);
+        subMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        try {
+            if(item.getItemId() == 1){
+                Api.doPutReview(work.getInt("id"),Api.FILTER_MARKED,actionCallBack);
+            }else if(item.getItemId() == 2){
+                Api.doPutReview(work.getInt("id"),Api.FILTER_LISTENING,actionCallBack);
+            }else if(item.getItemId() == 3){
+                Api.doPutReview(work.getInt("id"),Api.FILTER_LISTENED,actionCallBack);
+            }else if(item.getItemId() == 4){
+                Api.doPutReview(work.getInt("id"),Api.FILTER_REPLAY,actionCallBack);
+            }else if(item.getItemId() == 5){
+                Api.doPutReview(work.getInt("id"),Api.FILTER_POSTPONED,actionCallBack);
+            }
+        }catch (Exception e){
+
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private AsyncHttpClient.JSONObjectCallback actionCallBack = new AsyncHttpClient.JSONObjectCallback() {
+        @Override
+        public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
+            if(asyncHttpResponse == null)
+                return;
+            if(asyncHttpResponse.code() == 200){
+                try {
+                    String message = jsonObject.getString("message");
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(WorkActivity.this,message,Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    Log.d(TAG, "onCompleted: "+message);
+                } catch (JSONException jsonException) {
+                    jsonException.printStackTrace();
+                }
+            }else {
+                Log.d(TAG, "onCompleted: "+asyncHttpResponse.code());
+            }
+        }
+    };
 
     @Override
     public void onClick(View v) {

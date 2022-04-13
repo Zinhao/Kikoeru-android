@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.SubMenu;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -22,6 +23,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -55,20 +57,29 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
     private TextView tvWorkTitle;
     private ImageButton ibStatus;
 
+    private static final int TYPE_ALL_WORK = 491;
+    private static final int TYPE_SELF_LISTENING = 492;
+    private static final int TYPE_SELF_LISTENED = 493;
+    private static final int TYPE_SELF_MARKED = 494;
+    private static final int TYPE_SELF_REPLAY = 495;
+    private static final int TYPE_SELF_POSTPONED = 496;
+    private int type = TYPE_ALL_WORK;
+
     private AsyncHttpClient.StringCallback apisCallback = new AsyncHttpClient.StringCallback() {
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, String s) {
             Log.d(TAG, "onCompleted: "+s);
             if(asyncHttpResponse == null || asyncHttpResponse.code() !=200){
                 Log.d(TAG, String.format("onCompleted:failed! "));
-                ivCover.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        retryCount++;
-                        setTitle(String.format("retry: %d",retryCount));
-                        getNextPage();
-                    }
-                },3000);
+                if(!isDestroyed()){
+                    ivCover.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            retryCount++;
+                            getNextPage();
+                        }
+                    },3000);
+                }
                 return;
             }
             try {
@@ -76,9 +87,11 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
                 JSONArray jsonArray = jsonObject.getJSONArray("works");
                 totalCount = jsonObject.getJSONObject("pagination").getInt("totalCount");
                 page = jsonObject.getJSONObject("pagination").getInt("currentPage") +1;
-                page = Math.min(page,totalCount/12 + 1);
                 for (int i = 0; i < jsonArray.length(); i++) {
                     works.add(jsonArray.getJSONObject(i));
+                }
+                if(jsonArray.length() != 0){
+                    page = Math.min(page,totalCount/jsonArray.length() + 1);
                 }
                 runOnUiThread(new Runnable() {
                     @SuppressLint("DefaultLocale")
@@ -134,36 +147,10 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-//                if (dy > 0 && shouldShowAnim && bottomLayout.getVisibility() == View.VISIBLE){
-//                    toggleBottom();
-//                }else if(dy<0 && shouldShowAnim && bottomLayout.getVisibility() == View.GONE){
-//                    toggleBottom();
-//                }
             }
         };
-        checkToken();
         works = new ArrayList<>();
-        Api.doGetWorks(1,apisCallback);
-    }
-
-    private void checkToken(){
-        App app = (App) getApplication();
-
-        String userName = app.getValue(App.CONFIG_USER_ACCOUNT,"guest");
-        String password = app.getValue(App.CONFIG_USER_PASSWORD,"guest");
-        if(userName.equals("guest")&& password.equals("guest")){
-            setTitle("当前处于游客用户，速度可能受到限制！");
-        }else {
-            setTitle(userName);
-        }
-        String token = app.getValue(App.CONFIG_TOKEN,"");
-        long updateTime= app.getValue(App.CONFIG_UPDATE_TIME,0);
-        if(token.isEmpty() || System.currentTimeMillis() - updateTime > 24*60*60*1000){
-            Api.doGetToken();
-            Toast.makeText(this,"Update token.",Toast.LENGTH_SHORT).show();
-        }else {
-            Api.init(token);
-        }
+        getNextPage();
     }
 
     private void toggleBottom(){
@@ -191,12 +178,27 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
     }
 
     public void getNextPage() {
-        Api.doGetWorks(page,apisCallback);
+        if(type == TYPE_ALL_WORK){
+            Api.doGetWorks(page,apisCallback);
+        }else if(type == TYPE_SELF_LISTENING){
+            Api.doGetReview(Api.FILTER_LISTENING,page,apisCallback);
+        }else if(type == TYPE_SELF_LISTENED){
+            Api.doGetReview(Api.FILTER_LISTENED,page,apisCallback);
+        }else if(type == TYPE_SELF_MARKED){
+            Api.doGetReview(Api.FILTER_MARKED,page,apisCallback);
+        }else if(type == TYPE_SELF_REPLAY){
+            Api.doGetReview(Api.FILTER_REPLAY,page,apisCallback);
+        }else if(type == TYPE_SELF_POSTPONED){
+            Api.doGetReview(Api.FILTER_POSTPONED,page,apisCallback);
+        }
     }
 
     @SuppressLint("DefaultLocale")
     @Override
     public void onAlbumChange(int rjNumber) {
+        if(rjNumber!=0 && bottomLayout.getVisibility() == View.GONE){
+            toggleBottom();
+        }
         Glide.with(this).load(Api.HOST+String.format("/api/cover/%d?type=sam",rjNumber)).into(ivCover);
     }
 
@@ -213,9 +215,9 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
     @Override
     public void onStatusChange(int status) {
         if(status == 0){
-            ibStatus.setImageResource(R.drawable.ic_baseline_play_arrow_24);
+            ibStatus.setImageResource(R.drawable.ic_baseline_play_arrow_white_24);
         }else {
-            ibStatus.setImageResource(R.drawable.ic_baseline_pause_24);
+            ibStatus.setImageResource(R.drawable.ic_baseline_pause_white_24);
         }
     }
 
@@ -264,34 +266,86 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-//                setTitle(currentRow.content);
             }
         });
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuItem menuItem = menu.add(0,0,0,"use local server");
-        menu.add(0,1,1,"use remote server");
-        menu.add(0,2,2,"setting");
-//        menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
+        MenuItem menuItem1 = menu.add(0,0,0,"sign out");
+        SubMenu menuProgress = menu.addSubMenu(0,1,1,"progress");
+        MenuItem menuItem3 =menu.add(0,2,2,"setting");
+        MenuItem menuItem4 =menu.add(0,3,3,"work");
+        menuItem4.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        menuProgress.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+
+        menuProgress.add(1,4,4,Api.FILTER_MARKED);
+        menuProgress.add(1,5,5,Api.FILTER_LISTENING);
+        menuProgress.add(1,6,6,Api.FILTER_LISTENED);
+        menuProgress.add(1,7,7,Api.FILTER_REPLAY);
+        menuProgress.add(1,8,8,Api.FILTER_POSTPONED);
+
+        SubMenu menuItem5 = menu.addSubMenu(0,9,9,"layout");
+        menuItem5.add(2,10,10,"list");
+        menuItem5.add(2,11,11,"small gird");
+        menuItem5.add(2,12,12,"gird");
+        menuItem5.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(item.getItemId() == 0){
-            Api.HOST = Api.LOCAL_HOST;
-            App.getInstance().setValue("host",Api.HOST);
-            Toast.makeText(this,Api.HOST,Toast.LENGTH_SHORT).show();
+            App.getInstance().setValue(App.CONFIG_UPDATE_TIME,0);
+            startActivity(new Intent(this,LoginAccountActivity.class));
+            finish();
         }else if(item.getItemId() == 1){
-            Api.HOST = Api.REMOTE_HOST;
-            App.getInstance().setValue("host",Api.HOST);
-            Toast.makeText(this,Api.HOST,Toast.LENGTH_SHORT).show();
         }else if(item.getItemId() == 2){
 
+        }else if(item.getItemId() == 3){
+            type = TYPE_ALL_WORK;
+            clearWork();
+            getNextPage();
+        }else if(item.getItemId() == 4){
+            type = TYPE_SELF_MARKED;
+            clearWork();
+            getNextPage();
+        }else if(item.getItemId() == 5){
+            type = TYPE_SELF_LISTENING;
+            clearWork();
+            getNextPage();
+        }else if(item.getItemId() == 6){
+            type = TYPE_SELF_LISTENED;
+            clearWork();
+            getNextPage();
+        }else if(item.getItemId() == 7){
+            type = TYPE_SELF_REPLAY;
+            clearWork();
+            getNextPage();
+        }else if(item.getItemId() == 8){
+            type = TYPE_SELF_POSTPONED;
+            clearWork();
+            getNextPage();
+        }else if(item.getItemId() == 10){
+            workAdapter = new WorkAdapter(works,1);
+            recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+            recyclerView.setAdapter(workAdapter);
+        }else if(item.getItemId() == 11){
+            workAdapter = new WorkAdapter(works,3);
+            recyclerView.setLayoutManager(new GridLayoutManager(MainActivity.this,3));
+            recyclerView.setAdapter(workAdapter);
+        }else if(item.getItemId() == 12){
+            workAdapter = new WorkAdapter(works,2);
+            recyclerView.setLayoutManager(new GridLayoutManager(MainActivity.this,2));
+            recyclerView.setAdapter(workAdapter);
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void clearWork(){
+        page = 1;
+        workAdapter.notifyItemRangeRemoved(0,works.size());
+        works.clear();
     }
 
     @Override

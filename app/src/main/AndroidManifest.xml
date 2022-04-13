@@ -4,7 +4,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <application
         android:name=".App"
@@ -16,24 +16,32 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Kikoeru">
         <activity
+            android:name=".LoginAccountActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".WorkActivity"
             android:exported="true" />
         <activity
             android:name=".MainActivity"
             android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
         <activity android:name=".LrcShowActivity" />
         <activity
             android:name=".VideoPlayerActivity"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
         <activity android:name=".MusicPlayerActivity" />
-        <activity android:name=".LrcFloatWindow" android:theme="@style/Theme.AppCompat.Dialog.MinWidth"/>
-        <activity android:name=".ImageBrowserActivity" android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+        <activity
+            android:name=".LrcFloatWindow"
+            android:theme="@style/Theme.AppCompat.Dialog.MinWidth" />
+        <activity
+            android:name=".ImageBrowserActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
         <service android:name=".AudioService" />
     </application>

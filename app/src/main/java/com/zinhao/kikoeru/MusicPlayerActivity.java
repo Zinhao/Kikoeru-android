@@ -34,7 +34,7 @@ public class MusicPlayerActivity extends AppCompatActivity implements ServiceCon
     private TextView tvUpLrc;
     private TextView tvNextLrc;
     private TimeProgressView timeProgressView;
-
+    private boolean needShowLrcWhenDestroy = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -101,6 +101,7 @@ public class MusicPlayerActivity extends AppCompatActivity implements ServiceCon
         ctrlBinder.addMusicChangeListener(this);
         ctrlBinder.addLrcRowChangeListener(this);
         if(ctrlBinder.isLrcWindowShow()){
+            needShowLrcWhenDestroy = true;
             ctrlBinder.showOrHideLrcFloatWindow();
 //            startActivity(new Intent(this,LrcFloatWindow.class));
         }
@@ -173,7 +174,7 @@ public class MusicPlayerActivity extends AppCompatActivity implements ServiceCon
             ctrlBinder.removeLrcRowChangeListener(this);
             ctrlBinder.removeMusicChangeListener(this);
             unbindService(this);
-            if(!ctrlBinder.isLrcWindowShow())
+            if(!ctrlBinder.isLrcWindowShow() && needShowLrcWhenDestroy)
                 startActivity(new Intent(this,LrcFloatWindow.class));
         }
         super.onDestroy();

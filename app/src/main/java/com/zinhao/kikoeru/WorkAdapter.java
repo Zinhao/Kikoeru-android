@@ -22,16 +22,31 @@ import java.util.List;
 
 public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private List<JSONObject> datas;
+    private int layoutType;
 
     public WorkAdapter(List<JSONObject> datas) {
         this.datas = datas;
     }
 
+    public WorkAdapter(List<JSONObject> datas, int layoutType) {
+        this.datas = datas;
+        this.layoutType = layoutType;
+    }
+
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_3,parent,false);
-        return new SmallGirdViewHolder(v);
+        if(layoutType == 1){
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_1,parent,false);
+            return new SimpleViewHolder(v);
+        }else if(layoutType == 2){
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_2,parent,false);
+            return new GirdViewHolder(v);
+        }else{
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_3,parent,false);
+            return new SmallGirdViewHolder(v);
+        }
+
     }
 
     @SuppressLint("DefaultLocale")

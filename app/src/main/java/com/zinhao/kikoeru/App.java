@@ -20,6 +20,7 @@ public class App extends Application {
     public static final String CONFIG_TOKEN = "token";
     public static final String CONFIG_USER_ACCOUNT = "user";
     public static final String CONFIG_USER_PASSWORD = "password";
+    public static final String CONFIG_HOST = "host";
 
     public static App getInstance() {
         return instance;
@@ -41,7 +42,6 @@ public class App extends Application {
                         ID_PLAY_SERVICE,
                         getString(R.string.channel_description), NotificationManager.IMPORTANCE_LOW
                 );
-        Api.HOST = getValue("host",Api.REMOTE_HOST);
         channelMusicService.setDescription(getString(R.string.channel_description));
         channelMusicService.enableLights(false);
         channelMusicService.enableVibration(false);
