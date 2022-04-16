@@ -82,15 +82,11 @@
         app:layout_constraintStart_toStartOf="@+id/tvCom"
         app:layout_constraintTop_toBottomOf="@+id/tvCom" />
 
-    <TextView
+    <com.zinhao.kikoeru.TagsView
         android:id="@+id/tvTags"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:background="@drawable/card_bg_text"
         android:padding="4dp"
-        android:text="手交,内射,中出,口交,巨乳,爆乳,ASMR,舔耳"
         android:textColor="@color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/tvPrice"
@@ -100,7 +96,12 @@
         android:id="@+id/tvArt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:background="@drawable/card_bg_lrc"
+        android:layout_marginBottom="10dp"
+        android:padding="5dp"
         android:text="こやまはる"
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="@+id/tvTags"
         app:layout_constraintTop_toBottomOf="@+id/tvTags" />
 

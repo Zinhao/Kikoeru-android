@@ -1,40 +1,45 @@
 package com.zinhao.kikoeru;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.viewpager.widget.PagerAdapter;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
-import com.bumptech.glide.request.Request;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.CustomViewTarget;
-import com.bumptech.glide.request.target.SizeReadyCallback;
-import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
+import com.google.common.base.Utf8;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLDecoder;
 import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class ImagePagerAdapter<T> extends PagerAdapter {
@@ -97,7 +102,7 @@ public class ImagePagerAdapter<T> extends PagerAdapter {
             @Override
             public boolean onLongClick(final View v) {
                 download(position,v.getContext());
-                return false;
+                return true;
             }
         });
         imageView.setOnClickListener(new View.OnClickListener() {
@@ -111,12 +116,17 @@ public class ImagePagerAdapter<T> extends PagerAdapter {
     }
 
     public void download(final int position, final Context context){
+        if(ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+            Toast.makeText(context,"请授予读写权限",Toast.LENGTH_SHORT).show();
+            return;
+        }
         new AlertDialog.Builder(context).setTitle("下载图片?").setNegativeButton("是", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 try {
-                    downLoadPic((String) ts.get(position),pic);
-                    Toast.makeText(context,"已保存！",Toast.LENGTH_SHORT).show();
+                    String urlStr = new String(ts.get(position).toString().getBytes(), StandardCharsets.UTF_8);
+                    downLoadPic(urlStr ,pic);
+                    Toast.makeText(context,"已保存!",Toast.LENGTH_SHORT).show();
                 } catch (IOException e) {
                     e.printStackTrace();
                     Toast.makeText(context,"保存失败！",Toast.LENGTH_SHORT).show();
@@ -139,7 +149,7 @@ public class ImagePagerAdapter<T> extends PagerAdapter {
                 throw new FileNotFoundException("创建文件夹失败");
             }
         String[] strs=urlStr.split("/");
-        final File pic =new File(f,strs[strs.length-1]);
+        final File pic =new File(f,URLDecoder.decode(strs[strs.length-1]));
         FileInputStream fi =new FileInputStream(into);
         FileOutputStream fo =new FileOutputStream(pic);
         FileChannel fic =fi.getChannel();

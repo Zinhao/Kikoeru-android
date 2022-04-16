@@ -12,4 +12,6 @@
     <color name="white_tran">#40FFFFFF</color>
     <color name="pine_200">#E5917C</color>
     <color name="pine_700">#974D3A</color>
+    <color name="blue_200">#1D5AF4</color>
+    <color name="blue_700">#183AA5</color>
 </resources>

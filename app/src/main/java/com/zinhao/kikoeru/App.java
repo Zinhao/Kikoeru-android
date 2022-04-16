@@ -13,6 +13,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class App extends Application {
     public static final String ID_PLAY_SERVICE = "com.zinhao.kikoeru.play_control";
     private static App instance;
@@ -21,6 +24,7 @@ public class App extends Application {
     public static final String CONFIG_USER_ACCOUNT = "user";
     public static final String CONFIG_USER_PASSWORD = "password";
     public static final String CONFIG_HOST = "host";
+    public static final String CONFIG_LAYOUT_TYPE = "layout_type";
 
     public static App getInstance() {
         return instance;
@@ -58,6 +62,10 @@ public class App extends Application {
             stringBuilder.append(" ");
         }
         return stringBuilder.toString();
+    }
+
+    public static JSONArray getTagsList(JSONObject jsonObject) throws JSONException {
+        return  jsonObject.getJSONArray("tags");
     }
 
     public static String getArtStr(JSONObject jsonObject) throws JSONException{

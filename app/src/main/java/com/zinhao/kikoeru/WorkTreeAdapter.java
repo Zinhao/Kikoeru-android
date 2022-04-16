@@ -25,6 +25,7 @@ import java.util.List;
 public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private List<JSONObject> data;
     private View.OnClickListener itemClickListener;
+    private TagsView.TagClickListener tagClickListener;
     private List<List<JSONObject>> parentData;
     private JSONObject headerInfo;
     private static final int TYPE_HEADER = 295;
@@ -36,6 +37,10 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     public void setItemClickListener(View.OnClickListener itemClickListener) {
         this.itemClickListener = itemClickListener;
+    }
+
+    public void setTagClickListener(TagsView.TagClickListener<?> tagClickListener) {
+        this.tagClickListener = tagClickListener;
     }
 
     public List<JSONObject> getData() {
@@ -135,7 +140,8 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 girdHolder.tvTitle.setText(jsonObject.getString("title"));
                 girdHolder.tvArt.setText(App.getArtStr(jsonObject));
                 girdHolder.tvCom.setText(jsonObject.getString("name"));
-                girdHolder.tvTags.setText(App.getTagsStr(jsonObject));
+                girdHolder.tvTags.setTags(App.getTagsList(jsonObject),TagsView.JSON_TEXT_GET.setKey("name"));
+                girdHolder.tvTags.setTagClickListener(tagClickListener);
                 girdHolder.tvRjNumber.setText(String.format("RJ%d",jsonObject.getInt("id")));
                 girdHolder.tvDate.setText(jsonObject.getString("release"));
                 girdHolder.tvPrice.setText(String.format("%d 日元",jsonObject.getInt("price")));
@@ -179,7 +185,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         private TextView tvTitle;
         private TextView tvCom;
         private TextView tvArt;
-        private TextView tvTags;
+        private TagsView<JSONArray> tvTags;
         private TextView tvRjNumber;
         private TextView tvDate;
         private TextView tvPrice;

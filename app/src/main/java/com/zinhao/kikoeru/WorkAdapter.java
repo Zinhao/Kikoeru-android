@@ -2,6 +2,7 @@ package com.zinhao.kikoeru;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,25 +22,46 @@ import org.json.JSONObject;
 import java.util.List;
 
 public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    private static final String TAG = "WorkAdapter";
     private List<JSONObject> datas;
     private int layoutType;
+    private TagsView.TextGet<JSONObject> textGet;
+    private TagsView.TagClickListener tagClickListener;
+    public static final int LAYOUT_LIST = 846;
+    public static final int LAYOUT_SMALL_GRID = 847;
+    public static final int LAYOUT_BIG_GRID = 848;
+
+    public void setTagClickListener(TagsView.TagClickListener<?> tagClickListener) {
+        this.tagClickListener = tagClickListener;
+    }
 
     public WorkAdapter(List<JSONObject> datas) {
-        this.datas = datas;
+        this(datas,LAYOUT_SMALL_GRID);
     }
 
     public WorkAdapter(List<JSONObject> datas, int layoutType) {
         this.datas = datas;
         this.layoutType = layoutType;
+        textGet = new TagsView.TextGet<JSONObject>() {
+            @Override
+            public String onGetText(JSONObject t) {
+                try {
+                    return t.getString("name");
+                } catch (JSONException e) {
+
+                }
+                return "";
+            }
+        };
     }
 
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        if(layoutType == 1){
+        if(layoutType == LAYOUT_LIST){
             View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_1,parent,false);
             return new SimpleViewHolder(v);
-        }else if(layoutType == 2){
+        }else if(layoutType == LAYOUT_BIG_GRID){
             View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_2,parent,false);
             return new GirdViewHolder(v);
         }else{
@@ -78,7 +100,8 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 girdHolder.tvTitle.setText(jsonObject.getString("title"));
                 girdHolder.tvArt.setText(App.getArtStr(jsonObject));
                 girdHolder.tvCom.setText(jsonObject.getString("name"));
-                girdHolder.tvTags.setText(App.getTagsStr(jsonObject));
+                girdHolder.tvTags.setTags(App.getTagsList(jsonObject),textGet);
+                girdHolder.tvTags.setTagClickListener(tagClickListener);
                 girdHolder.tvRjNumber.setText(String.format("RJ%d",jsonObject.getInt("id")));
                 girdHolder.tvDate.setText(jsonObject.getString("release"));
                 girdHolder.tvPrice.setText(String.format("%d 日元",jsonObject.getInt("price")));
@@ -143,7 +166,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         private TextView tvTitle;
         private TextView tvCom;
         private TextView tvArt;
-        private TextView tvTags;
+        private TagsView<JSONArray> tvTags;
         private TextView tvRjNumber;
         private TextView tvDate;
         private TextView tvPrice;

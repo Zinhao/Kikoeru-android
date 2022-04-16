@@ -372,6 +372,10 @@ public class AudioService extends Service{
         private AsyncHttpClient.StringCallback checkLrcCallBack = new AsyncHttpClient.StringCallback() {
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, String s) {
+                if(s ==null){
+                    mLrc = Lrc.NONE;
+                    return;
+                }
                 try {
                     JSONObject lrcResult = new JSONObject(s);
                     boolean exist = lrcResult.getBoolean("result");

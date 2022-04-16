@@ -5,6 +5,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
         android:name=".App"
@@ -14,6 +16,7 @@
         android:networkSecurityConfig="@xml/network"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:requestLegacyExternalStorage="true"
         android:theme="@style/Theme.Kikoeru">
         <activity
             android:name=".LoginAccountActivity"
@@ -42,6 +45,8 @@
         <activity
             android:name=".ImageBrowserActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
+        <activity android:name=".TagsActivity" android:exported="true" />
 
         <service android:name=".AudioService" />
     </application>

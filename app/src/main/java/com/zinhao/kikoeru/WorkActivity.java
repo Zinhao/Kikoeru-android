@@ -26,6 +26,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.koushikdutta.async.ByteBufferList;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
 
@@ -39,7 +40,7 @@ import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-public class WorkActivity extends AppCompatActivity implements View.OnClickListener,MusicChangeListener,ServiceConnection,LrcRowChangeListener {
+public class WorkActivity extends AppCompatActivity implements View.OnClickListener,MusicChangeListener,ServiceConnection,LrcRowChangeListener,View.OnLongClickListener, TagsView.TagClickListener<JSONObject> {
     /**
      * http://localhost:8888/api/tracks/357844
      * @param savedInstanceState
@@ -80,6 +81,7 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
                     public void run() {
                         workTreeAdapter = new WorkTreeAdapter(workTrees);
                         workTreeAdapter.setItemClickListener(WorkActivity.this);
+                        workTreeAdapter.setTagClickListener(WorkActivity.this);
                         workTreeAdapter.setHeaderInfo(work);
                         RecyclerView.ItemDecoration itemDecoration = new DividerItemDecoration(WorkActivity.this,DividerItemDecoration.VERTICAL);
                         recyclerView.addItemDecoration(itemDecoration);
@@ -422,5 +424,28 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
 //                setTitle(currentRow.content);
             }
         });
+    }
+
+    @Override
+    public boolean onLongClick(View v) {
+        JSONObject item = (JSONObject) v.getTag();
+
+        return false;
+    }
+
+    AsyncHttpClient.DownloadCallback downloadCallback = new AsyncHttpClient.DownloadCallback() {
+        @Override
+        public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, ByteBufferList byteBufferList) {
+
+        }
+    };
+
+    @Override
+    public void onTagClick(JSONObject jsonObject) {
+        try {
+            int tagId = jsonObject.getInt("id");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 }

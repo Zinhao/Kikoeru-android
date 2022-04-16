@@ -38,13 +38,27 @@ public class Api {
         HOST = host;
     }
 
-    public static void doGetWorks(int page,AsyncHttpClient.StringCallback callback){
+    public static void doGetWorks(int page,AsyncHttpClient.JSONObjectCallback callback){
         //https://api.asmr.one/api/works?order=create_date&sort=desc&page=1&seed=40&subtitle=1
         //subtitle=1 带字幕
-        AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST+String.format("/api/works?order=id&sort=desc&page=%d&seed=35&subtitle=1",page)),"GET");
+        AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST+String.format("/api/works?order=release&sort=desc&page=%d&seed=35&subtitle=1",page)),"GET");
         request.setTimeout(5000);
         request.addHeader("authorization",authorization);
-        AsyncHttpClient.getDefaultInstance().executeString(request, callback);
+        AsyncHttpClient.getDefaultInstance().executeJSONObject(request, callback);
+    }
+
+    public static void doGetWorksByTag(int page,int tagId,AsyncHttpClient.JSONObjectCallback callback){
+        AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST+String.format("/api/tags/%d/works?order=release&sort=desc&page=%d&seed=21&subtitle=1",tagId,page)),"GET");
+        request.setTimeout(5000);
+        request.addHeader("authorization",authorization);
+        AsyncHttpClient.getDefaultInstance().executeJSONObject(request, callback);
+    }
+
+    public static void doGetAllTags(AsyncHttpClient.JSONArrayCallback callback){
+        AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST+"/api/tags/"),"GET");
+        request.setTimeout(5000);
+        request.addHeader("authorization",authorization);
+        AsyncHttpClient.getDefaultInstance().executeJSONArray(request, callback);
     }
 
     public static void doGetDocTree(int id, AsyncHttpClient.StringCallback callback){
@@ -98,11 +112,11 @@ public class Api {
      * https://api.asmr.one/api/review?order=updated_at&sort=desc&page=1&filter=postponed   我的进度 - 搁置
      * https://api.asmr.one/api/review?order=updated_at&sort=desc&page=1                    我的评价
      */
-    public static void doGetReview(@Filter String filter, int page, AsyncHttpClient.StringCallback callback){
+    public static void doGetReview(@Filter String filter, int page, AsyncHttpClient.JSONObjectCallback callback){
         AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST+String.format("/api/review?order=updated_at&sort=desc&page=%d&filter=%s",page,filter)),"GET");
         request.setTimeout(5000);
         request.addHeader("authorization",authorization);
-        AsyncHttpClient.getDefaultInstance().executeString(request, callback);
+        AsyncHttpClient.getDefaultInstance().executeJSONObject(request, callback);
     }
 
     /**
@@ -127,4 +141,5 @@ public class Api {
         request.addHeader("authorization",authorization);
         AsyncHttpClient.getDefaultInstance().executeJSONObject(request, callback);
     }
+
 }
