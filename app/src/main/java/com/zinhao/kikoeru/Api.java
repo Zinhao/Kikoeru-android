@@ -61,18 +61,18 @@ public class Api {
         AsyncHttpClient.getDefaultInstance().executeJSONArray(request, callback);
     }
 
-    public static void doGetDocTree(int id, AsyncHttpClient.StringCallback callback){
+    public static void doGetDocTree(int id, AsyncHttpClient.JSONArrayCallback callback){
         AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST+String.format("/api/tracks/%d",id)),"GET");
         request.setTimeout(5000);
         request.addHeader("authorization",authorization);
-        AsyncHttpClient.getDefaultInstance().executeString(request, callback);
+        AsyncHttpClient.getDefaultInstance().executeJSONArray(request, callback);
     }
 
-    public static void checkLrc(String hash,AsyncHttpClient.StringCallback callback){
+    public static void checkLrc(String hash,AsyncHttpClient.JSONObjectCallback callback){
         AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST+String.format("/api/media/check-lrc/%s?token=%s",hash,token)),"GET");
         request.setTimeout(5000);
         request.addHeader("authorization",authorization);
-        AsyncHttpClient.getDefaultInstance().executeString(request, callback);
+        AsyncHttpClient.getDefaultInstance().executeJSONObject(request, callback);
     }
 
     public static void doGetMediaString(String hash, AsyncHttpClient.StringCallback callback){

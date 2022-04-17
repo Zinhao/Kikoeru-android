@@ -67,23 +67,28 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
     private static final int TYPE_SELF_REPLAY = 495;
     private static final int TYPE_SELF_POSTPONED = 496;
     private static final int TYPE_TAG_WORK = 497;
+    private static final int TYPE_LOCAL_WORK = 498;
     private int type = TYPE_ALL_WORK;
 
     private AsyncHttpClient.JSONObjectCallback apisCallback = new AsyncHttpClient.JSONObjectCallback() {
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
             if(asyncHttpResponse == null || asyncHttpResponse.code() !=200){
-                Log.d(TAG, String.format("onCompleted:failed! "));
-                if(!isDestroyed()){
-                    ivCover.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            retryCount++;
-                            getNextPage();
-                        }
-                    },3000);
+                if(jsonObject != null && jsonObject.has("works")){
+                    Log.d(TAG, "onCompleted: load local cache!");
+                }else {
+                    Log.d(TAG, String.format("onCompleted:failed! "));
+                    if(!isDestroyed()){
+                        ivCover.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                retryCount++;
+                                getNextPage();
+                            }
+                        },3000);
+                    }
+                    return;
                 }
-                return;
             }
             try {
                 JSONArray jsonArray = jsonObject.getJSONArray("works");
@@ -103,7 +108,16 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
                             initLayout((int) App.getInstance().getValue(App.CONFIG_LAYOUT_TYPE,WorkAdapter.LAYOUT_SMALL_GRID));
                             recyclerView.addOnScrollListener(scrollListener);
                         }else {
-                            workAdapter.notifyItemInserted(works.size()-jsonArray.length());
+                            try{
+                                //
+//                                It will always be more efficient to use more specific change events if you can. Rely on notifyDataSetChanged as a last resort.
+                                workAdapter.notifyDataSetChanged();
+//                                workAdapter.notifyItemInserted(Math.max(works.size()-jsonArray.length(), works.size()));
+                            }catch (Exception e){
+
+                            }
+
+
                         }
 
                     }
@@ -198,6 +212,13 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
         }else if(type == TYPE_TAG_WORK){
             setTitle(tagStr);
             Api.doGetWorksByTag(page,tagId,apisCallback);
+        }else if(type == TYPE_LOCAL_WORK){
+            setTitle("本地緩存");
+            try {
+                LocalFileCache.getInstance().readLocalWorks(this,apisCallback);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -305,6 +326,10 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
         MenuItem menuItem6 = menu.add(0,13,13,"tags");
         menuItem6.setIcon(R.drawable.ic_baseline_tag_24);
         menuItem6.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+
+        MenuItem menuItem7 = menu.add(0,14,14,"local");
+        menuItem7.setIcon(R.drawable.ic_baseline_storage_24);
+        menuItem7.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -371,6 +396,12 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
 
         }else if(item.getItemId() == 13){
             startActivityForResult(new Intent(this,TagsActivity.class),14);
+        }else if(item.getItemId() == 14){
+            if(type != TYPE_LOCAL_WORK){
+                type = TYPE_LOCAL_WORK;
+                clearWork();
+                getNextPage();
+            }
         }
         return super.onOptionsItemSelected(item);
     }
@@ -409,8 +440,10 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
 
     private void clearWork(){
         page = 1;
-        workAdapter.notifyItemRangeRemoved(0,works.size());
         works.clear();
+        if(workAdapter == null)
+            return;
+        workAdapter.notifyItemRangeRemoved(0,works.size());
     }
 
     @Override

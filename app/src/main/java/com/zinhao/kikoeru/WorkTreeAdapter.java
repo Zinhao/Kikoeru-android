@@ -19,20 +19,28 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private List<JSONObject> data;
     private View.OnClickListener itemClickListener;
+    private View.OnLongClickListener longClickListener;
     private TagsView.TagClickListener tagClickListener;
     private List<List<JSONObject>> parentData;
+    private List<String> pathList;
+    private RelativePathChangeListener pathChangeListener;
     private JSONObject headerInfo;
     private static final int TYPE_HEADER = 295;
     private static final int TYPE_FILE = 296;
 
     public void setHeaderInfo(JSONObject headerInfo) {
         this.headerInfo = headerInfo;
+    }
+
+    public void setPathChangeListener(RelativePathChangeListener pathChangeListener) {
+        this.pathChangeListener = pathChangeListener;
     }
 
     public void setItemClickListener(View.OnClickListener itemClickListener) {
@@ -43,12 +51,17 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         this.tagClickListener = tagClickListener;
     }
 
+    public void setItemLongClickListener(View.OnLongClickListener longClickListener) {
+        this.longClickListener = longClickListener;
+    }
+
     public List<JSONObject> getData() {
         return data;
     }
 
     public WorkTreeAdapter(List<JSONObject> data) {
         this.data = data;
+        this.pathList = new ArrayList<>();
         parentData =new ArrayList<>();
     }
 
@@ -79,55 +92,63 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     @SuppressLint("DefaultLocale")
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        JSONObject jsonObject;
+        JSONObject item;
         if(position == 0){
-            jsonObject = headerInfo;
+            item = headerInfo;
         }else {
-            jsonObject= data.get(position-1);
+            item= data.get(position-1);
         }
         if(holder instanceof SimpleViewHolder){
             try {
-                ((SimpleViewHolder) holder).tvTitle.setText(jsonObject.getString("title"));
-                ((SimpleViewHolder) holder).tvCount.setText(jsonObject.getString("type"));
-                if("folder".equals(jsonObject.getString("type"))){
-                    JSONArray jsonArray = jsonObject.getJSONArray("children");
+                ((SimpleViewHolder) holder).tvTitle.setText(item.getString("title"));
+                ((SimpleViewHolder) holder).tvCount.setText(item.getString("type"));
+                if("folder".equals(item.getString("type"))){
+                    JSONArray jsonArray = item.getJSONArray("children");
                     ((SimpleViewHolder) holder).tvCount.setText(String.format("%d 项",jsonArray.length()));
                     Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_folder_24).into(((SimpleViewHolder) holder).ivCover);
-                }else if("audio".equals(jsonObject.getString("type"))){
+                }else if("audio".equals(item.getString("type"))){
                     Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_audiotrack_24).into(((SimpleViewHolder) holder).ivCover);
-                }else if("image".equals(jsonObject.getString("type"))){
+                }else if("image".equals(item.getString("type"))){
                     Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_image_24).into(((SimpleViewHolder) holder).ivCover);
-                }else if("text".equals(jsonObject.getString("type"))){
+                }else if("text".equals(item.getString("type"))){
                     Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_text_snippet_24).into(((SimpleViewHolder) holder).ivCover);
                 }else {
                     Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_insert_drive_file_24).into(((SimpleViewHolder) holder).ivCover);
                 }
 
-                if("folder".equals(jsonObject.getString("type"))){
-                    JSONArray jsonArray = jsonObject.getJSONArray("children");
+                if("folder".equals(item.getString("type"))){
                     holder.itemView.setOnClickListener(new View.OnClickListener() {
+                        @SuppressLint("NotifyDataSetChanged")
                         @Override
                         public void onClick(View v) {
-                            parentData.add(data);
-                            List<JSONObject> list = new ArrayList<>();
-                            for (int i = 0; i < jsonArray.length(); i++) {
-                                try {
+                            try {
+                                parentData.add(data);
+                                JSONArray jsonArray = item.getJSONArray("children");
+                                List<JSONObject> list = new ArrayList<>();
+                                pathList.add(item.getString("title"));
+                                for (int i = 0; i < jsonArray.length(); i++) {
                                     list.add(jsonArray.getJSONObject(i));
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
                                 }
+                                data = list;
+                                if(pathChangeListener != null){
+                                    pathChangeListener.onPathChange(getRelativePath());
+                                }
+                                notifyDataSetChanged();
+                            } catch (JSONException e) {
+                                e.printStackTrace();
                             }
-                            data = list;
-//                            notifyItemRangeChanged(1,list.size()-1);
-                            notifyDataSetChanged();
+
                         }
                     });
-                }else if("audio".equals(jsonObject.getString("type")) ||
-                        "image".equals(jsonObject.getString("type")) ||
-                        "text".equals(jsonObject.getString("type"))){
-                    holder.itemView.setTag(jsonObject);
+                    holder.itemView.setOnLongClickListener(null);
+                }else if("audio".equals(item.getString("type")) ||
+                        "image".equals(item.getString("type")) ||
+                        "text".equals(item.getString("type"))){
+                    holder.itemView.setTag(item);
                     holder.itemView.setOnClickListener(itemClickListener);
+                    holder.itemView.setOnLongClickListener(longClickListener);
                 } else {
+                    holder.itemView.setOnLongClickListener(null);
                     holder.itemView.setOnClickListener(null);
                 }
             } catch (JSONException e) {
@@ -136,16 +157,16 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         } else if(holder instanceof DetailViewHolder){
             DetailViewHolder girdHolder = (DetailViewHolder) holder;
             try {
-                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d",jsonObject.getInt("id"))).apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
-                girdHolder.tvTitle.setText(jsonObject.getString("title"));
-                girdHolder.tvArt.setText(App.getArtStr(jsonObject));
-                girdHolder.tvCom.setText(jsonObject.getString("name"));
-                girdHolder.tvTags.setTags(App.getTagsList(jsonObject),TagsView.JSON_TEXT_GET.setKey("name"));
+                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d",item.getInt("id"))).apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
+                girdHolder.tvTitle.setText(item.getString("title"));
+                girdHolder.tvArt.setText(App.getArtStr(item));
+                girdHolder.tvCom.setText(item.getString("name"));
+                girdHolder.tvTags.setTags(App.getTagsList(item),TagsView.JSON_TEXT_GET.setKey("name"));
                 girdHolder.tvTags.setTagClickListener(tagClickListener);
-                girdHolder.tvRjNumber.setText(String.format("RJ%d",jsonObject.getInt("id")));
-                girdHolder.tvDate.setText(jsonObject.getString("release"));
-                girdHolder.tvPrice.setText(String.format("%d 日元",jsonObject.getInt("price")));
-                girdHolder.tvSaleCount.setText(String.format("售出：%d",jsonObject.getInt("dl_count")));
+                girdHolder.tvRjNumber.setText(String.format("RJ%d",item.getInt("id")));
+                girdHolder.tvDate.setText(item.getString("release"));
+                girdHolder.tvPrice.setText(String.format("%d 日元",item.getInt("price")));
+                girdHolder.tvSaleCount.setText(String.format("售出：%d",item.getInt("dl_count")));
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -157,8 +178,24 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             return true;
         }
         data = parentData.remove(parentData.size()-1);
+        if(pathList.size()!=0){
+            pathList.remove(pathList.size()-1);
+            pathChangeListener.onPathChange(getRelativePath());
+        }
         notifyDataSetChanged();
         return false;
+    }
+
+    public String getRelativePath(){
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(File.separator);
+        for (int i = 0; i < pathList.size(); i++) {
+            stringBuilder.append(pathList.get(i));
+            if(i != pathList.size() - 1){
+                stringBuilder.append(File.separator);
+            }
+        }
+        return stringBuilder.toString();
     }
 
     @Override
@@ -203,5 +240,9 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             tvPrice = itemView.findViewById(R.id.tvPrice);
             tvSaleCount = itemView.findViewById(R.id.tvSaleCount);
         }
+    }
+
+    public interface RelativePathChangeListener{
+        void onPathChange(String path);
     }
 }

@@ -4,7 +4,7 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/card_bg_lrc.xml" value="0.4203125" />
-        <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/card_bg_tagview.xml" value="0.5697916666666667" />
+        <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/card_bg_tagview.xml" value="0.33" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/card_bg_text.xml" value="0.48854166666666665" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/card_bg_work.xml" value="0.48854166666666665" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/ic_baseline_audiotrack_24.xml" value="0.48854166666666665" />
@@ -17,6 +17,7 @@
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/item_bg.xml" value="0.5697916666666667" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/player_bg.xml" value="0.5697916666666667" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/side_nav_bar.xml" value="0.46510416666666665" />
+        <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/activity_local_work.xml" value="0.5260416666666666" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/activity_login_account.xml" value="0.5536458333333333" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/activity_main.xml" value="0.5390625" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/activity_main_home.xml" value="0.5536458333333333" />

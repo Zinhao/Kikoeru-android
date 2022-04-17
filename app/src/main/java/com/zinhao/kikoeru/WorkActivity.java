@@ -1,6 +1,7 @@
 package com.zinhao.kikoeru;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -8,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
 import android.content.ComponentName;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
@@ -26,7 +28,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.koushikdutta.async.ByteBufferList;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
 
@@ -34,13 +35,17 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-public class WorkActivity extends AppCompatActivity implements View.OnClickListener,MusicChangeListener,ServiceConnection,LrcRowChangeListener,View.OnLongClickListener, TagsView.TagClickListener<JSONObject> {
+public class WorkActivity extends AppCompatActivity implements View.OnClickListener,MusicChangeListener,
+        ServiceConnection,LrcRowChangeListener,View.OnLongClickListener, TagsView.TagClickListener<JSONObject>,
+        WorkTreeAdapter.RelativePathChangeListener{
     /**
      * http://localhost:8888/api/tracks/357844
      * @param savedInstanceState
@@ -49,8 +54,11 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
     private RecyclerView recyclerView;
     private WorkTreeAdapter workTreeAdapter;
     private AudioService.CtrlBinder ctrlBinder;
+
     private JSONObject work;
     private List<JSONObject> workTrees;
+    private JSONArray jsonWorkTrees;
+
     private RecyclerView.OnScrollListener scrollListener;
 
     private View bottomLayout;
@@ -62,17 +70,31 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
     private TextView tvWorkTitle;
     private ImageButton ibStatus;
 
-    private AsyncHttpClient.StringCallback docTreeCallback = new AsyncHttpClient.StringCallback() {
+
+    private AsyncHttpClient.JSONArrayCallback docTreeCallback = new AsyncHttpClient.JSONArrayCallback() {
         @Override
-        public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, String s) {
-            Log.d(TAG, "onCompleted: "+s);
-            if(asyncHttpResponse==null || asyncHttpResponse.code() != 200 || s==null || s.isEmpty()){
-                Log.d(TAG, "onCompleted: docTreeCallback err ");
-                return;
+        public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONArray jsonArray) {
+            if(asyncHttpResponse==null || asyncHttpResponse.code() != 200){
+                if(jsonArray != null && jsonArray.length() != 0){
+                    Log.d(TAG, "onCompleted: local work tree get success!");
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                setTitle(String.format("RJ%d (local)",work.getInt("id")));
+                            } catch (JSONException jsonException) {
+                                jsonException.printStackTrace();
+                            }
+                        }
+                    });
+                }else {
+                    Log.d(TAG, "onCompleted: docTreeCallback err ");
+                    return;
+                }
             }
             workTrees = new ArrayList<>();
             try {
-                JSONArray jsonArray = new JSONArray(s);
+                jsonWorkTrees = jsonArray;
                 for (int i = 0; i < jsonArray.length(); i++) {
                     workTrees.add(jsonArray.getJSONObject(i));
                 }
@@ -82,6 +104,8 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
                         workTreeAdapter = new WorkTreeAdapter(workTrees);
                         workTreeAdapter.setItemClickListener(WorkActivity.this);
                         workTreeAdapter.setTagClickListener(WorkActivity.this);
+                        workTreeAdapter.setItemLongClickListener(WorkActivity.this);
+                        workTreeAdapter.setPathChangeListener(WorkActivity.this);
                         workTreeAdapter.setHeaderInfo(work);
                         RecyclerView.ItemDecoration itemDecoration = new DividerItemDecoration(WorkActivity.this,DividerItemDecoration.VERTICAL);
                         recyclerView.addItemDecoration(itemDecoration);
@@ -159,7 +183,15 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
         };
         recyclerView.addOnScrollListener(scrollListener);
         try {
-            Api.doGetDocTree(work.getInt("id"), docTreeCallback);
+            if(work.has("localWorK")){
+                boolean isLocalWork = work.getBoolean("localWorK");
+                if(isLocalWork){
+                    LocalFileCache.getInstance().readLocalWorkTree(this,work.getInt("id"),docTreeCallback);
+                }
+            }else {
+                Api.doGetDocTree(work.getInt("id"), docTreeCallback);
+            }
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -298,6 +330,13 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
                     public void accept(JSONObject jsonObject) {
                         try {
                             if("audio".equals(jsonObject.getString("type"))){
+                                int id = work.getInt("id");
+                                File itemFile = LocalFileCache.getInstance().mapLocalItemFile(WorkActivity.this,jsonObject,id,workTreeAdapter.getRelativePath());
+                                if(itemFile!=null){
+                                    if(itemFile.exists()){
+                                        jsonObject.put("local_file_path",itemFile.getAbsolutePath());
+                                    }
+                                }
                                 musicArray.add(jsonObject);
                             }
                         } catch (JSONException e) {
@@ -428,15 +467,112 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public boolean onLongClick(View v) {
+        if(downLoadDialog != null){
+            downLoadDialog.show();
+            return true;
+        }
         JSONObject item = (JSONObject) v.getTag();
+        try {
+            if(jsonWorkTrees != null && work !=null){
+                LocalFileCache.getInstance().saveWork(this,work,jsonWorkTrees);
+            }
+            String type = item.getString("type");
+            String title = item.getString("title");
+            if(!"audio".equals(type) && !"text".equals(type) && !"image".equals(type)){
+                return true;
+            }
+            int id = work.getInt("id");
+            String relativePath = workTreeAdapter.getRelativePath();
+            File itemFile = LocalFileCache.getInstance().mapLocalItemFile(this,item,id,relativePath);
+            if(itemFile == null)
+                return true;
+            AlertDialog.Builder builder= new AlertDialog.Builder(this);
+            builder.setMessage(itemFile.getAbsolutePath());
+            if(itemFile.exists()){
+                final String streamUrl = item.getString("mediaStreamUrl");
+                String currentPlayUrl = ctrlBinder.getCurrent().getString("mediaStreamUrl");
+                builder.setTitle("已下载").setNegativeButton("打开", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if(type.equals("audio")){
+                            if(ctrlBinder.getCurrent()!=null && currentPlayUrl.equals(streamUrl)){
 
-        return false;
+                            }else {
+                                ctrlBinder.setReap();
+                                ctrlBinder.setCurrentAlbumId(id);
+                                try {
+                                    item.put("local_file_path",itemFile.getAbsolutePath());
+                                    ctrlBinder.play(Arrays.asList(item),0);
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                        if(title.toLowerCase(Locale.ROOT).endsWith("mp4")){
+                            startActivity(new Intent(WorkActivity.this,VideoPlayerActivity.class));
+                        }else if(title.toLowerCase(Locale.ROOT).endsWith("lrc")){
+//                                Api.doGetMediaString(hash,lrcTextCallback);
+                        }else if(title.toLowerCase(Locale.ROOT).endsWith("mp3")){
+                            startActivity(new Intent(WorkActivity.this, MusicPlayerActivity.class));
+                        }
+                    }
+                });
+            }else {
+                final String downLoadUrl = item.getString("mediaDownloadUrl");
+                builder.setTitle("未下载")
+                        .setMessage(itemFile.getAbsolutePath())
+                        .setNegativeButton("下载", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                if(downLoadDialog == null){
+                                    AlertDialog.Builder builder = new AlertDialog.Builder(WorkActivity.this).setTitle("正在下载")
+                                            .setNegativeButton("hide", new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    dialog.dismiss();
+                                                }
+                                            });
+                                    downLoadDialog = builder.create();
+                                    downLoadDialog.setMessage("开始下载");
+                                    downLoadDialog.show();
+                                }
+                                LocalFileCache.getInstance().downLoadFile(itemFile,downLoadUrl,downloadCallback);
+                            }
+                        });
+            }
+            builder.create().show();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return true;
     }
 
-    AsyncHttpClient.DownloadCallback downloadCallback = new AsyncHttpClient.DownloadCallback() {
-        @Override
-        public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, ByteBufferList byteBufferList) {
+    private AlertDialog downLoadDialog;
+    private AsyncHttpClient.FileCallback downloadCallback = new AsyncHttpClient.FileCallback() {
 
+        @Override
+        public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, File file) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    downLoadDialog.setTitle("下载完成");
+                    downLoadDialog.setMessage(file.getAbsolutePath());
+                    downLoadDialog.show();
+                    downLoadDialog = null;
+                }
+            });
+        }
+
+        @Override
+        public void onProgress(AsyncHttpResponse response, long downloaded, long total) {
+            super.onProgress(response, downloaded, total);
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if(downLoadDialog!=null)
+                        downLoadDialog.setMessage(String.format(Locale.CHINA,"当前进度(%d / %d)",downloaded,total));
+                }
+            });
         }
     };
 
@@ -447,5 +583,10 @@ public class WorkActivity extends AppCompatActivity implements View.OnClickListe
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void onPathChange(String path) {
+        setTitle(path);
     }
 }
