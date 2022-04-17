@@ -74,17 +74,21 @@ public class MainActivity extends AppCompatActivity implements MusicChangeListen
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
             if(asyncHttpResponse == null || asyncHttpResponse.code() !=200){
-                Log.d(TAG, String.format("onCompleted:failed! "));
-                if(!isDestroyed()){
-                    ivCover.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            retryCount++;
-                            getNextPage();
-                        }
-                    },3000);
+                if(jsonObject != null && jsonObject.has("works")){
+                    Log.d(TAG, "onCompleted: load local cache!");
+                }else {
+                    Log.d(TAG, String.format("onCompleted:failed! "));
+                    if(!isDestroyed()){
+                        ivCover.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                retryCount++;
+                                getNextPage();
+                            }
+                        },3000);
+                    }
+                    return;
                 }
-                return;
             }
             try {
                 JSONArray jsonArray = jsonObject.getJSONArray("works");
