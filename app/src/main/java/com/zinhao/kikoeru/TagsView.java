@@ -30,7 +30,7 @@ public class TagsView<T> extends View{
     private final Paint textPaint;
     private int MIN_WIDTH = 0;
     private int MIN_HEIGHT = 0;
-    private float textPadding = 10;
+    private float textPadding = 20;
     private float rectFH = 0;
     private float textDistance;
     private Drawable tagBg;
@@ -110,6 +110,7 @@ public class TagsView<T> extends View{
         for (int i = 0; i < getTagsLen(); i++) {
             tagsRectFs.add(new RectF());
         }
+        setPadding(10,7,0,7);
         tagBg = ContextCompat.getDrawable(context,R.drawable.card_bg_tagview);
         simpleOnGestureListener = new GestureDetector.SimpleOnGestureListener(){
             @Override
@@ -245,21 +246,21 @@ public class TagsView<T> extends View{
             tagsRectFs.add(new RectF());
         }
         int h = 0;
-        float x = 0,y=15;
+        float x = 0,y=getPaddingTop();
         for (int i = 0; i < getTagsLen(); i++) {
             float textW = 0;
             String text = getTagText(i);
             textW = textPaint.measureText(text);
-            float rectW = textW + 2 * textPadding;
-            float rectH = rectFH + 2 * textPadding;
+            float rectW = textW + textPadding *2;
+            float rectH = rectFH + textPadding;
 
             if(x+rectW > w){
-                y+=rectH + 15;
+                y+=rectH + getPaddingTop()+getPaddingBottom();
                 x=0;
             }
             tagsRectFs.get(i).set(x,y,x+rectW,y+rectH);
-            x += rectW +15;
-            h = (int) (y+rectH) + 15;
+            x += rectW +getPaddingRight()+getPaddingLeft();
+            h = (int) (y+rectH) + getPaddingBottom();
         }
         if(getTagsLen() == 0)
             h = 0;
@@ -276,10 +277,17 @@ public class TagsView<T> extends View{
         super.onDraw(canvas);
         for (int i = 0; i < getTagsLen(); i++) {
             RectF tagRectF = tagsRectFs.get(i);
+
             tagBg.setBounds((int)tagRectF.left,(int)tagRectF.top,(int)tagRectF.right,(int)tagRectF.bottom);
             tagBg.draw(canvas);
+
+            textPaint.setColor(Color.WHITE);
             textPaint.setStyle(Paint.Style.FILL);
             canvas.drawText(getTagText(i),tagsRectFs.get(i).centerX(),tagsRectFs.get(i).centerY()+textDistance,textPaint);
+
+//            textPaint.setColor(Color.RED);
+//            textPaint.setStyle(Paint.Style.STROKE);
+//            canvas.drawRect(tagRectF,textPaint);
         }
     }
 }

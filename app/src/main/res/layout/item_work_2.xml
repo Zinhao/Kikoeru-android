@@ -9,7 +9,7 @@
     android:background="@drawable/card_bg_work"
     android:layout_height="wrap_content">
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/ivCover"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -17,9 +17,10 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:adjustViewBounds="true"
         app:layout_constraintHorizontal_bias="0.0"
+        android:src="@drawable/ic_no_cover"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:srcCompat="@tools:sample/avatars" />
+        />
 
     <TextView
         android:id="@+id/tvTitle"

@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
 import android.media.ExifInterface;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
@@ -369,15 +370,15 @@ public class AudioService extends Service{
             this.windowManager = windowManager;
         }
 
-        private AsyncHttpClient.StringCallback checkLrcCallBack = new AsyncHttpClient.StringCallback() {
+        private AsyncHttpClient.JSONObjectCallback checkLrcCallBack = new AsyncHttpClient.JSONObjectCallback() {
+
             @Override
-            public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, String s) {
-                if(s ==null){
+            public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject lrcResult) {
+                if(lrcResult ==null){
                     mLrc = Lrc.NONE;
                     return;
                 }
                 try {
-                    JSONObject lrcResult = new JSONObject(s);
                     boolean exist = lrcResult.getBoolean("result");
                     if(exist){
                         Api.doGetMediaString(lrcResult.getString("hash"),lrcCallBack);
@@ -393,8 +394,9 @@ public class AudioService extends Service{
         private AsyncHttpClient.StringCallback lrcCallBack = new AsyncHttpClient.StringCallback() {
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, String s) {
-                if(asyncHttpResponse == null)
+                if(asyncHttpResponse == null){
                     return;
+                }
                 if(asyncHttpResponse.code() == 200){
                     Log.d(TAG, "onCompleted: "+s);
                     mLrc = new Lrc(s);
@@ -434,20 +436,29 @@ public class AudioService extends Service{
             lrcRowChangeListeners.remove(listener);
         }
 
-        public void play(JSONObject music) throws JSONException {
+        private void play(JSONObject music) throws JSONException {
             current = music;
+            MediaItem mediaItem;
             String path =current.getString("mediaStreamUrl");
             if(path.startsWith("http")){
                 path = path + "?token=" + Api.token;
             }else {
                 path = Api.HOST + path + "?token=" + Api.token;
             }
+            if(music.has("local_file_path")){
+                path = music.getString("local_file_path");
+                File audioFile = new File(path);
+                LocalFileCache.getInstance().getLrcText(AudioService.this,audioFile,lrcCallBack);
+                mediaItem = MediaItem.fromUri(Uri.fromFile(audioFile));
+            }else {
+                Log.d(TAG, "play: network file");
+                Api.checkLrc(current.getString("hash"),checkLrcCallBack);
+                mediaItem = MediaItem.fromUri(path);
+            }
             Log.d(TAG, "play: "+path);
-            MediaItem mediaItem = MediaItem.fromUri(path);
             mediaPlayer.setMediaItem(mediaItem);
             mediaPlayer.prepare();
             mediaPlayer.play();
-            Api.checkLrc(current.getString("hash"),checkLrcCallBack);
         }
 
         public void setCurrentAlbumId(int currentAlbumId) {
