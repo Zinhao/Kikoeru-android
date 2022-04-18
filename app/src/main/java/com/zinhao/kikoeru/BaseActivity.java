@@ -18,7 +18,7 @@ public class BaseActivity extends SlideOutActivity {
             @Override
             public void run() {
                 AlertDialog.Builder builder = new AlertDialog.Builder(BaseActivity.this);
-                builder.setTitle("发生错误").setMessage(e.getMessage());
+                builder.setTitle("发生错误").setMessage(String.format("%s: %s",e.getClass().getSimpleName(),e.getMessage()));
                 builder.create().show();
             }
         });

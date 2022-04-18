@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Environment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -43,6 +44,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class ImagePagerAdapter<T> extends PagerAdapter {
+    private static final String TAG = "ImagePagerAdapter";
     public List<T> ts;
     private HideLayoutCallBack listener;
     File pic;
@@ -84,7 +86,6 @@ public class ImagePagerAdapter<T> extends PagerAdapter {
 
                     @Override
                     public void onLoadFailed(@Nullable Drawable drawable) {
-
                     }
 
                     @Override

@@ -281,8 +281,13 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                 }).forEach(new Consumer<JSONObject>() {
                     @Override
                     public void accept(JSONObject jsonObject) {
+
                         try {
-                            imageList.add(jsonObject.getString("mediaStreamUrl"));
+                            String url = jsonObject.getString("mediaStreamUrl");
+                            if(!url.startsWith("http")){
+                                url = Api.HOST + url;
+                            }
+                            imageList.add(url);
                         } catch (JSONException e) {
                             e.printStackTrace();
                             alertException(e);
