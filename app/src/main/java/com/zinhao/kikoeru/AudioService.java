@@ -1,6 +1,7 @@
 package com.zinhao.kikoeru;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
@@ -312,23 +313,48 @@ public class AudioService extends Service{
         private WindowManager windowManager;
         private boolean lrcWindowShow = false;
         private View lrcView;
+        private AsyncHttpClient.JSONObjectCallback lastPlayListCallback = new AsyncHttpClient.JSONObjectCallback() {
+            @Override
+            public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
+                if(asyncHttpResponse.code() == 200){
+                    JSONArray jsonArray = null;
+                    if(playList == null)
+                        playList = new ArrayList<>();
+                    try {
+                        jsonArray = jsonObject.getJSONArray("playlist");
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            playList.add(jsonArray.getJSONObject(i));
+                        }
+                        if(playList.size()!=0){
+                            mHandler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    setReap();
+                                    try {
+                                        setCurrentAlbumId(jsonObject.getInt("id"));
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                    try {
+                                        play(playList,0);
+                                        getCtrl().getTransportControls().pause();
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            });
+
+                        }
+                    } catch (JSONException jsonException) {
+                        jsonException.printStackTrace();
+                    }
+                }
+            }
+        };
 
         public CtrlBinder() {
             mLrcUpdateTimer = new Timer();
-
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        read();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }).start();
-
+            LocalFileCache.getInstance().readLastPlayList(AudioService.this,lastPlayListCallback);
             mLrcUpdateTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
@@ -347,7 +373,6 @@ public class AudioService extends Service{
                         @Override
                         public void accept(LrcRowChangeListener listener) {
                             listener.onChange(mLrc.getCurrent());
-
                         }
                     });
                 }
@@ -394,6 +419,10 @@ public class AudioService extends Service{
         private AsyncHttpClient.StringCallback lrcCallBack = new AsyncHttpClient.StringCallback() {
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, String s) {
+                if(e != null){
+                    alertException(e);
+                    return;
+                }
                 if(asyncHttpResponse == null){
                     return;
                 }
@@ -406,6 +435,16 @@ public class AudioService extends Service{
                 }
             }
         };
+
+        private void alertException(Exception e){
+            Activity activity = App.getInstance().getBackHelper().getLastActivity();
+            if(activity == null){
+                return;
+            }
+            if(activity instanceof BaseActivity){
+                ((BaseActivity) activity).alertException(e);
+            }
+        }
 
         public ExoPlayer getExoPlayer(){
             return mediaPlayer;
@@ -487,6 +526,7 @@ public class AudioService extends Service{
                 play(playList.get(currentIndex));
             } catch (JSONException e) {
                 e.printStackTrace();
+                alertException(e);
             }
         }
 
@@ -512,6 +552,7 @@ public class AudioService extends Service{
                 play(playList.get(currentIndex));
             } catch (JSONException e) {
                 e.printStackTrace();
+                alertException(e);
             }
         }
 
@@ -535,71 +576,6 @@ public class AudioService extends Service{
                 lrcWindowShow = false;
                 windowManager.removeView(lrcView);
             }
-        }
-
-        public void save() throws IOException, JSONException {
-            Log.d(TAG, "save: ");
-            JSONObject jsonObject = new JSONObject();
-            JSONArray jsonArray = new JSONArray();
-            if(playList == null)
-                return;
-            playList.forEach(new Consumer<JSONObject>() {
-                @Override
-                public void accept(JSONObject jsonObject) {
-                    jsonArray.put(jsonObject);
-                }
-            });
-
-            jsonObject.put("playlist",jsonArray);
-            jsonObject.put("id",currentAlbumId);
-
-            File file = new File(getCacheDir(),"playList.json");
-            FileWriter fileWriter = new FileWriter(file);
-            BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-            bufferedWriter.write(jsonObject.toString());
-            bufferedWriter.flush();
-        }
-
-        public void read() throws IOException, JSONException {
-            Log.d(TAG, "read: ");
-            File file = new File(getCacheDir(),"playList.json");
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
-            StringBuilder stringBuilder = new StringBuilder();
-            String text = null;
-            while ((text = bufferedReader.readLine()) != null){
-                stringBuilder.append(text);
-            }
-            bufferedReader.close();
-            if(stringBuilder.toString().isEmpty())
-                return;
-            List<JSONObject> playList = new ArrayList<>();
-            JSONObject jsonObject = new JSONObject(stringBuilder.toString());
-            JSONArray jsonArray = jsonObject.getJSONArray("playlist");
-
-            for (int i = 0; i < jsonArray.length(); i++) {
-                playList.add(jsonArray.getJSONObject(i));
-            }
-            if(playList.size()!=0){
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        setReap();
-                        try {
-                            setCurrentAlbumId(jsonObject.getInt("id"));
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        try {
-                            play(playList,0);
-                            getCtrl().getTransportControls().pause();
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                });
-
-            }
-
         }
 
         public void setReap(){
@@ -628,16 +604,7 @@ public class AudioService extends Service{
         @Override
         public void close() throws IOException {
             mLrcUpdateTimer.cancel();
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        save();
-                    } catch (IOException | JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }).start();
+            LocalFileCache.getInstance().savePlayList(AudioService.this,playList,currentAlbumId);
         }
     }
 
@@ -646,6 +613,7 @@ public class AudioService extends Service{
         super.onDestroy();
         try {
             ctrlBinder.close();
+            ctrlBinder = null;
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -20,6 +20,7 @@ import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
@@ -27,6 +28,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 
 public class LocalFileCache implements Runnable, Closeable {
     private static final String TAG = "LocalFileCache";
@@ -82,15 +84,21 @@ public class LocalFileCache implements Runnable, Closeable {
     public boolean getLrcText(Context context,File audioFile,AsyncHttpClient.StringCallback callback){
         File dir = audioFile.getParentFile();
         String name = audioFile.getName();
-
         String beforeName = name.substring(0,name.lastIndexOf("."));
         File lrcFile =new File(dir ,beforeName + ".lrc");
         if(lrcFile.exists()){
             mission.add(new Runnable() {
                 @Override
                 public void run() {
-                    String lrcText = readTextSync(lrcFile);
-                    callback.onCompleted(null, new LocalResponse(200), lrcText);
+                    String lrcText = null;
+                    try {
+                        lrcText = readTextSync(lrcFile);
+                        callback.onCompleted(null, new LocalResponse(200), lrcText);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        callback.onCompleted(e, new LocalResponse(404), null);
+                    }
+
                 }
             });
             return true;
@@ -150,7 +158,8 @@ public class LocalFileCache implements Runnable, Closeable {
                         pagination.put("totalCount",workFiles.length);
                         rootJson.put("pagination",pagination);
                         for (int i = 0; i < workFiles.length; i++) {
-                            String workStr = readTextSync(workFiles[i]);
+                            String workStr;
+                            workStr = readTextSync(workFiles[i]);
                             if(workStr!=null && !workStr.isEmpty()){
                                 JSONObject work = new JSONObject(workStr);
                                 work.put("localWorK",true);
@@ -159,9 +168,11 @@ public class LocalFileCache implements Runnable, Closeable {
                         }
                         rootJson.put("works",works);
                         callback.onCompleted(null,new LocalResponse(200),rootJson);
-                    } catch (JSONException e) {
-                        callback.onCompleted(e,null,null);
+                    } catch (JSONException | IOException  e) {
+                        callback.onCompleted(e,new LocalResponse(404),null);
                     }
+                }else {
+                    callback.onCompleted(new FileNotFoundException("本地缓存为空"),null,null);
                 }
             }
         });
@@ -175,16 +186,18 @@ public class LocalFileCache implements Runnable, Closeable {
                 File workJsonDir = new File(cacheDir,"json_work_tree");
                 File workTreeFile = new File(workJsonDir,String.format(Locale.US,"%d.json",id));
                 if(workTreeFile.exists()){
-                    String workStr = readTextSync(workTreeFile);
-                    if(workStr != null && !workStr.isEmpty() && workStr.startsWith("[")){
-                        try {
+                    try {
+                        String workStr = readTextSync(workTreeFile);
+                        if(workStr != null && !workStr.isEmpty() && workStr.startsWith("[")){
                             JSONArray workTree = new JSONArray(workStr);
                             callback.onCompleted(null,new LocalResponse(200),workTree);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            callback.onCompleted(null,null,null);
                         }
+                    } catch (JSONException | IOException e) {
+                        e.printStackTrace();
+                        callback.onCompleted(e,null,null);
                     }
+                }else {
+                    callback.onCompleted(new FileNotFoundException(String.format("%s 不存在!",workTreeFile.getAbsolutePath())),null,null);
                 }
             }
         });
@@ -226,19 +239,15 @@ public class LocalFileCache implements Runnable, Closeable {
         });
     }
 
-    public String readTextSync(File save){
-        try {
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(save));
-            String text = null;
-            StringBuilder stringBuilder = new StringBuilder();
-            while ((text = bufferedReader.readLine())!= null){
-                stringBuilder.append(text).append("\n");
-            }
-            bufferedReader.close();
-            return stringBuilder.toString();
-        }catch (Exception e){
+    public String readTextSync(File save) throws IOException {
+        BufferedReader bufferedReader = new BufferedReader(new FileReader(save));
+        String text = null;
+        StringBuilder stringBuilder = new StringBuilder();
+        while ((text = bufferedReader.readLine())!= null){
+            stringBuilder.append(text).append("\n");
         }
-        return null;
+        bufferedReader.close();
+        return stringBuilder.toString();
     }
 
     public void downLoadFile(File save,String url,AsyncHttpClient.FileCallback callback){
@@ -251,6 +260,61 @@ public class LocalFileCache implements Runnable, Closeable {
         request.setTimeout(5000);
         AsyncHttpClient asyncHttpClient = AsyncHttpClient.getDefaultInstance();
         asyncHttpClient.executeFile(request, save.getPath(), callback);
+    }
+
+    public void savePlayList(Context context,List<JSONObject> playList,int currentAlbumId){
+        mission.add(new Runnable() {
+            @Override
+            public void run() {
+                JSONObject jsonObject = new JSONObject();
+                JSONArray jsonArray = new JSONArray();
+                if(playList == null || playList.size() == 0)
+                    return;
+                playList.forEach(new Consumer<JSONObject>() {
+                    @Override
+                    public void accept(JSONObject jsonObject) {
+                        jsonArray.put(jsonObject);
+                    }
+                });
+                try {
+                    jsonObject.put("playlist",jsonArray);
+                    jsonObject.put("id",currentAlbumId);
+                    File file = new File(context.getCacheDir(),"playList.json");
+                    FileWriter fileWriter = new FileWriter(file);
+                    BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+                    bufferedWriter.write(jsonObject.toString());
+                    bufferedWriter.flush();
+                } catch (IOException | JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+    }
+
+    public void readLastPlayList(Context context,AsyncHttpClient.JSONObjectCallback callback){
+        mission.add(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    File file = new File(context.getCacheDir(),"playList.json");
+                    BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+                    StringBuilder stringBuilder = new StringBuilder();
+                    String text;
+                    while ((text = bufferedReader.readLine()) != null){
+                        stringBuilder.append(text);
+                    }
+                    bufferedReader.close();
+                    if(stringBuilder.toString().isEmpty())
+                        return;
+                    JSONObject jsonObject = new JSONObject(stringBuilder.toString());
+                    callback.onCompleted(null,new LocalResponse(200),jsonObject);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        });
+
     }
 
     @Override

@@ -27,12 +27,17 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private int layoutType;
     private TagsView.TextGet<JSONObject> textGet;
     private TagsView.TagClickListener tagClickListener;
+    private View.OnClickListener itemClickListener;
     public static final int LAYOUT_LIST = 846;
     public static final int LAYOUT_SMALL_GRID = 847;
     public static final int LAYOUT_BIG_GRID = 848;
 
     public void setTagClickListener(TagsView.TagClickListener<?> tagClickListener) {
         this.tagClickListener = tagClickListener;
+    }
+
+    public void setItemClickListener(View.OnClickListener itemClickListener) {
+        this.itemClickListener = itemClickListener;
     }
 
     public WorkAdapter(List<JSONObject> datas) {
@@ -74,21 +79,15 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @SuppressLint("DefaultLocale")
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        JSONObject jsonObject = datas.get(position);
+        JSONObject item = datas.get(position);
+        holder.itemView.setTag(item);
+        holder.itemView.setOnClickListener(itemClickListener);
         if(holder instanceof SimpleViewHolder){
             try {
-                ((SimpleViewHolder) holder).tvTitle.setText(jsonObject.getString("title"));
-                ((SimpleViewHolder) holder).tvComArt.setText(jsonObject.getString("name"));
-                ((SimpleViewHolder) holder).tvTags.setText(App.getTagsStr(jsonObject));
-                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d?type=sam",jsonObject.getInt("id"))).into(((SimpleViewHolder) holder).ivCover);
-                holder.itemView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent intent = new Intent(v.getContext(),WorkActivity.class);
-                        intent.putExtra("work_json_str",jsonObject.toString());
-                        ActivityCompat.startActivity(v.getContext(),intent,null);
-                    }
-                });
+                ((SimpleViewHolder) holder).tvTitle.setText(item.getString("title"));
+                ((SimpleViewHolder) holder).tvComArt.setText(item.getString("name"));
+                ((SimpleViewHolder) holder).tvTags.setText(App.getTagsStr(item));
+                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d?type=sam",item.getInt("id"))).into(((SimpleViewHolder) holder).ivCover);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -96,47 +95,32 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if(holder instanceof GirdViewHolder){
             GirdViewHolder girdHolder = (GirdViewHolder) holder;
             try {
-                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d",jsonObject.getInt("id"))).apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
-                girdHolder.tvTitle.setText(jsonObject.getString("title"));
-                girdHolder.tvArt.setText(App.getArtStr(jsonObject));
-                girdHolder.tvCom.setText(jsonObject.getString("name"));
-                girdHolder.tvTags.setTags(App.getTagsList(jsonObject),textGet);
+                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d",item.getInt("id"))).apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
+                girdHolder.tvTitle.setText(item.getString("title"));
+                girdHolder.tvArt.setText(App.getArtStr(item));
+                girdHolder.tvCom.setText(item.getString("name"));
+                girdHolder.tvTags.setTags(App.getTagsList(item),textGet);
                 girdHolder.tvTags.setTagClickListener(tagClickListener);
-                girdHolder.tvRjNumber.setText(String.format("RJ%d",jsonObject.getInt("id")));
-                girdHolder.tvDate.setText(jsonObject.getString("release"));
-                girdHolder.tvPrice.setText(String.format("%d 日元",jsonObject.getInt("price")));
-                girdHolder.tvSaleCount.setText(String.format("售出：%d",jsonObject.getInt("dl_count")));
+                girdHolder.tvRjNumber.setText(String.format("RJ%d",item.getInt("id")));
+                girdHolder.tvDate.setText(item.getString("release"));
+                girdHolder.tvPrice.setText(String.format("%d 日元",item.getInt("price")));
+                girdHolder.tvSaleCount.setText(String.format("售出：%d",item.getInt("dl_count")));
 
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            holder.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(v.getContext(),WorkActivity.class);
-                    intent.putExtra("work_json_str",jsonObject.toString());
-                    ActivityCompat.startActivity(v.getContext(),intent,null);
-                }
-            });
         }
 
         if(holder instanceof SmallGirdViewHolder){
             SmallGirdViewHolder girdHolder = (SmallGirdViewHolder) holder;
             try {
-                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d",jsonObject.getInt("id"))).apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
-                girdHolder.tvRjNumber.setText(String.format("RJ%d",jsonObject.getInt("id")));
-                girdHolder.tvDate.setText(jsonObject.getString("release"));
+                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d",item.getInt("id"))).apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
+                girdHolder.tvRjNumber.setText(String.format("RJ%d",item.getInt("id")));
+                girdHolder.tvDate.setText(item.getString("release"));
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            holder.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(v.getContext(),WorkActivity.class);
-                    intent.putExtra("work_json_str",jsonObject.toString());
-                    ActivityCompat.startActivity(v.getContext(),intent,null);
-                }
-            });
+
         }
     }
 

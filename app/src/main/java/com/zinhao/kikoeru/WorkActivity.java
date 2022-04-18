@@ -59,8 +59,6 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
     private List<JSONObject> workTrees;
     private JSONArray jsonWorkTrees;
 
-    private RecyclerView.OnScrollListener scrollListener;
-
     private View bottomLayout;
     private Animation outAnim;
     private Animation inAnim;
@@ -71,11 +69,14 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
     private ImageButton ibStatus;
 
 
-    private AsyncHttpClient.JSONArrayCallback docTreeCallback = new AsyncHttpClient.JSONArrayCallback() {
+    private final AsyncHttpClient.JSONArrayCallback docTreeCallback = new AsyncHttpClient.JSONArrayCallback() {
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONArray jsonArray) {
+            if(e != null){
+                alertException(e);
+                return;
+            }
             if(asyncHttpResponse==null || asyncHttpResponse.code() != 200){
-                Log.d(TAG, "onCompleted: docTreeCallback err ");
                 return;
             }
             workTrees = new ArrayList<>();
@@ -105,7 +106,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
         }
     };
 
-    private AsyncHttpClient.StringCallback lrcTextCallback = new AsyncHttpClient.StringCallback() {
+    private final AsyncHttpClient.StringCallback lrcTextCallback = new AsyncHttpClient.StringCallback() {
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, String s) {
             if(asyncHttpResponse ==null || asyncHttpResponse.code() !=200){
@@ -151,23 +152,6 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
         bindService(new Intent(this, AudioService.class),this,BIND_AUTO_CREATE);
         outAnim = AnimationUtils.loadAnimation(this,R.anim.move_bottom_out);
         inAnim = AnimationUtils.loadAnimation(this,R.anim.move_bottom_in);
-        scrollListener = new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-            }
-
-            @Override
-            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-//                if (dy > 0 && shouldShowAnim && bottomLayout.getVisibility() == View.VISIBLE){
-//                    toggleBottom();
-//                }else if(dy<0 && shouldShowAnim && bottomLayout.getVisibility() == View.GONE){
-//                    toggleBottom();
-//                }
-            }
-        };
-        recyclerView.addOnScrollListener(scrollListener);
         try {
             if(work.has("localWorK")){
                 boolean isLocalWork = work.getBoolean("localWorK");
@@ -181,6 +165,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
 
         } catch (JSONException e) {
             e.printStackTrace();
+            alertException(e);
         }
     }
 
@@ -250,6 +235,10 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
     private AsyncHttpClient.JSONObjectCallback actionCallBack = new AsyncHttpClient.JSONObjectCallback() {
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
+            if(e!=null){
+                alertException(e);
+                return;
+            }
             if(asyncHttpResponse == null)
                 return;
             if(asyncHttpResponse.code() == 200){
@@ -261,12 +250,10 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                             Toast.makeText(WorkActivity.this,message,Toast.LENGTH_SHORT).show();
                         }
                     });
-                    Log.d(TAG, "onCompleted: "+message);
                 } catch (JSONException jsonException) {
                     jsonException.printStackTrace();
+                    alertException(jsonException);
                 }
-            }else {
-                Log.d(TAG, "onCompleted: "+asyncHttpResponse.code());
             }
         }
     };
@@ -317,50 +304,32 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                     public void accept(JSONObject jsonObject) {
                         try {
                             if("audio".equals(jsonObject.getString("type"))){
-                                int id = work.getInt("id");
-//                                File itemFile = LocalFileCache.getInstance().mapLocalItemFile(WorkActivity.this,jsonObject,id,workTreeAdapter.getRelativePath());
-//                                if(itemFile!=null){
-//                                    if(itemFile.exists()){
-//                                        jsonObject.put("local_file_path",itemFile.getAbsolutePath());
-//                                    }
-//                                }
                                 musicArray.add(jsonObject);
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
+                            alertException(e);
                         }
                     }
                 });
-
                 for (int i = 0; i < musicArray.size(); i++) {
-                    try {
-                        if(musicArray.get(i).getString("hash").equals(item.getString("hash"))){
-                            index = i;
-                            break;
-                        }
-                    } catch (JSONException e) {
-                        e.printStackTrace();
+                    if(musicArray.get(i).getString("hash").equals(item.getString("hash"))){
+                        index = i;
+                        break;
                     }
                 }
+                if(ctrlBinder.getCurrent()!=null && ctrlBinder.getCurrent().getString("mediaStreamUrl").equals(item.getString("mediaStreamUrl"))){
 
-                try {
-                    if(ctrlBinder.getCurrent()!=null && ctrlBinder.getCurrent().getString("mediaStreamUrl").equals(item.getString("mediaStreamUrl"))){
-
-                    }else {
-                        ctrlBinder.setReap();
-                        ctrlBinder.setCurrentAlbumId(work.getInt("id"));
-                        ctrlBinder.play(musicArray,index);
-                    }
-
-                    if(item.getString("title").toLowerCase(Locale.ROOT).endsWith("mp4")){
-                        startActivity(new Intent(this,VideoPlayerActivity.class));
-                    }else {
-                        startActivity(new Intent(this, MusicPlayerActivity.class));
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
+                }else {
+                    ctrlBinder.setReap();
+                    ctrlBinder.setCurrentAlbumId(work.getInt("id"));
+                    ctrlBinder.play(musicArray,index);
                 }
-
+                if(item.getString("title").toLowerCase(Locale.ROOT).endsWith("mp4")){
+                    startActivity(new Intent(this,VideoPlayerActivity.class));
+                }else {
+                    startActivity(new Intent(this, MusicPlayerActivity.class));
+                }
             } else if("text".equals(item.getString("type"))){
                 if(item.getString("title").toLowerCase(Locale.ROOT).endsWith("lrc")){
                     Api.doGetMediaString(item.getString("hash"),lrcTextCallback);
@@ -368,6 +337,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
             }
         } catch (JSONException e) {
             e.printStackTrace();
+            alertException(e);
         }
 
     }
@@ -384,6 +354,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
             tvWorkTitle.setText(audio.getString("workTitle"));
         } catch (JSONException e) {
             e.printStackTrace();
+            alertException(e);
         }
     }
 
@@ -430,6 +401,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
+                    alertException(e);
                 }
             }
         });
@@ -447,7 +419,6 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-//                setTitle(currentRow.content);
             }
         });
     }
@@ -536,6 +507,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
             builder.create().show();
         } catch (JSONException e) {
             e.printStackTrace();
+            alertException(e);
         }
         return true;
     }
@@ -573,6 +545,13 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
     public void onTagClick(JSONObject jsonObject) {
         try {
             int tagId = jsonObject.getInt("id");
+            String tagName = jsonObject.getString("name");
+            setTitle(tagName);
+            Intent intent = new Intent();
+            intent.putExtra("id",tagId);
+            intent.putExtra("name",tagName);
+            setResult(RESULT_OK,intent);
+            finish();
         } catch (JSONException e) {
             e.printStackTrace();
         }

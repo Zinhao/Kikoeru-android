@@ -22,7 +22,9 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -73,6 +75,10 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
     private AsyncHttpClient.JSONObjectCallback apisCallback = new AsyncHttpClient.JSONObjectCallback() {
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
+            if(e!=null){
+                alertException(e);
+                return;
+            }
             if(asyncHttpResponse == null || asyncHttpResponse.code() !=200){
                 if(jsonObject != null && jsonObject.has("works")){
                     Log.d(TAG, "onCompleted: load local cache!");
@@ -109,17 +115,11 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
                             recyclerView.addOnScrollListener(scrollListener);
                         }else {
                             try{
-                                //
-//                                It will always be more efficient to use more specific change events if you can. Rely on notifyDataSetChanged as a last resort.
                                 workAdapter.notifyDataSetChanged();
-//                                workAdapter.notifyItemInserted(Math.max(works.size()-jsonArray.length(), works.size()));
                             }catch (Exception e){
 
                             }
-
-
                         }
-
                     }
                 });
             } catch (JSONException jsonException) {
@@ -128,6 +128,7 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
         }
     };
     private AudioService.CtrlBinder ctrlBinder;
+    private static final int TAG_SELECT_RESULT = 14;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -395,7 +396,7 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
         }else if(item.getItemId() == 2){
 
         }else if(item.getItemId() == 13){
-            startActivityForResult(new Intent(this,TagsActivity.class),14);
+            startActivityForResult(new Intent(this,TagsActivity.class),TAG_SELECT_RESULT);
         }else if(item.getItemId() == 14){
             if(type != TYPE_LOCAL_WORK){
                 type = TYPE_LOCAL_WORK;
@@ -409,7 +410,7 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == 14){
+        if(requestCode == TAG_SELECT_RESULT){
             if(resultCode == RESULT_OK && data!=null){
                 int tagId = data.getIntExtra("id",-1);
                 type = TYPE_TAG_WORK;
@@ -434,27 +435,32 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
         }
         workAdapter = new WorkAdapter(works,layoutType);
         workAdapter.setTagClickListener(this);
+        workAdapter.setItemClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                JSONObject item = (JSONObject) v.getTag();
+                Intent intent = new Intent(v.getContext(),WorkActivity.class);
+                intent.putExtra("work_json_str",item.toString());
+                ActivityCompat.startActivityForResult(MainActivity.this,intent,TAG_SELECT_RESULT,null);
+            }
+        });
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setAdapter(workAdapter);
     }
 
     private void clearWork(){
         page = 1;
-        works.clear();
         if(workAdapter == null)
             return;
         workAdapter.notifyItemRangeRemoved(0,works.size());
+        workAdapter.notifyItemRangeChanged(0,works.size());
+        works.clear();
     }
 
     @Override
     protected void onDestroy() {
         ctrlBinder.removeMusicChangeListener(this);
         ctrlBinder.removeLrcRowChangeListener(this);
-        try {
-            ctrlBinder.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         unbindService(this);
         super.onDestroy();
     }
