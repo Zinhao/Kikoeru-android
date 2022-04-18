@@ -66,6 +66,7 @@ public class TagsView<T> extends View{
                 return t.getString(key);
             } catch (JSONException e) {
                 e.printStackTrace();
+                App.getInstance().alertException(e);
             }
             return "";
         }
@@ -172,6 +173,7 @@ public class TagsView<T> extends View{
                 o= ((JSONArray) tags).get(index);
             } catch (JSONException e) {
                 e.printStackTrace();
+                App.getInstance().alertException(e);
             }
         }
         if(o!=null && textGet != null){
@@ -190,6 +192,7 @@ public class TagsView<T> extends View{
                 o= ((JSONArray) tags).getJSONObject(index);
             } catch (JSONException e) {
                 e.printStackTrace();
+                App.getInstance().alertException(e);
             }
         }
         return o;

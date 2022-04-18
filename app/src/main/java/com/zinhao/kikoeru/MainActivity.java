@@ -124,6 +124,7 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
                 });
             } catch (JSONException jsonException) {
                 jsonException.printStackTrace();
+                alertException(jsonException);
             }
         }
     };
@@ -219,6 +220,7 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
                 LocalFileCache.getInstance().readLocalWorks(this,apisCallback);
             } catch (JSONException e) {
                 e.printStackTrace();
+                alertException(e);
             }
         }
     }
@@ -239,6 +241,7 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
             tvWorkTitle.setText(audio.getString("workTitle"));
         } catch (JSONException e) {
             e.printStackTrace();
+            alertException(e);
         }
     }
 
@@ -279,6 +282,7 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
+                    alertException(e);
                 }
             }
         });
@@ -480,6 +484,7 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
             getNextPage();
         } catch (JSONException e) {
             e.printStackTrace();
+            alertException(e);
         }
     }
 }

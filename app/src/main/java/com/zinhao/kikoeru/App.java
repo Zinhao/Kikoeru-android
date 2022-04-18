@@ -1,5 +1,6 @@
 package com.zinhao.kikoeru;
 
+import android.app.Activity;
 import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -52,6 +53,16 @@ public class App extends SwipeBackApplication {
         channelMusicService.enableVibration(false);
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.createNotificationChannel(channelMusicService);
+    }
+
+    public void alertException(Exception e){
+        Activity activity = getBackHelper().getLastActivity();
+        if(activity == null){
+            return;
+        }
+        if(activity instanceof BaseActivity){
+            ((BaseActivity) activity).alertException(e);
+        }
     }
 
     public static String getTagsStr(JSONObject jsonObject) throws JSONException {

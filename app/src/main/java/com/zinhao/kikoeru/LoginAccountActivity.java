@@ -111,6 +111,7 @@ public class LoginAccountActivity extends BaseActivity {
                         next();
                     } catch (JSONException jsonException) {
                         jsonException.printStackTrace();
+                        alertException(jsonException);
                     }
                 }
             }else{
@@ -122,6 +123,7 @@ public class LoginAccountActivity extends BaseActivity {
                                 Toast.makeText(LoginAccountActivity.this,String.format("%d:%s",asyncHttpResponse.code(),jsonObject.getString("error")),Toast.LENGTH_SHORT).show();
                             } catch (JSONException jsonException) {
                                 jsonException.printStackTrace();
+                                alertException(jsonException);
                             }
                         }
                     });

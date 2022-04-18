@@ -102,6 +102,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                 });
             } catch (JSONException jsonException) {
                 jsonException.printStackTrace();
+                alertException(jsonException);
             }
         }
     };
@@ -138,6 +139,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                 work = new JSONObject(workStr);
             } catch (JSONException e) {
                 e.printStackTrace();
+                alertException(e);
                 finish();
                 return;
             }
@@ -272,6 +274,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                             return "image".equals(jsonObject.getString("type"));
                         } catch (JSONException e) {
                             e.printStackTrace();
+                            alertException(e);
                         }
                         return false;
                     }
@@ -282,6 +285,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                             imageList.add(jsonObject.getString("mediaStreamUrl"));
                         } catch (JSONException e) {
                             e.printStackTrace();
+                            alertException(e);
                         }
                     }
                 });
@@ -293,6 +297,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                         }
                     } catch (JSONException e) {
                         e.printStackTrace();
+                        alertException(e);
                     }
                 }
                 ImageBrowserActivity.start(this,imageList,index);
@@ -469,6 +474,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                                     ctrlBinder.play(Arrays.asList(item),0);
                                 } catch (JSONException e) {
                                     e.printStackTrace();
+                                    alertException(e);
                                 }
                             }
                         }
@@ -554,6 +560,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
             finish();
         } catch (JSONException e) {
             e.printStackTrace();
+            alertException(e);
         }
     }
 

@@ -144,6 +144,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                                 notifyDataSetChanged();
                             } catch (JSONException e) {
                                 e.printStackTrace();
+                                App.getInstance().alertException(e);
                             }
 
                         }
@@ -161,6 +162,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
+                App.getInstance().alertException(e);
             }
         } else if(holder instanceof DetailViewHolder){
             DetailViewHolder girdHolder = (DetailViewHolder) holder;
@@ -177,6 +179,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 girdHolder.tvSaleCount.setText(String.format("售出：%d",item.getInt("dl_count")));
             } catch (JSONException e) {
                 e.printStackTrace();
+                App.getInstance().alertException(e);
             }
         }
     }

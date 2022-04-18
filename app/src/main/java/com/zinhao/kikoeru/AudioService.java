@@ -130,7 +130,6 @@ public class AudioService extends Service{
         mHandler = new Handler(getMainLooper());
         mediaPlayer = new ExoPlayer.Builder(this).build();
         mediaPlayer.addListener(new Player.Listener() {
-
             @Override
             public void onIsPlayingChanged(boolean isPlaying) {
                 Log.d(TAG, "onIsPlayingChanged: ");
@@ -138,6 +137,8 @@ public class AudioService extends Service{
                     updateMediaSessionMetaData();
                 } catch (JSONException e) {
                     e.printStackTrace();
+                    alertException(e);
+
                 }
                 ctrlBinder.musicChangeListeners.forEach(new Consumer<MusicChangeListener>() {
                     @Override
@@ -197,6 +198,7 @@ public class AudioService extends Service{
                     .build();
         } catch (JSONException e) {
             e.printStackTrace();
+            alertException(e);
         }
         mediaSession.setMetadata(metadata);
         if(mediaPlayer.getPlaybackState() == Player.STATE_BUFFERING){
@@ -302,6 +304,16 @@ public class AudioService extends Service{
 
     private CtrlBinder ctrlBinder;
 
+    private void alertException(Exception e){
+        Activity activity = App.getInstance().getBackHelper().getLastActivity();
+        if(activity == null){
+            return;
+        }
+        if(activity instanceof BaseActivity){
+            ((BaseActivity) activity).alertException(e);
+        }
+    }
+
     public class CtrlBinder extends Binder implements Closeable {
         private List<JSONObject> playList;
         private JSONObject current;
@@ -334,12 +346,14 @@ public class AudioService extends Service{
                                         setCurrentAlbumId(jsonObject.getInt("id"));
                                     } catch (JSONException e) {
                                         e.printStackTrace();
+                                        alertException(e);
                                     }
                                     try {
                                         play(playList,0);
                                         getCtrl().getTransportControls().pause();
                                     } catch (JSONException e) {
                                         e.printStackTrace();
+                                        alertException(e);
                                     }
                                 }
                             });
@@ -347,6 +361,7 @@ public class AudioService extends Service{
                         }
                     } catch (JSONException jsonException) {
                         jsonException.printStackTrace();
+                        alertException(jsonException);
                     }
                 }
             }
@@ -412,6 +427,7 @@ public class AudioService extends Service{
                     }
                 } catch (JSONException jsonException) {
                     jsonException.printStackTrace();
+                    alertException(jsonException);
                 }
             }
         };
@@ -435,16 +451,6 @@ public class AudioService extends Service{
                 }
             }
         };
-
-        private void alertException(Exception e){
-            Activity activity = App.getInstance().getBackHelper().getLastActivity();
-            if(activity == null){
-                return;
-            }
-            if(activity instanceof BaseActivity){
-                ((BaseActivity) activity).alertException(e);
-            }
-        }
 
         public ExoPlayer getExoPlayer(){
             return mediaPlayer;

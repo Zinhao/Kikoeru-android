@@ -139,6 +139,7 @@ public class MusicPlayerActivity extends BaseActivity implements ServiceConnecti
                     setTitle(ctrlBinder.getCurrentTitle());
                 } catch (JSONException e) {
                     e.printStackTrace();
+                    alertException(e);
                 }
             }
         });

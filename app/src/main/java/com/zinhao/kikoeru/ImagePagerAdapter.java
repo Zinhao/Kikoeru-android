@@ -129,7 +129,7 @@ public class ImagePagerAdapter<T> extends PagerAdapter {
                     Toast.makeText(context,"已保存!",Toast.LENGTH_SHORT).show();
                 } catch (IOException e) {
                     e.printStackTrace();
-                    Toast.makeText(context,"保存失败！",Toast.LENGTH_SHORT).show();
+                    App.getInstance().alertException(e);
                 }
             }
         }).setPositiveButton("否", new DialogInterface.OnClickListener() {

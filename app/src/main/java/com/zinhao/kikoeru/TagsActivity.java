@@ -35,6 +35,7 @@ public class TagsActivity extends BaseActivity implements TagsView.TagClickListe
                 return jsonObject.getString("name")+ "("+jsonObject.getInt("count")+")";
             } catch (JSONException e) {
                 e.printStackTrace();
+                alertException(e);
             }
             return "";
         }
@@ -85,6 +86,7 @@ public class TagsActivity extends BaseActivity implements TagsView.TagClickListe
             finish();
         } catch (JSONException e) {
             e.printStackTrace();
+            alertException(e);
         }
     }
 

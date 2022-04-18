@@ -90,6 +90,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d?type=sam",item.getInt("id"))).into(((SimpleViewHolder) holder).ivCover);
             } catch (JSONException e) {
                 e.printStackTrace();
+                App.getInstance().alertException(e);
             }
         }
         if(holder instanceof GirdViewHolder){
@@ -108,6 +109,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
             } catch (JSONException e) {
                 e.printStackTrace();
+                App.getInstance().alertException(e);
             }
         }
 
@@ -119,6 +121,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 girdHolder.tvDate.setText(item.getString("release"));
             } catch (JSONException e) {
                 e.printStackTrace();
+                App.getInstance().alertException(e);
             }
 
         }
