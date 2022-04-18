@@ -456,8 +456,8 @@ public class AudioService extends Service{
             return mediaPlayer;
         }
 
-        private List<MusicChangeListener> musicChangeListeners = new ArrayList<>();
-        private List<LrcRowChangeListener> lrcRowChangeListeners = new ArrayList<>();
+        private final List<MusicChangeListener> musicChangeListeners = new ArrayList<>();
+        private final List<LrcRowChangeListener> lrcRowChangeListeners = new ArrayList<>();
 
         public MediaControllerCompat getCtrl(){
             return mediaSession.getController();

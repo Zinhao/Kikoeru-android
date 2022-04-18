@@ -32,11 +32,11 @@
             android:exported="true" />
         <activity
             android:name=".MainActivity"
-            android:exported="true"></activity>
+            android:exported="true" />
         <activity android:name=".LrcShowActivity" />
         <activity
             android:name=".VideoPlayerActivity"
-            android:theme="@style/Theme.AppCompat.NoActionBar" />
+            android:theme="@style/Theme.Kikoeru.NoActionBar" />
         <activity android:name=".MusicPlayerActivity" />
         <activity
             android:name=".LrcFloatWindow"

@@ -435,6 +435,8 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
             return true;
         }
         JSONObject item = (JSONObject) v.getTag();
+        if(item == null)
+            return false;
         try {
             if(jsonWorkTrees != null && work !=null){
                 LocalFileCache.getInstance().saveWork(this,work,jsonWorkTrees);
