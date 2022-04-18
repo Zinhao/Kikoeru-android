@@ -14,7 +14,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class TagsActivity extends AppCompatActivity implements TagsView.TagClickListener<JSONObject>{
+public class TagsActivity extends BaseActivity implements TagsView.TagClickListener<JSONObject>{
     private static final String TAG = "TagsActivity";
     private TagsView<JSONArray> tagsView;
     @Override

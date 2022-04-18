@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.os.Build;
 
 import com.bumptech.glide.request.RequestOptions;
+import com.jil.swipeback.SwipeBackApplication;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -16,7 +17,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class App extends Application {
+public class App extends SwipeBackApplication {
     public static final String ID_PLAY_SERVICE = "com.zinhao.kikoeru.play_control";
     private static App instance;
     public static final String CONFIG_UPDATE_TIME = "update_time";

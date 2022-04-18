@@ -20,7 +20,7 @@ import org.json.JSONObject;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class LrcShowActivity extends AppCompatActivity implements ServiceConnection,LrcRowChangeListener {
+public class LrcShowActivity extends BaseActivity implements ServiceConnection,LrcRowChangeListener {
     private boolean isCurrent;
 
     public static void start(Context context, String lrc, boolean isCurrent) {

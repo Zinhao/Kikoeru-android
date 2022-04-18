@@ -17,7 +17,7 @@ import com.koushikdutta.async.http.AsyncHttpResponse;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class LoginAccountActivity extends AppCompatActivity {
+public class LoginAccountActivity extends BaseActivity {
     private static final String TAG = "LoginAccountActivity";
     private TextInputLayout tilUser;
     private TextInputLayout tilPassword;

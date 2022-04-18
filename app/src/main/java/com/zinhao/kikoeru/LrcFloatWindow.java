@@ -18,7 +18,7 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-public class LrcFloatWindow extends AppCompatActivity implements ServiceConnection, View.OnTouchListener {
+public class LrcFloatWindow extends BaseActivity implements ServiceConnection, View.OnTouchListener {
 
     private AudioService.CtrlBinder ctrlBinder;
     @Override

@@ -16,7 +16,7 @@ import androidx.viewpager.widget.ViewPager;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ImageBrowserActivity extends AppCompatActivity {
+public class ImageBrowserActivity extends BaseActivity {
     private List<String> imageList;
     private ImagePagerAdapter<String> adapter;
     private ImageIndicator imageIndicator;

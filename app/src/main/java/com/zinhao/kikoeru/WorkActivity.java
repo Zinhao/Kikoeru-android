@@ -43,7 +43,7 @@ import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-public class WorkActivity extends AppCompatActivity implements View.OnClickListener,MusicChangeListener,
+public class WorkActivity extends BaseActivity implements View.OnClickListener,MusicChangeListener,
         ServiceConnection,LrcRowChangeListener,View.OnLongClickListener, TagsView.TagClickListener<JSONObject>,
         WorkTreeAdapter.RelativePathChangeListener{
     /**

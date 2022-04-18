@@ -13,7 +13,7 @@ import com.google.android.exoplayer2.ui.StyledPlayerView;
 
 import org.json.JSONObject;
 
-public class VideoPlayerActivity extends AppCompatActivity implements ServiceConnection,MusicChangeListener {
+public class VideoPlayerActivity extends BaseActivity implements ServiceConnection,MusicChangeListener {
     private StyledPlayerView playerView;
     private AudioService.CtrlBinder ctrlBinder;
     @Override

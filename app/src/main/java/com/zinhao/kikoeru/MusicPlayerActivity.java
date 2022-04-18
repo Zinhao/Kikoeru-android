@@ -23,7 +23,7 @@ import com.bumptech.glide.request.RequestOptions;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class MusicPlayerActivity extends AppCompatActivity implements ServiceConnection,MusicChangeListener,LrcRowChangeListener, SeekBar.OnSeekBarChangeListener {
+public class MusicPlayerActivity extends BaseActivity implements ServiceConnection,MusicChangeListener,LrcRowChangeListener, SeekBar.OnSeekBarChangeListener {
     private AudioService.CtrlBinder ctrlBinder;
     private ImageView imageView;
     private RequestOptions options;
