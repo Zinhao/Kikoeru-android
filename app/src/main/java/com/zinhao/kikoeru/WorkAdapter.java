@@ -87,7 +87,8 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 ((SimpleViewHolder) holder).tvTitle.setText(item.getString("title"));
                 ((SimpleViewHolder) holder).tvComArt.setText(item.getString("name"));
                 ((SimpleViewHolder) holder).tvTags.setText(App.getTagsStr(item));
-                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d?type=sam",item.getInt("id"))).into(((SimpleViewHolder) holder).ivCover);
+                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d?type=sam",item.getInt("id")))
+                        .apply(App.getInstance().getDefaultPic()).into(((SimpleViewHolder) holder).ivCover);
             } catch (JSONException e) {
                 e.printStackTrace();
                 App.getInstance().alertException(e);
@@ -96,7 +97,8 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if(holder instanceof GirdViewHolder){
             GirdViewHolder girdHolder = (GirdViewHolder) holder;
             try {
-                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d",item.getInt("id"))).apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
+                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d",item.getInt("id")))
+                        .apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
                 girdHolder.tvTitle.setText(item.getString("title"));
                 girdHolder.tvArt.setText(App.getArtStr(item));
                 girdHolder.tvCom.setText(item.getString("name"));
@@ -116,7 +118,8 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if(holder instanceof SmallGirdViewHolder){
             SmallGirdViewHolder girdHolder = (SmallGirdViewHolder) holder;
             try {
-                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d",item.getInt("id"))).apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
+                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d",item.getInt("id")))
+                        .apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
                 girdHolder.tvRjNumber.setText(String.format("RJ%d",item.getInt("id")));
                 girdHolder.tvDate.setText(item.getString("release"));
             } catch (JSONException e) {
