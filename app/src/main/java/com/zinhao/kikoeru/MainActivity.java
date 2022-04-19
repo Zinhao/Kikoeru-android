@@ -309,7 +309,7 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
         MenuItem menuItem1 = menu.add(0,0,0,"sign out");
         SubMenu menuProgress = menu.addSubMenu(0,1,1,"progress");
         menuProgress.setIcon(R.drawable.ic_baseline_favorite_24);
-        MenuItem menuItem3 =menu.add(0,2,2,"setting");
+        MenuItem menuItem3 =menu.add(0,2,2,"about");
         MenuItem menuItem4 =menu.add(1,3,3,"work");
         menuItem4.setIcon(R.drawable.ic_baseline_widgets_24);
         menuItem4.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
@@ -398,7 +398,7 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
             finish();
         }else if(item.getItemId() == 1){
         }else if(item.getItemId() == 2){
-
+            startActivity(new Intent(this,AboutActivity.class));
         }else if(item.getItemId() == 13){
             startActivityForResult(new Intent(this,TagsActivity.class),TAG_SELECT_RESULT);
         }else if(item.getItemId() == 14){

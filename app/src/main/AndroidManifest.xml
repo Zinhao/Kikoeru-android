@@ -47,6 +47,7 @@
         <activity
             android:name=".TagsActivity"
             android:exported="true" />
+        <activity android:name=".AboutActivity" />
 
         <service android:name=".AudioService" />
     </application>
