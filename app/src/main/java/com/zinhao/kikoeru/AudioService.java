@@ -58,7 +58,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.Buffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.Consumer;
@@ -414,7 +416,11 @@ public class AudioService extends Service{
 
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject lrcResult) {
-                if(lrcResult ==null){
+                if(e!=null){
+                    alertException(e);
+                    return;
+                }
+                if(lrcResult == null){
                     mLrc = Lrc.NONE;
                     return;
                 }
@@ -467,6 +473,27 @@ public class AudioService extends Service{
             musicChangeListeners.add(listener);
             if(current != null)
                 updateLastBottomView(listener);
+        }
+
+        public boolean equalsCurrentPlay(String lrcTitle){
+            if(lrcTitle == null)
+                return false;
+            if(!lrcTitle.toLowerCase(Locale.ROOT).endsWith(".lrc"))
+                return false;
+            try {
+                String musicTitle = current.getString("title");
+                if(musicTitle.isEmpty())
+                    return false;
+                if(!musicTitle.contains("."))
+                    return false;
+                String beforeLrcTitle = lrcTitle.substring(0,lrcTitle.lastIndexOf('.'));
+                String beforeMusicTitle =  musicTitle.substring(0,lrcTitle.lastIndexOf('.'));
+                return  beforeLrcTitle.equals(beforeMusicTitle);
+            } catch (JSONException e) {
+                e.printStackTrace();
+                alertException(e);
+            }
+            return false;
         }
 
         public void removeMusicChangeListener(MusicChangeListener listener){

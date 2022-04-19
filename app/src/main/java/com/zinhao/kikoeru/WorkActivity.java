@@ -67,6 +67,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
     private TextView tvTitle;
     private TextView tvWorkTitle;
     private ImageButton ibStatus;
+    private boolean isOpenCurrentPlayLrc = false;
 
 
     private final AsyncHttpClient.JSONArrayCallback docTreeCallback = new AsyncHttpClient.JSONArrayCallback() {
@@ -117,7 +118,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if(ctrlBinder.getLrc()!=null && ctrlBinder.getLrc().getText().equals(s)){
+                    if(isOpenCurrentPlayLrc){
                         LrcShowActivity.start(WorkActivity.this,ctrlBinder.getLrc().getText(),true);
                     }else {
                         LrcShowActivity.start(WorkActivity.this,s,false);
@@ -264,7 +265,11 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
     public void onClick(View v) {
         JSONObject item = (JSONObject) v.getTag();
         try {
-            if("image".equals(item.getString("type"))){
+            String itemTitle =item.getString("title");
+            String itemType = item.getString("type");
+            String itemMediaStreamUrl = item.getString("mediaStreamUrl");
+            String itemHash = item.getString("hash");
+            if("image".equals(itemType)){
                 List<String> imageList = new ArrayList<>();
                 int index = 0;
                 workTreeAdapter.getData().stream().filter(new Predicate<JSONObject>() {
@@ -295,18 +300,13 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                     }
                 });
                 for (int i = 0; i < imageList.size(); i++) {
-                    try {
-                        if(imageList.get(i).equals(item.getString("mediaStreamUrl"))){
-                            index = i;
-                            break;
-                        }
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                        alertException(e);
+                    if(imageList.get(i).equals(itemMediaStreamUrl)){
+                        index = i;
+                        break;
                     }
                 }
                 ImageBrowserActivity.start(this,imageList,index);
-            }else if("audio".equals(item.getString("type"))){
+            }else if("audio".equals(itemType)){
                 List<JSONObject> musicArray = new ArrayList<>();
                 int index = 0;
                 workTreeAdapter.getData().forEach(new Consumer<JSONObject>() {
@@ -323,33 +323,37 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                     }
                 });
                 for (int i = 0; i < musicArray.size(); i++) {
-                    if(musicArray.get(i).getString("hash").equals(item.getString("hash"))){
+                    if(musicArray.get(i).getString("hash").equals(itemHash)){
                         index = i;
                         break;
                     }
                 }
-                if(ctrlBinder.getCurrent()!=null && ctrlBinder.getCurrent().getString("mediaStreamUrl").equals(item.getString("mediaStreamUrl"))){
+                if(ctrlBinder.getCurrent()!=null && ctrlBinder.getCurrent().getString("mediaStreamUrl").equals(itemMediaStreamUrl)){
 
                 }else {
                     ctrlBinder.setReap();
                     ctrlBinder.setCurrentAlbumId(work.getInt("id"));
                     ctrlBinder.play(musicArray,index);
                 }
-                if(item.getString("title").toLowerCase(Locale.ROOT).endsWith("mp4")){
+                if(itemTitle.toLowerCase(Locale.ROOT).endsWith("mp4")){
                     startActivity(new Intent(this,VideoPlayerActivity.class));
                 }else {
                     startActivity(new Intent(this, MusicPlayerActivity.class));
                 }
-            } else if("text".equals(item.getString("type"))){
-                if(item.getString("title").toLowerCase(Locale.ROOT).endsWith("lrc")){
-                    Api.doGetMediaString(item.getString("hash"),lrcTextCallback);
+            } else if("text".equals(itemType)){
+                if(itemTitle.toLowerCase(Locale.ROOT).endsWith("lrc")){
+                    if(ctrlBinder.equalsCurrentPlay(itemTitle)){
+                        isOpenCurrentPlayLrc = true;
+                    }else {
+                        isOpenCurrentPlayLrc = false;
+                    }
+                    Api.doGetMediaString(itemHash,lrcTextCallback);
                 }
             }
         } catch (JSONException e) {
             e.printStackTrace();
             alertException(e);
         }
-
     }
 
     @Override

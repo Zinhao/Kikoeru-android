@@ -23,8 +23,7 @@
         android:layout_marginStart="0dp"
         android:layout_marginTop="0dp"
         android:layout_toEndOf="@+id/ivCover"
-        android:text="title"
-        android:textColor="@color/black" />
+        android:text="title" />
 
 
     <TextView

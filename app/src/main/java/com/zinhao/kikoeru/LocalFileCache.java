@@ -71,13 +71,6 @@ public class LocalFileCache implements Runnable, Closeable {
         }
         File workDir = instance.getExternalCacheDir(context,id);
         String title = item.getString("title");
-//        File relativeDir = new File(workDir.getPath() + relativePath);
-//        if(!relativeDir.exists()){
-//            if(!relativeDir.mkdirs()){
-//                Log.e(TAG, "mapLocalItemFile: mkdir failed！" );
-//                return null;
-//            }
-//        }
         return new File( workDir.getPath() + relativePath + File.separator + title);
     }
 
@@ -98,7 +91,6 @@ public class LocalFileCache implements Runnable, Closeable {
                         e.printStackTrace();
                         callback.onCompleted(e, new LocalResponse(404), null);
                     }
-
                 }
             });
             return true;

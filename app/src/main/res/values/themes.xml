@@ -8,12 +8,13 @@
         <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/pine_200</item>
         <item name="colorSecondaryVariant">@color/pine_700</item>
-        <item name="colorOnSecondary">@color/black</item>
+        <item name="colorOnSecondary">@android:color/holo_green_light</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowIsTranslucent">true</item>
+
     </style>
 
     <style name="Theme.Kikoeru.NoActionBar">

@@ -100,9 +100,7 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
                 JSONArray jsonArray = jsonObject.getJSONArray("works");
                 totalCount = jsonObject.getJSONObject("pagination").getInt("totalCount");
                 page = jsonObject.getJSONObject("pagination").getInt("currentPage") +1;
-                for (int i = 0; i < jsonArray.length(); i++) {
-                    works.add(jsonArray.getJSONObject(i));
-                }
+
                 if(jsonArray.length() != 0){
                     page = Math.min(page,totalCount/jsonArray.length() + 1);
                 }
@@ -110,15 +108,20 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
                     @SuppressLint("DefaultLocale")
                     @Override
                     public void run() {
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            try {
+                                works.add(jsonArray.getJSONObject(i));
+                            } catch (JSONException jsonException) {
+                                jsonException.printStackTrace();
+                                alertException(jsonException);
+                            }
+                        }
                         if(workAdapter == null){
                             initLayout((int) App.getInstance().getValue(App.CONFIG_LAYOUT_TYPE,WorkAdapter.LAYOUT_SMALL_GRID));
                             recyclerView.addOnScrollListener(scrollListener);
                         }else {
-                            try{
-                                workAdapter.notifyDataSetChanged();
-                            }catch (Exception e){
-
-                            }
+                            workAdapter.notifyItemRangeInserted(Math.max(0,works.size() - jsonArray.length()),jsonArray.length());
+                            workAdapter.notifyItemRangeChanged(Math.max(0,works.size() - jsonArray.length()),jsonArray.length());
                         }
                     }
                 });
@@ -321,20 +324,20 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
         menuProgress.add(1,7,7,Api.FILTER_REPLAY);
         menuProgress.add(1,8,8,Api.FILTER_POSTPONED);
 
-        SubMenu menuItem5 = menu.addSubMenu(0,9,9,"layout");
-        menuItem5.setIcon(R.drawable.ic_baseline_view_column_24);
-        menuItem5.add(2,10,10,"list");
-        menuItem5.add(2,11,11,"small gird");
-        menuItem5.add(2,12,12,"gird");
-        menuItem5.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        SubMenu layoutMenu = menu.addSubMenu(0,9,9,"layout");
+        layoutMenu.setIcon(R.drawable.ic_baseline_view_column_24);
+        layoutMenu.add(2,10,10,"list");
+        layoutMenu.add(2,11,11,"small gird");
+        layoutMenu.add(2,12,12,"gird");
+        layoutMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
-        MenuItem menuItem6 = menu.add(0,13,13,"tags");
-        menuItem6.setIcon(R.drawable.ic_baseline_tag_24);
-        menuItem6.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        MenuItem tagMenu = menu.add(0,13,13,"tags");
+        tagMenu.setIcon(R.drawable.ic_baseline_tag_24);
+        tagMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
-        MenuItem menuItem7 = menu.add(0,14,14,"local");
-        menuItem7.setIcon(R.drawable.ic_baseline_storage_24);
-        menuItem7.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        MenuItem localSaveMenu = menu.add(0,14,14,"local");
+        localSaveMenu.setIcon(R.drawable.ic_baseline_storage_24);
+        localSaveMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
         menu.add(0,15,15,"setting");
 

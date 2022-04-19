@@ -1,8 +1,10 @@
 package com.zinhao.kikoeru;
 
 import android.annotation.SuppressLint;
-import android.content.Intent;
+import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Color;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,11 +12,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.RequestOptions;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -35,6 +35,8 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private JSONObject headerInfo;
     private static final int TYPE_HEADER = 295;
     private static final int TYPE_FILE = 296;
+    private int unCacheItemBackgroundColor = -1;
+    private int cachedItemBackgroundColor = -1;
 
     public void setHeaderInfo(JSONObject headerInfo) {
         this.headerInfo = headerInfo;
@@ -77,6 +79,16 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        if(unCacheItemBackgroundColor == -1 || cachedItemBackgroundColor == -1){
+            Context context = parent.getContext();
+            TypedValue typedValue = new TypedValue();
+            context.getTheme().resolveAttribute(android.R.attr.textAppearanceLarge, typedValue, true);
+            int[] attribute = new int[] { R.attr.colorOnPrimary,R.attr.colorOnSecondary};
+            TypedArray array = context.obtainStyledAttributes(typedValue.resourceId, attribute);
+            unCacheItemBackgroundColor = array.getColor(0 , Color.WHITE);
+            cachedItemBackgroundColor = array.getColor(1 , Color.WHITE);
+            array.recycle();
+        }
         View v;
         if(viewType == TYPE_FILE){
             v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_tree_1,parent,false);
@@ -105,9 +117,10 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 File mapFile = LocalFileCache.getInstance().mapLocalItemFile(holder.itemView.getContext(),item,headerInfo.getInt("id"),getRelativePath());
                 if(mapFile.exists()){
                     item.put("local_file_path",mapFile.getAbsolutePath());
-                    holder.itemView.setBackgroundColor(Color.GREEN);
+                    holder.itemView.setBackgroundColor(cachedItemBackgroundColor);
                 }else {
-                    holder.itemView.setBackgroundColor(Color.WHITE);
+
+                    holder.itemView.setBackgroundColor(unCacheItemBackgroundColor);
                 }
                 ((SimpleViewHolder) holder).tvCount.setText(item.getString("type"));
                 if("folder".equals(item.getString("type"))){
