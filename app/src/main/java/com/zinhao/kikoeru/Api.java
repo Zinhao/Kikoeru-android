@@ -83,8 +83,23 @@ public class Api {
         AsyncHttpClient.getDefaultInstance().executeJSONObject(request, callback);
     }
 
+    public static void doGetWorkByVa(int page,String vaId,AsyncHttpClient.JSONObjectCallback callback){
+//        http://localhost:8888/api/vas/2b5e7ab5-d994-5491-a53c-f1b6ae562d0e/works?order=price&sort=desc&page=1&seed=68
+        AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST+String.format("/api/vas/%s/works?order=%s&sort=%s&page=%d&seed=21&subtitle=%d",vaId,order,makeSort(),page,subtitle)),"GET");
+        request.setTimeout(5000);
+        request.addHeader("authorization",authorization);
+        AsyncHttpClient.getDefaultInstance().executeJSONObject(request, callback);
+    }
+
     public static void doGetAllTags(AsyncHttpClient.JSONArrayCallback callback){
         AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST+"/api/tags/"),"GET");
+        request.setTimeout(5000);
+        request.addHeader("authorization",authorization);
+        AsyncHttpClient.getDefaultInstance().executeJSONArray(request, callback);
+    }
+
+    public static void doGetAllVas(AsyncHttpClient.JSONArrayCallback callback){
+        AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST+"/api/vas/"),"GET");
         request.setTimeout(5000);
         request.addHeader("authorization",authorization);
         AsyncHttpClient.getDefaultInstance().executeJSONArray(request, callback);

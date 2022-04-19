@@ -88,19 +88,19 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:padding="4dp"
-        android:textColor="@color/white"
+        app:tagBackground="@drawable/card_bg_tagview"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/tvPrice"
         app:layout_constraintTop_toBottomOf="@+id/tvPrice" />
 
-    <TextView
+    <com.zinhao.kikoeru.TagsView
         android:id="@+id/tvArt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/card_bg_lrc"
         android:layout_marginBottom="10dp"
         android:padding="5dp"
         android:text="こやまはる"
+        app:tagBackground="@drawable/card_bg_lrc"
         android:textColor="@color/white"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="@+id/tvTags"

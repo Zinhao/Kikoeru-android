@@ -4,9 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
 
@@ -14,17 +11,18 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class TagsActivity extends BaseActivity implements TagsView.TagClickListener<JSONObject>{
-    private static final String TAG = "TagsActivity";
-    private TagsView<JSONArray> tagsView;
+public class VasActivity extends BaseActivity implements TagsView.TagClickListener<JSONObject>{
+    private static final String TAG = "VasActivity";
+    private TagsView<JSONArray> VasView;
+
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_tags);
-        tagsView = findViewById(R.id.tagsView);
-        tagsView.setTagClickListener(this);
-        Api.doGetAllTags(callback);
-
+        VasView = findViewById(R.id.tagsView);
+        VasView.setTagClickListener(this);
+        VasView.setTagBackgroundResource(R.drawable.card_bg_lrc);
+        Api.doGetAllVas(callback);
     }
 
     private final TagsView.TextGet<JSONObject> textGet = new TagsView.TextGet<JSONObject>() {
@@ -55,15 +53,15 @@ public class TagsActivity extends BaseActivity implements TagsView.TagClickListe
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    tagsView.setTags(jsonArray,textGet);
-                    if(!tagsView.isInLayout()){
-                        tagsView.requestLayout();
+                    VasView.setTags(jsonArray,textGet);
+                    if(!VasView.isInLayout()){
+                        VasView.requestLayout();
                     }else {
-                        tagsView.postDelayed(new Runnable() {
+                        VasView.postDelayed(new Runnable() {
                             @Override
                             public void run() {
-                                if(!tagsView.isInLayout()){
-                                    tagsView.requestLayout();
+                                if(!VasView.isInLayout()){
+                                    VasView.requestLayout();
                                 }
                             }
                         },500);
@@ -78,14 +76,14 @@ public class TagsActivity extends BaseActivity implements TagsView.TagClickListe
     @Override
     public void onTagClick(JSONObject jsonObject) {
         try {
-            int tagId = jsonObject.getInt("id");
-            Log.d(TAG, "onTagClick: "+ tagId);
-            String tagName = jsonObject.getString("name");
-            setTitle(tagName);
+            String vaId = jsonObject.getString("id");
+            Log.d(TAG, "onTagClick: "+ vaId);
+            String vaName = jsonObject.getString("name");
+            setTitle(vaName);
             Intent intent = new Intent();
-            intent.putExtra("resultType","tag");
-            intent.putExtra("id",tagId);
-            intent.putExtra("name",tagName);
+            intent.putExtra("resultType","va");
+            intent.putExtra("id",vaId);
+            intent.putExtra("name",vaName);
             setResult(RESULT_OK,intent);
             finish();
         } catch (JSONException e) {

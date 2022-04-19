@@ -94,6 +94,10 @@ public class App extends SwipeBackApplication {
         return stringBuilder.toString();
     }
 
+    public static JSONArray getVasList(JSONObject jsonObject) throws JSONException {
+        return  jsonObject.getJSONArray("vas");
+    }
+
     public void setValue(String key, String value){
         SharedPreferences sharedPreferences = getSharedPreferences("app.config",MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();

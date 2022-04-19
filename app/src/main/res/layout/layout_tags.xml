@@ -9,6 +9,7 @@
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"
         android:layout_width="match_parent"
+        app:tagBackground="@drawable/card_bg_tagview"
         android:layout_height="wrap_content" />
 
 </ScrollView>

@@ -27,6 +27,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private int layoutType;
     private TagsView.TextGet<JSONObject> textGet;
     private TagsView.TagClickListener tagClickListener;
+    private TagsView.TagClickListener vaClickListener;
     private View.OnClickListener itemClickListener;
     public static final int LAYOUT_LIST = 846;
     public static final int LAYOUT_SMALL_GRID = 847;
@@ -38,6 +39,10 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     public void setItemClickListener(View.OnClickListener itemClickListener) {
         this.itemClickListener = itemClickListener;
+    }
+
+    public void setVaClickListener(TagsView.TagClickListener<?> vaClickListener) {
+        this.vaClickListener = vaClickListener;
     }
 
     public WorkAdapter(List<JSONObject> datas) {
@@ -100,7 +105,8 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d",item.getInt("id")))
                         .apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
                 girdHolder.tvTitle.setText(item.getString("title"));
-                girdHolder.tvArt.setText(App.getArtStr(item));
+                girdHolder.tvArt.setTags(App.getVasList(item),TagsView.JSON_TEXT_GET.setKey("name"));
+                girdHolder.tvArt.setTagClickListener(vaClickListener);
                 girdHolder.tvCom.setText(item.getString("name"));
                 girdHolder.tvTags.setTags(App.getTagsList(item),textGet);
                 girdHolder.tvTags.setTagClickListener(tagClickListener);
@@ -155,7 +161,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         private ImageView ivCover;
         private TextView tvTitle;
         private TextView tvCom;
-        private TextView tvArt;
+        private TagsView<JSONArray> tvArt;
         private TagsView<JSONArray> tvTags;
         private TextView tvRjNumber;
         private TextView tvDate;

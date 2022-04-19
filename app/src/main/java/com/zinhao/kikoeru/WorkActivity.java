@@ -92,6 +92,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                         workTreeAdapter = new WorkTreeAdapter(workTrees);
                         workTreeAdapter.setItemClickListener(WorkActivity.this);
                         workTreeAdapter.setTagClickListener(WorkActivity.this);
+                        workTreeAdapter.setVaClickListener(vaClickListener);
                         workTreeAdapter.setItemLongClickListener(WorkActivity.this);
                         workTreeAdapter.setPathChangeListener(WorkActivity.this);
                         workTreeAdapter.setHeaderInfo(work);
@@ -565,6 +566,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
             String tagName = jsonObject.getString("name");
             setTitle(tagName);
             Intent intent = new Intent();
+            intent.putExtra("resultType","tag");
             intent.putExtra("id",tagId);
             intent.putExtra("name",tagName);
             setResult(RESULT_OK,intent);
@@ -574,6 +576,28 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
             alertException(e);
         }
     }
+
+
+    private final TagsView.TagClickListener<JSONObject> vaClickListener = new TagsView.TagClickListener<JSONObject>() {
+        @Override
+        public void onTagClick(JSONObject jsonObject) {
+            try {
+                String vaId = jsonObject.getString("id");
+                Log.d(TAG, "onTagClick: "+ vaId);
+                String vaName = jsonObject.getString("name");
+                setTitle(vaName);
+                Intent intent = new Intent();
+                intent.putExtra("resultType","va");
+                intent.putExtra("id",vaId);
+                intent.putExtra("name",vaName);
+                setResult(RESULT_OK,intent);
+                finish();
+            } catch (JSONException e) {
+                e.printStackTrace();
+                alertException(e);
+            }
+        }
+    };
 
     @Override
     public void onPathChange(String path) {

@@ -61,6 +61,8 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
     private ImageButton ibStatus;
     private int tagId = -1;
     private String tagStr = "";
+    private String vaId  = "";
+    private String vaName= "";
 
     private static final int TYPE_ALL_WORK = 491;
     private static final int TYPE_SELF_LISTENING = 492;
@@ -70,6 +72,8 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
     private static final int TYPE_SELF_POSTPONED = 496;
     private static final int TYPE_TAG_WORK = 497;
     private static final int TYPE_LOCAL_WORK = 498;
+    private static final int TYPE_VA_WORK = 499;
+
     private int type = TYPE_ALL_WORK;
 
     private AsyncHttpClient.JSONObjectCallback apisCallback = new AsyncHttpClient.JSONObjectCallback() {
@@ -133,6 +137,7 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
     };
     private AudioService.CtrlBinder ctrlBinder;
     private static final int TAG_SELECT_RESULT = 14;
+    private static final int VA_SELECT_RESULT = 15;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -217,6 +222,9 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
         }else if(type == TYPE_TAG_WORK){
             setTitle(tagStr);
             Api.doGetWorksByTag(page,tagId,apisCallback);
+        }else if(type == TYPE_VA_WORK){
+            setTitle(vaName);
+            Api.doGetWorkByVa(page,vaId,apisCallback);
         }else if(type == TYPE_LOCAL_WORK){
             setTitle("本地緩存");
             try {
@@ -309,11 +317,11 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuItem menuItem1 = menu.add(0,0,0,"sign out");
-        SubMenu menuProgress = menu.addSubMenu(0,1,1,"progress");
+        MenuItem signOutMenu = menu.add(0,0,0,"登出");
+        SubMenu menuProgress = menu.addSubMenu(0,1,1,"我的进度");
         menuProgress.setIcon(R.drawable.ic_baseline_favorite_24);
-        MenuItem menuItem3 =menu.add(0,2,2,"about");
-        MenuItem menuItem4 =menu.add(1,3,3,"work");
+        MenuItem aboutMenu =menu.add(0,2,2,"关于");
+        MenuItem menuItem4 =menu.add(1,3,3,"全部作品");
         menuItem4.setIcon(R.drawable.ic_baseline_widgets_24);
         menuItem4.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         menuProgress.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
@@ -324,29 +332,31 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
         menuProgress.add(1,7,7,Api.FILTER_REPLAY);
         menuProgress.add(1,8,8,Api.FILTER_POSTPONED);
 
-        SubMenu layoutMenu = menu.addSubMenu(0,9,9,"layout");
+        SubMenu layoutMenu = menu.addSubMenu(0,9,9,"布局");
         layoutMenu.setIcon(R.drawable.ic_baseline_view_column_24);
-        layoutMenu.add(2,10,10,"list");
-        layoutMenu.add(2,11,11,"small gird");
-        layoutMenu.add(2,12,12,"gird");
-        layoutMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        layoutMenu.add(2,10,10,"列表视图");
+        layoutMenu.add(2,11,11,"封面网格");
+        layoutMenu.add(2,12,12,"详细网格");
+        layoutMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
 
-        MenuItem tagMenu = menu.add(0,13,13,"tags");
+        MenuItem tagMenu = menu.add(0,13,13,"标签");
         tagMenu.setIcon(R.drawable.ic_baseline_tag_24);
         tagMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
-        MenuItem localSaveMenu = menu.add(0,14,14,"local");
+        MenuItem localSaveMenu = menu.add(0,14,14,"本地缓存");
         localSaveMenu.setIcon(R.drawable.ic_baseline_storage_24);
-        localSaveMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        localSaveMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
 
-        menu.add(0,15,15,"setting");
+        menu.add(0,15,15,"设置");
 
         SubMenu sortMenu = menu.addSubMenu(0,16,16,"排序");
         sortMenu.add(3,17,17,"发布时间");
         sortMenu.add(3,18,18,"RJ号码");
         sortMenu.add(3,19,19,"价格");
         sortMenu.add(3,20,20,"最新收录");
-        return super.onCreateOptionsMenu(menu);
+
+        menu.add(0,21,21,"声优");
+     return super.onCreateOptionsMenu(menu);
     }
 
     @Override
@@ -442,6 +452,8 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
             }
         }else if(item.getItemId() == 15){
             startActivity(new Intent(this,SettingActivity.class));
+        }else if(item.getItemId() == 21){
+            startActivityForResult(new Intent(this,VasActivity.class),VA_SELECT_RESULT);
         }
         return super.onOptionsItemSelected(item);
     }
@@ -449,38 +461,53 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == TAG_SELECT_RESULT){
+        if(requestCode == TAG_SELECT_RESULT || requestCode == VA_SELECT_RESULT){
             if(resultCode == RESULT_OK && data!=null){
-                int tagId = data.getIntExtra("id",-1);
-                type = TYPE_TAG_WORK;
-                if(tagId != this.tagId){
-                    tagStr = data.getStringExtra("name");
-                    clearWork();
-                    this.tagId = tagId;
+                String resultType = data.getStringExtra("resultType");
+                if(resultType == null){
+                    return;
+                }
+                if(resultType.equals("va")){
+                    String vaId = data.getStringExtra("id");
+                    type = TYPE_VA_WORK;
+                    if(!vaId.equals(this.vaId)){
+                        vaName = data.getStringExtra("name");
+                        clearWork();
+                        this.vaId = vaId;
+                    }
+                }else if(resultType.equals("tag")){
+                    int tagId = data.getIntExtra("id",-1);
+                    type = TYPE_TAG_WORK;
+                    if(tagId != this.tagId){
+                        tagStr = data.getStringExtra("name");
+                        clearWork();
+                        this.tagId = tagId;
+                    }
                 }
                 getNextPage();
             }
         }
     }
 
-    private void initLayout(int layoutType){
+    private void initLayout(int layoutType) {
         RecyclerView.LayoutManager layoutManager = null;
-        if(layoutType == WorkAdapter.LAYOUT_LIST){
+        if (layoutType == WorkAdapter.LAYOUT_LIST) {
             layoutManager = new LinearLayoutManager(MainActivity.this);
-        }else if( layoutType == WorkAdapter.LAYOUT_SMALL_GRID){
-            layoutManager=new GridLayoutManager(MainActivity.this,3);
-        }else if(layoutType == WorkAdapter.LAYOUT_BIG_GRID){
-            layoutManager = new GridLayoutManager(MainActivity.this,2);
+        } else if (layoutType == WorkAdapter.LAYOUT_SMALL_GRID) {
+            layoutManager = new GridLayoutManager(MainActivity.this, 3);
+        } else if (layoutType == WorkAdapter.LAYOUT_BIG_GRID) {
+            layoutManager = new GridLayoutManager(MainActivity.this, 2);
         }
-        workAdapter = new WorkAdapter(works,layoutType);
+        workAdapter = new WorkAdapter(works, layoutType);
         workAdapter.setTagClickListener(this);
+        workAdapter.setVaClickListener(vaClickListener);
         workAdapter.setItemClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 JSONObject item = (JSONObject) v.getTag();
-                Intent intent = new Intent(v.getContext(),WorkActivity.class);
-                intent.putExtra("work_json_str",item.toString());
-                ActivityCompat.startActivityForResult(MainActivity.this,intent,TAG_SELECT_RESULT,null);
+                Intent intent = new Intent(v.getContext(), WorkActivity.class);
+                intent.putExtra("work_json_str", item.toString());
+                ActivityCompat.startActivityForResult(MainActivity.this, intent, TAG_SELECT_RESULT, null);
             }
         });
         recyclerView.setLayoutManager(layoutManager);
@@ -522,4 +549,23 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
             alertException(e);
         }
     }
+
+    private final TagsView.TagClickListener<JSONObject> vaClickListener = new TagsView.TagClickListener<JSONObject>() {
+        @Override
+        public void onTagClick(JSONObject jsonObject) {
+            try {
+                String vaId = jsonObject.getString("id");
+                type = TYPE_VA_WORK;
+                if(!vaId.equals(MainActivity.this.vaId)){
+                    vaName = jsonObject.getString("name");
+                    clearWork();
+                    MainActivity.this.vaId = vaId;
+                }
+                getNextPage();
+            } catch (JSONException e) {
+                e.printStackTrace();
+                alertException(e);
+            }
+        }
+    };
 }

@@ -29,6 +29,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private View.OnClickListener itemClickListener;
     private View.OnLongClickListener longClickListener;
     private TagsView.TagClickListener tagClickListener;
+    private TagsView.TagClickListener vaClickListener;
     private List<List<JSONObject>> parentData;
     private List<String> pathList;
     private RelativePathChangeListener pathChangeListener;
@@ -52,6 +53,10 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     public void setTagClickListener(TagsView.TagClickListener<?> tagClickListener) {
         this.tagClickListener = tagClickListener;
+    }
+
+    public void setVaClickListener(TagsView.TagClickListener<?> vaClickListener) {
+        this.vaClickListener = vaClickListener;
     }
 
     public void setItemLongClickListener(View.OnLongClickListener longClickListener) {
@@ -182,7 +187,8 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             try {
                 Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d",item.getInt("id"))).apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
                 girdHolder.tvTitle.setText(item.getString("title"));
-                girdHolder.tvArt.setText(App.getArtStr(item));
+                girdHolder.tvArt.setTags(App.getVasList(item),TagsView.JSON_TEXT_GET.setKey("name"));
+                girdHolder.tvArt.setTagClickListener(vaClickListener);
                 girdHolder.tvCom.setText(item.getString("name"));
                 girdHolder.tvTags.setTags(App.getTagsList(item),TagsView.JSON_TEXT_GET.setKey("name"));
                 girdHolder.tvTags.setTagClickListener(tagClickListener);
@@ -245,7 +251,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         private ImageView ivCover;
         private TextView tvTitle;
         private TextView tvCom;
-        private TextView tvArt;
+        private TagsView<JSONArray> tvArt;
         private TagsView<JSONArray> tvTags;
         private TextView tvRjNumber;
         private TextView tvDate;

@@ -42,4 +42,10 @@ public class BaseActivity extends SlideOutActivity {
             }
         });
     }
+
+    @Override
+    public void finish() {
+        super.finish();
+        overridePendingTransition(R.anim.activity_in, R.anim.activity_out);
+    }
 }

@@ -1,6 +1,7 @@
 package com.zinhao.kikoeru;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -46,6 +47,11 @@ public class TagsView<T> extends View{
     @Override
     public boolean onGenericMotionEvent(MotionEvent event) {
         return gestureDetector.onGenericMotionEvent(event);
+    }
+
+    public void setTagBackgroundResource(int resid) {
+        tagBg = ContextCompat.getDrawable(getContext(),resid);
+        invalidate();
     }
 
     @Override
@@ -112,7 +118,9 @@ public class TagsView<T> extends View{
             tagsRectFs.add(new RectF());
         }
         setPadding(10,7,0,7);
-        tagBg = ContextCompat.getDrawable(context,R.drawable.card_bg_tagview);
+        TypedArray array = context.obtainStyledAttributes(attrs,R.styleable.TagsView);
+        tagBg = array.getDrawable(R.styleable.TagsView_tagBackground);
+        array.recycle();
         simpleOnGestureListener = new GestureDetector.SimpleOnGestureListener(){
             @Override
             public boolean onContextClick(MotionEvent e) {
@@ -280,17 +288,13 @@ public class TagsView<T> extends View{
         super.onDraw(canvas);
         for (int i = 0; i < getTagsLen(); i++) {
             RectF tagRectF = tagsRectFs.get(i);
-
-            tagBg.setBounds((int)tagRectF.left,(int)tagRectF.top,(int)tagRectF.right,(int)tagRectF.bottom);
-            tagBg.draw(canvas);
-
+            if(tagBg!=null){
+                tagBg.setBounds((int)tagRectF.left,(int)tagRectF.top,(int)tagRectF.right,(int)tagRectF.bottom);
+                tagBg.draw(canvas);
+            }
             textPaint.setColor(Color.WHITE);
             textPaint.setStyle(Paint.Style.FILL);
             canvas.drawText(getTagText(i),tagsRectFs.get(i).centerX(),tagsRectFs.get(i).centerY()+textDistance,textPaint);
-
-//            textPaint.setColor(Color.RED);
-//            textPaint.setStyle(Paint.Style.STROKE);
-//            canvas.drawRect(tagRectF,textPaint);
         }
     }
 }
