@@ -112,6 +112,9 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
                     @SuppressLint("DefaultLocale")
                     @Override
                     public void run() {
+                        if(type == TYPE_ALL_WORK){
+                            setTitle(String.format("%s(%d)",getString(R.string.app_name),totalCount));
+                        }
                         for (int i = 0; i < jsonArray.length(); i++) {
                             try {
                                 works.add(jsonArray.getJSONObject(i));
