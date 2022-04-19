@@ -1,10 +1,13 @@
 package com.zinhao.kikoeru;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -170,6 +173,20 @@ public class LoginAccountActivity extends BaseActivity {
         App.getInstance().setValue(App.CONFIG_USER_PASSWORD,password);
         Api.doGetToken(userName,password,host,signInCallback);
         return true;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuItem menuItem3 =menu.add(0,2,2,"about");
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if(item.getItemId() == 2){
+            startActivity(new Intent(this,AboutActivity.class));
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void next(){

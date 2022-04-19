@@ -335,6 +335,14 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
         MenuItem menuItem7 = menu.add(0,14,14,"local");
         menuItem7.setIcon(R.drawable.ic_baseline_storage_24);
         menuItem7.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+
+        menu.add(0,15,15,"setting");
+
+        SubMenu sortMenu = menu.addSubMenu(0,16,16,"排序");
+        sortMenu.add(3,17,17,"发布时间");
+        sortMenu.add(3,18,18,"RJ号码");
+        sortMenu.add(3,19,19,"价格");
+        sortMenu.add(3,20,20,"最新收录");
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -392,6 +400,28 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
             return super.onOptionsItemSelected(item);
         }
 
+        if(item.getGroupId() == 3){
+            boolean update = false;
+            if(item.getItemId() == 17){
+                Api.setOrder("release");
+                update = true;
+            }else if(item.getItemId() == 18){
+                Api.setOrder("id");
+                update = true;
+            }else if(item.getItemId() == 19){
+                Api.setOrder("price");
+                update = true;
+            }else if(item.getItemId() == 20){
+                Api.setOrder("create_date");
+                update = true;
+            }
+            if(update){
+                clearWork();
+                getNextPage();
+            }
+            return true;
+        }
+
         if(item.getItemId() == 0){
             App.getInstance().setValue(App.CONFIG_UPDATE_TIME,0);
             startActivity(new Intent(this,LoginAccountActivity.class));
@@ -407,6 +437,8 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
                 clearWork();
                 getNextPage();
             }
+        }else if(item.getItemId() == 15){
+            startActivity(new Intent(this,SettingActivity.class));
         }
         return super.onOptionsItemSelected(item);
     }

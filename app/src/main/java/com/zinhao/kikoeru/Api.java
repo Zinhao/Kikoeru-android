@@ -31,24 +31,53 @@ public class Api {
     public static final String LOCAL_HOST = "http://192.168.1.47:8888";
     public static String authorization = "";
     public static String token = "";
+    private static int subtitle = 1;
+    private static int sort = 1;
+    private static String order = "id";
 
     public static void init(String tokenStr,String host){
         token = tokenStr;
         authorization = String.format("Bearer %s",tokenStr);
         HOST = host;
+        subtitle = (int) App.getInstance().getValue(App.CONFIG_ONLY_DISPLAY_LRC,1);
+        order = App.getInstance().getValue(App.CONFIG_ORDER,"id");
+        sort = (int) App.getInstance().getValue(App.CONFIG_SORT,1);
     }
 
-    public static void doGetWorks(int page,AsyncHttpClient.JSONObjectCallback callback){
-        //https://api.asmr.one/api/works?order=create_date&sort=desc&page=1&seed=40&subtitle=1
+    private static String makeSort(){
+        if(sort != 1){
+            return "desc";
+        }else {
+            return "asc";
+        }
+    }
+
+    public static void setOrder(String order) {
+        if(Api.order.equals(order)){
+            if(sort == 1){
+                sort = 0;
+            }else {
+                sort = 1;
+            }
+            return;
+        }
+        Api.order = order;
+    }
+
+    public static void setSubtitle(int subtitle) {
+        Api.subtitle = subtitle;
+    }
+
+    public static void doGetWorks(int page, AsyncHttpClient.JSONObjectCallback callback){
         //subtitle=1 带字幕
-        AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST+String.format("/api/works?order=release&sort=desc&page=%d&seed=35&subtitle=1",page)),"GET");
+        AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST+String.format("/api/works?order=%s&sort=%s&page=%d&seed=35&subtitle=%d",order,makeSort(),page,subtitle)),"GET");
         request.setTimeout(5000);
         request.addHeader("authorization",authorization);
         AsyncHttpClient.getDefaultInstance().executeJSONObject(request, callback);
     }
 
     public static void doGetWorksByTag(int page,int tagId,AsyncHttpClient.JSONObjectCallback callback){
-        AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST+String.format("/api/tags/%d/works?order=release&sort=desc&page=%d&seed=21&subtitle=1",tagId,page)),"GET");
+        AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST+String.format("/api/tags/%d/works?order=%s&sort=%s&page=%d&seed=21&subtitle=%d",tagId,order,makeSort(),page,subtitle)),"GET");
         request.setTimeout(5000);
         request.addHeader("authorization",authorization);
         AsyncHttpClient.getDefaultInstance().executeJSONObject(request, callback);

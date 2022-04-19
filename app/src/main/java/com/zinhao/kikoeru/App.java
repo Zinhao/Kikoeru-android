@@ -27,6 +27,9 @@ public class App extends SwipeBackApplication {
     public static final String CONFIG_USER_PASSWORD = "password";
     public static final String CONFIG_HOST = "host";
     public static final String CONFIG_LAYOUT_TYPE = "layout_type";
+    public static final String CONFIG_ONLY_DISPLAY_LRC = "only_display_lrc";
+    public static final String CONFIG_SORT = "sort";
+    public static final String CONFIG_ORDER = "order";
 
     public static App getInstance() {
         return instance;
