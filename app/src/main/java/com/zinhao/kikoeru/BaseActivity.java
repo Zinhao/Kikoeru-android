@@ -13,6 +13,11 @@ public class BaseActivity extends SlideOutActivity {
         super.onCreate(savedInstanceState);
     }
 
+    @Override
+    protected boolean enableSlide() {
+        return true;
+    }
+
     protected void alertException(Exception e){
         runOnUiThread(new Runnable() {
             @Override

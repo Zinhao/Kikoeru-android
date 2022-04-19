@@ -52,6 +52,11 @@ public class VideoPlayerActivity extends BaseActivity implements ServiceConnecti
     }
 
     @Override
+    protected boolean enableSlide() {
+        return false;
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         unbindService(this);
