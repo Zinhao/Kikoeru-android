@@ -59,9 +59,11 @@ public class Api {
             }else {
                 sort = 1;
             }
+            App.getInstance().setValue(App.CONFIG_SORT,order);
             return;
         }
         Api.order = order;
+        App.getInstance().setValue(App.CONFIG_ORDER,order);
     }
 
     public static void setSubtitle(int subtitle) {
