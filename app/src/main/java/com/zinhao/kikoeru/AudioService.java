@@ -480,6 +480,8 @@ public class AudioService extends Service{
                 return false;
             if(!lrcTitle.toLowerCase(Locale.ROOT).endsWith(".lrc"))
                 return false;
+            if(current == null)
+                return false;
             try {
                 String musicTitle = current.getString("title");
                 if(musicTitle.isEmpty())
