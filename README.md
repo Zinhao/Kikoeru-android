@@ -2,6 +2,8 @@
 用于浏览Kikoeru服务器内容的Android应用程序
 ## 什么是Kikoeru
 [Kikoeru-project][1]
+## App兼容什么版本的Kikoeru-project服务器
+Kikoeru-android 根据 Kikoeru-project V0.6.2 的Api进行适配开发，建议使用V0.6.2版本
 ## TODO
 - [x] 歌词悬浮窗
 - [x] 在线播放视频
