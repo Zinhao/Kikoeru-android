@@ -12,4 +12,9 @@
     <string name="menu_home">Home</string>
     <string name="menu_gallery">Gallery</string>
     <string name="menu_slideshow">Slideshow</string>
+    <string name="openlibs">https://github.com/koush/AndroidAsync/blob/master/LICENSE\n
+        https://github.com/google/ExoPlayer/blob/release-v2/LICENSE\n
+        https://github.com/bumptech/glide/blob/master/LICENSE\n
+        https://github.com/davemorrissey/subsampling-scale-image-view/blob/master/LICENSE\n
+    </string>
 </resources>
