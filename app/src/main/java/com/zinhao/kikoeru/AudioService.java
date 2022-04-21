@@ -487,7 +487,7 @@ public class AudioService extends Service{
                 if(!musicTitle.contains("."))
                     return false;
                 String beforeLrcTitle = lrcTitle.substring(0,lrcTitle.lastIndexOf('.'));
-                String beforeMusicTitle =  musicTitle.substring(0,lrcTitle.lastIndexOf('.'));
+                String beforeMusicTitle =  musicTitle.substring(0,musicTitle.lastIndexOf('.'));
                 return  beforeLrcTitle.equals(beforeMusicTitle);
             } catch (JSONException e) {
                 e.printStackTrace();
