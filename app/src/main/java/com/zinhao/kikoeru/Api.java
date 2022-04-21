@@ -59,7 +59,7 @@ public class Api {
             }else {
                 sort = 1;
             }
-            App.getInstance().setValue(App.CONFIG_SORT,order);
+            App.getInstance().setValue(App.CONFIG_SORT,sort);
             return;
         }
         Api.order = order;
