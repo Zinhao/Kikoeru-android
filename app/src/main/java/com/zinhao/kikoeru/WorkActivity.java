@@ -2,7 +2,6 @@ package com.zinhao.kikoeru;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -458,12 +457,16 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
             }
             int id = work.getInt("id");
             String relativePath = workTreeAdapter.getRelativePath();
-            File itemFile = LocalFileCache.getInstance().mapLocalItemFile(this,item,id,relativePath);
+            item.put("relativePath",relativePath);
+            item.put("workId",id);
+            File itemFile = LocalFileCache.getInstance().mapLocalItemFile(item,id,relativePath);
             if(itemFile == null)
                 return true;
             AlertDialog.Builder builder= new AlertDialog.Builder(this);
             builder.setMessage(itemFile.getAbsolutePath());
             if(itemFile.exists()){
+                builder.setTitle("已下载");
+                DownloadUtils.Mission mapMission = DownloadUtils.mapMission(item);
                 final String streamUrl = item.getString("mediaStreamUrl");
                 JSONObject currentPlay = ctrlBinder.getCurrent();
                 String currentPlayUrl;
@@ -472,33 +475,50 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                 }else {
                     currentPlayUrl = "";
                 }
-                builder.setTitle("已下载").setNegativeButton("打开", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if(type.equals("audio")){
-                            if(ctrlBinder.getCurrent()!=null && currentPlayUrl.equals(streamUrl)){
+                if(mapMission != null){
+                    builder.setNegativeButton("取消下载", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            mapMission.stop();
+                        }
+                    });
+                    builder.setPositiveButton("查看任务", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            startActivity(new Intent(WorkActivity.this,DownLoadMissionActivity.class));
+                            dialogInterface.dismiss();
+                        }
+                    });
+                }else {
+                    builder.setNegativeButton("打开", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if(type.equals("audio")){
+                                if(ctrlBinder.getCurrent()!=null && currentPlayUrl.equals(streamUrl)){
 
-                            }else {
-                                ctrlBinder.setReap();
-                                ctrlBinder.setCurrentAlbumId(id);
-                                try {
-                                    item.put("local_file_path",itemFile.getAbsolutePath());
-                                    ctrlBinder.play(Arrays.asList(item),0);
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                    alertException(e);
+                                }else {
+                                    ctrlBinder.setReap();
+                                    ctrlBinder.setCurrentAlbumId(id);
+                                    try {
+                                        item.put("local_file_path",itemFile.getAbsolutePath());
+                                        ctrlBinder.play(Arrays.asList(item),0);
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                        alertException(e);
+                                    }
                                 }
                             }
-                        }
-                        if(title.toLowerCase(Locale.ROOT).endsWith("mp4")){
-                            startActivity(new Intent(WorkActivity.this,VideoPlayerActivity.class));
-                        }else if(title.toLowerCase(Locale.ROOT).endsWith("lrc")){
+                            if(title.toLowerCase(Locale.ROOT).endsWith("mp4")){
+                                startActivity(new Intent(WorkActivity.this,VideoPlayerActivity.class));
+                            }else if(title.toLowerCase(Locale.ROOT).endsWith("lrc")){
 //                                Api.doGetMediaString(hash,lrcTextCallback);
-                        }else if(title.toLowerCase(Locale.ROOT).endsWith("mp3")){
-                            startActivity(new Intent(WorkActivity.this, MusicPlayerActivity.class));
+                            }else if(title.toLowerCase(Locale.ROOT).endsWith("mp3")){
+                                startActivity(new Intent(WorkActivity.this, MusicPlayerActivity.class));
+                            }
                         }
-                    }
-                });
+                    });
+                }
+
             }else {
                 final String downLoadUrl = item.getString("mediaDownloadUrl");
                 builder.setTitle("未下载")
@@ -518,7 +538,10 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                                     downLoadDialog.setMessage("开始下载");
                                     downLoadDialog.show();
                                 }
-                                LocalFileCache.getInstance().downLoadFile(itemFile,downLoadUrl,downloadCallback);
+
+                                DownloadUtils.Mission downLoadMission = new DownloadUtils.Mission(item);
+                                downLoadMission.start();
+//                                LocalFileCache.getInstance().downLoadFile(itemFile,downLoadUrl,downloadCallback);
                             }
                         });
             }
@@ -538,10 +561,12 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    downLoadDialog.setTitle("下载完成");
-                    downLoadDialog.setMessage(file.getAbsolutePath());
-                    downLoadDialog.show();
-                    downLoadDialog = null;
+                    if(!WorkActivity.this.isDestroyed()){
+                        downLoadDialog.setTitle("下载完成");
+                        downLoadDialog.setMessage(file.getAbsolutePath());
+                        downLoadDialog.show();
+                        downLoadDialog = null;
+                    }
                 }
             });
         }

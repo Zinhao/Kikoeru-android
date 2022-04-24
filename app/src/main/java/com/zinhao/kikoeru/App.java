@@ -51,6 +51,7 @@ public class App extends SwipeBackApplication {
                         ID_PLAY_SERVICE,
                         getString(R.string.channel_description), NotificationManager.IMPORTANCE_LOW
                 );
+        DownloadUtils.getInstance().init(getApplicationContext());
         channelMusicService.setDescription(getString(R.string.channel_description));
         channelMusicService.enableLights(false);
         channelMusicService.enableVibration(false);
@@ -136,5 +137,10 @@ public class App extends SwipeBackApplication {
         position[0] = sharedPreferences.getFloat("WINDOW_X",145);
         position[1] = sharedPreferences.getFloat("WINDOW_Y",160);
         return position;
+    }
+
+    @Override
+    public void onTerminate() {
+        super.onTerminate();
     }
 }

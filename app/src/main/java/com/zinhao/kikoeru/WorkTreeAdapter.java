@@ -119,7 +119,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         if(holder instanceof SimpleViewHolder){
             try {
                 ((SimpleViewHolder) holder).tvTitle.setText(item.getString("title"));
-                File mapFile = LocalFileCache.getInstance().mapLocalItemFile(holder.itemView.getContext(),item,headerInfo.getInt("id"),getRelativePath());
+                File mapFile = LocalFileCache.getInstance().mapLocalItemFile(item,headerInfo.getInt("id"),getRelativePath());
                 if(mapFile.exists()){
                     item.put("local_file_path",mapFile.getAbsolutePath());
                     holder.itemView.setBackgroundColor(cachedItemBackgroundColor);

@@ -378,6 +378,7 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
         sortMenu.add(3,20,20,"最新收录");
 
         menu.add(0,21,21,"声优");
+        menu.add(0,22,22,"下载任务");
      return super.onCreateOptionsMenu(menu);
     }
 
@@ -476,6 +477,8 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
             startActivity(new Intent(this,SettingActivity.class));
         }else if(item.getItemId() == 21){
             startActivityForResult(new Intent(this,VasActivity.class),VA_SELECT_RESULT);
+        }else if(item.getItemId() == 22){
+            startActivityForResult(new Intent(this,DownLoadMissionActivity.class),VA_SELECT_RESULT);
         }
         return super.onOptionsItemSelected(item);
     }
@@ -590,4 +593,14 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
             }
         }
     };
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        try {
+            DownloadUtils.getInstance().close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

@@ -6,7 +6,9 @@ import android.os.Environment;
 import android.util.Log;
 
 import androidx.annotation.WorkerThread;
+import androidx.collection.SimpleArrayMap;
 
+import com.koushikdutta.async.AsyncServer;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpRequest;
 import com.koushikdutta.async.http.AsyncHttpResponse;
@@ -26,6 +28,7 @@ import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
@@ -37,6 +40,8 @@ public class LocalFileCache implements Runnable, Closeable {
     private Thread workThread;
     private final List<Runnable> mission;
     private boolean running = true;
+
+
 
     public static synchronized LocalFileCache getInstance() {
         if(instance == null){
@@ -51,8 +56,27 @@ public class LocalFileCache implements Runnable, Closeable {
         this.workThread.start();
     }
 
-    public File getExternalCacheDir(Context context, int id){
-        File cacheDir = context.getExternalCacheDir();
+    public File getExternalAppRootDir() throws FileNotFoundException {
+        File rootDir = new File(Environment.getExternalStorageDirectory(),"KikoeruLib");
+        if(!rootDir.exists()){
+            if(rootDir.mkdir()){
+                return rootDir;
+            }else {
+                throw new FileNotFoundException("创建文件夹失败："+rootDir.getAbsolutePath());
+            }
+        }
+        return rootDir;
+    }
+
+    public File getExternalCacheDir(int id){
+        File cacheDir = null;
+        try {
+            cacheDir = getExternalAppRootDir();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            App.getInstance().alertException(e);
+            return null;
+        }
         File worksLibDir = new File(cacheDir,"libs_work");
         File workLibDir = new File(worksLibDir,String.valueOf(id));
         if(!workLibDir.exists()){
@@ -65,11 +89,11 @@ public class LocalFileCache implements Runnable, Closeable {
         return workLibDir;
     }
 
-    public File mapLocalItemFile(Context context, JSONObject item, int id,String relativePath) throws JSONException {
+    public File mapLocalItemFile(JSONObject item, int id,String relativePath) throws JSONException {
         if(!item.has("hash") && !item.has("title")){
             return null;
         }
-        File workDir = instance.getExternalCacheDir(context,id);
+        File workDir = instance.getExternalCacheDir(id);
         String title = item.getString("title");
         return new File( workDir.getPath() + relativePath + File.separator + title);
     }
@@ -99,7 +123,14 @@ public class LocalFileCache implements Runnable, Closeable {
     }
 
     public void saveWork(Context context, JSONObject work, JSONArray rootTree) throws JSONException {
-        File cacheDir = context.getExternalCacheDir();
+        File cacheDir = null;
+        try {
+            cacheDir = getExternalAppRootDir();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            App.getInstance().alertException(e);
+            return;
+        }
         int id = work.getInt("id");
         File workJsonDir = new File(cacheDir,"json_work");
         File workTreeDir = new File(cacheDir,"json_work_tree");
@@ -130,7 +161,14 @@ public class LocalFileCache implements Runnable, Closeable {
         mission.add(new Runnable() {
             @Override
             public void run() {
-                File cacheDir = context.getExternalCacheDir();
+                File cacheDir = null;
+                try {
+                    cacheDir = getExternalAppRootDir();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                    App.getInstance().alertException(e);
+                    return;
+                }
                 File workJsonDir = new File(cacheDir,"json_work");
                 if(workJsonDir.exists()){
                     File[] workFiles = workJsonDir.listFiles(new FileFilter() {
@@ -174,7 +212,14 @@ public class LocalFileCache implements Runnable, Closeable {
         mission.add(new Runnable() {
             @Override
             public void run() {
-                File cacheDir = context.getExternalCacheDir();
+                File cacheDir = null;
+                try {
+                    cacheDir = getExternalAppRootDir();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                    App.getInstance().alertException(e);
+                    return;
+                }
                 File workJsonDir = new File(cacheDir,"json_work_tree");
                 File workTreeFile = new File(workJsonDir,String.format(Locale.US,"%d.json",id));
                 if(workTreeFile.exists()){
@@ -250,7 +295,7 @@ public class LocalFileCache implements Runnable, Closeable {
         }
         AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(url),"GET");
         request.setTimeout(5000);
-        AsyncHttpClient asyncHttpClient = AsyncHttpClient.getDefaultInstance();
+        AsyncHttpClient asyncHttpClient = new AsyncHttpClient(new AsyncServer());
         asyncHttpClient.executeFile(request, save.getPath(), callback);
     }
 

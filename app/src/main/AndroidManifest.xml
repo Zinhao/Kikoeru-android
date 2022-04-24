@@ -19,6 +19,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Kikoeru">
         <activity
+            android:name=".DownLoadMissionActivity"
+            android:exported="true" />
+        <activity
             android:name=".SettingActivity"
             android:exported="true" />
         <activity
