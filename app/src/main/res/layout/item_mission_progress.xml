@@ -1,28 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:background="@drawable/item_bg"
-    android:layout_height="50dp">
+    android:layout_height="70dp">
 
     <ImageView
         android:id="@+id/ivCover"
         android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_height="60dp"
         android:layout_marginStart="5dp"
         android:layout_marginTop="5dp"
         android:layout_marginEnd="5dp"
         android:layout_marginBottom="5dp"
-        android:scaleType="center"
+        android:scaleType="fitCenter"
         android:src="@drawable/ic_baseline_folder_24" />
 
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="match_parent"
-        android:layout_height="20dp"
+        android:layout_height="23dp"
         android:layout_alignTop="@+id/ivCover"
         android:layout_marginStart="0dp"
         android:layout_marginTop="0dp"
+        android:layout_marginEnd="5dp"
+        android:layout_toStartOf="@+id/imageView3"
         android:layout_toEndOf="@+id/ivCover"
+        android:gravity="center_vertical"
         android:text="title" />
 
 
@@ -33,8 +37,31 @@
         android:layout_height="20dp"
         android:layout_below="@+id/tvTitle"
         android:layout_alignStart="@+id/tvTitle"
+        android:layout_marginEnd="5dp"
         android:layout_marginRight="5dp"
+        android:layout_toStartOf="@+id/imageView3"
         android:progress="28"
         android:text="5" />
+
+    <ImageButton
+        android:id="@+id/imageView3"
+        android:layout_width="30dp"
+        android:layout_height="match_parent"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="10dp"
+        android:background="@null"
+        android:visibility="visible"
+        app:srcCompat="@drawable/ic_baseline_pause_24" />
+
+    <TextView
+        android:id="@+id/textView9"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/progress"
+        android:layout_alignEnd="@+id/progress"
+        android:layout_marginTop="0dp"
+        android:layout_marginEnd="0dp"
+        android:text="4.5M  / 18M" />
 
 </RelativeLayout>

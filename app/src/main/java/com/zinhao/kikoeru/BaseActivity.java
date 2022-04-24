@@ -1,7 +1,14 @@
 package com.zinhao.kikoeru;
 
+import android.Manifest;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
 import com.jil.swipeback.SlideOutActivity;
@@ -14,6 +21,31 @@ public class BaseActivity extends SlideOutActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED){
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                requestPermissions(new String[]{Manifest.permission.MANAGE_EXTERNAL_STORAGE},23);
+            }else {
+                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},23);
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if(requestCode == 23){
+            for (int i = 0; i < grantResults.length; i++) {
+                if(grantResults[i] == PackageManager.PERMISSION_DENIED){
+                    return;
+                }
+            }
+            Toast.makeText(this,"获取读写权限成功",Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override

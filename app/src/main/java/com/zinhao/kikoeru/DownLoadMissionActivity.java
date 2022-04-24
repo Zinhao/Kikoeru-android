@@ -1,6 +1,7 @@
 package com.zinhao.kikoeru;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -19,6 +20,9 @@ public class DownLoadMissionActivity extends BaseActivity implements Runnable{
         missionAdapter = new MissionAdapter();
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(missionAdapter);
+        recyclerView.setItemAnimator(null);
+        RecyclerView.ItemDecoration itemDecoration = new DividerItemDecoration(DownLoadMissionActivity.this,DividerItemDecoration.VERTICAL);
+        recyclerView.addItemDecoration(itemDecoration);
     }
 
     @Override
@@ -35,7 +39,7 @@ public class DownLoadMissionActivity extends BaseActivity implements Runnable{
     }
 
     private void update(){
-        recyclerView.postDelayed(this,500);
+        recyclerView.postDelayed(this,200);
     }
 
     @Override
@@ -43,8 +47,8 @@ public class DownLoadMissionActivity extends BaseActivity implements Runnable{
         if(isStop){
            return;
         }
-        for (int i = 0; i < DownloadUtils.missionList.size(); i++) {
-            DownloadUtils.Mission mission = DownloadUtils.missionList.get(i);
+        for (int i = 0; i < DownloadUtils.getInstance().missionList.size(); i++) {
+            DownloadUtils.Mission mission = DownloadUtils.getInstance().missionList.get(i);
             if(mission.isUpdate()){
                 missionAdapter.notifyItemChanged(i);
                 mission.setUpdate(false);

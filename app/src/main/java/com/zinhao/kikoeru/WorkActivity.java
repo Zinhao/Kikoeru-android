@@ -439,10 +439,6 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
 
     @Override
     public boolean onLongClick(View v) {
-        if(downLoadDialog != null){
-            downLoadDialog.show();
-            return true;
-        }
         JSONObject item = (JSONObject) v.getTag();
         if(item == null)
             return false;
@@ -465,7 +461,6 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
             AlertDialog.Builder builder= new AlertDialog.Builder(this);
             builder.setMessage(itemFile.getAbsolutePath());
             if(itemFile.exists()){
-                builder.setTitle("已下载");
                 DownloadUtils.Mission mapMission = DownloadUtils.mapMission(item);
                 final String streamUrl = item.getString("mediaStreamUrl");
                 JSONObject currentPlay = ctrlBinder.getCurrent();
@@ -476,6 +471,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                     currentPlayUrl = "";
                 }
                 if(mapMission != null){
+                    builder.setTitle("下载中");
                     builder.setNegativeButton("取消下载", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -520,28 +516,15 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                 }
 
             }else {
-                final String downLoadUrl = item.getString("mediaDownloadUrl");
                 builder.setTitle("未下载")
                         .setMessage(itemFile.getAbsolutePath())
                         .setNegativeButton("下载", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                if(downLoadDialog == null){
-                                    AlertDialog.Builder builder = new AlertDialog.Builder(WorkActivity.this).setTitle("正在下载")
-                                            .setNegativeButton("hide", new DialogInterface.OnClickListener() {
-                                                @Override
-                                                public void onClick(DialogInterface dialog, int which) {
-                                                    dialog.dismiss();
-                                                }
-                                            });
-                                    downLoadDialog = builder.create();
-                                    downLoadDialog.setMessage("开始下载");
-                                    downLoadDialog.show();
-                                }
-
+                                dialog.dismiss();
                                 DownloadUtils.Mission downLoadMission = new DownloadUtils.Mission(item);
                                 downLoadMission.start();
-//                                LocalFileCache.getInstance().downLoadFile(itemFile,downLoadUrl,downloadCallback);
+                                startActivity(new Intent(WorkActivity.this,DownLoadMissionActivity.class));
                             }
                         });
             }
@@ -552,37 +535,6 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
         }
         return true;
     }
-
-    private AlertDialog downLoadDialog;
-    private AsyncHttpClient.FileCallback downloadCallback = new AsyncHttpClient.FileCallback() {
-
-        @Override
-        public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, File file) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if(!WorkActivity.this.isDestroyed()){
-                        downLoadDialog.setTitle("下载完成");
-                        downLoadDialog.setMessage(file.getAbsolutePath());
-                        downLoadDialog.show();
-                        downLoadDialog = null;
-                    }
-                }
-            });
-        }
-
-        @Override
-        public void onProgress(AsyncHttpResponse response, long downloaded, long total) {
-            super.onProgress(response, downloaded, total);
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if(downLoadDialog!=null)
-                        downLoadDialog.setMessage(String.format(Locale.CHINA,"当前进度(%d / %d)",downloaded,total));
-                }
-            });
-        }
-    };
 
     @Override
     public void onTagClick(JSONObject jsonObject) {

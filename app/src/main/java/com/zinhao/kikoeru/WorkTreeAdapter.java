@@ -116,9 +116,11 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         }else {
             item= data.get(position-1);
         }
+
         if(holder instanceof SimpleViewHolder){
             try {
-                ((SimpleViewHolder) holder).tvTitle.setText(item.getString("title"));
+                String itemTitle = item.getString("title");
+                ((SimpleViewHolder) holder).tvTitle.setText(itemTitle);
                 File mapFile = LocalFileCache.getInstance().mapLocalItemFile(item,headerInfo.getInt("id"),getRelativePath());
                 if(mapFile.exists()){
                     item.put("local_file_path",mapFile.getAbsolutePath());
@@ -133,7 +135,11 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     ((SimpleViewHolder) holder).tvCount.setText(String.format("%d 项",jsonArray.length()));
                     Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_folder_24).into(((SimpleViewHolder) holder).ivCover);
                 }else if("audio".equals(item.getString("type"))){
-                    Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_audiotrack_24).into(((SimpleViewHolder) holder).ivCover);
+                    if(itemTitle.endsWith(".mp4")){
+                        Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_video_library_24).into(((SimpleViewHolder) holder).ivCover);
+                    }else {
+                        Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_audiotrack_24).into(((SimpleViewHolder) holder).ivCover);
+                    }
                 }else if("image".equals(item.getString("type"))){
                     Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_image_24).into(((SimpleViewHolder) holder).ivCover);
                 }else if("text".equals(item.getString("type"))){

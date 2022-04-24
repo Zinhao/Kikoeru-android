@@ -10,6 +10,9 @@
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/ic_baseline_audiotrack_24.xml" value="0.48854166666666665" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/ic_baseline_folder_24.xml" value="0.5697916666666667" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/ic_baseline_insert_drive_file_24.xml" value="0.38333333333333336" />
+        <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/ic_baseline_pause_24.xml" value="0.5697916666666667" />
+        <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/ic_baseline_pause_white_24.xml" value="0.5697916666666667" />
+        <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/ic_baseline_video_library_24.xml" value="0.5697916666666667" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/ic_launcher_background.xml" value="0.48854166666666665" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/ic_menu_camera.xml" value="0.41041666666666665" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/ic_menu_gallery.xml" value="0.41041666666666665" />
@@ -30,6 +33,7 @@
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/fragment_home.xml" value="0.49114583333333334" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/item_image.xml" value="0.5536458333333333" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/item_lrc_row.xml" value="0.31927083333333334" />
+        <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/item_mission_progress.xml" value="0.67" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/item_work_1.xml" value="0.33" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/item_work_2.xml" value="0.5536458333333333" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/item_work_3.xml" value="0.5536458333333333" />

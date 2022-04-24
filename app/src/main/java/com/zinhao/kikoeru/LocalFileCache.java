@@ -208,6 +208,39 @@ public class LocalFileCache implements Runnable, Closeable {
         });
     }
 
+    public void readLocalWorkById(int id,AsyncHttpClient.JSONObjectCallback callback){
+        mission.add(new Runnable() {
+            @Override
+            public void run() {
+                File cacheDir = null;
+                try {
+                    cacheDir = getExternalAppRootDir();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                    App.getInstance().alertException(e);
+                    return;
+                }
+                File workJsonDir = new File(cacheDir,"json_work");
+                File workJsonFile = new File(workJsonDir,String.format("%d.json",id));
+                if(workJsonFile.exists()){
+                    String workStr = null;
+                    try {
+                        workStr = readTextSync(workJsonFile);
+                        if(workStr!=null && !workStr.isEmpty()){
+                            JSONObject work = new JSONObject(workStr);
+                            work.put("localWorK",true);
+                            callback.onCompleted(null,new LocalResponse(200),work);
+                        }
+                    } catch (IOException | JSONException e) {
+                        e.printStackTrace();
+                        callback.onCompleted(e,new LocalResponse(404),null);
+                    }
+
+                }
+            }
+        });
+    }
+
     public void readLocalWorkTree(Context context,int id,AsyncHttpClient.JSONArrayCallback callback){
         mission.add(new Runnable() {
             @Override
