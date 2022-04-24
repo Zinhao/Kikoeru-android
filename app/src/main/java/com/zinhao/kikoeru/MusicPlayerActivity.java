@@ -41,9 +41,7 @@ public class MusicPlayerActivity extends BaseActivity implements ServiceConnecti
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
         imageView = findViewById(R.id.ivCover);
-        //设置图片圆角角度
         RoundedCorners roundedCorners = new RoundedCorners(20);
-        //通过RequestOptions扩展功能,override:采样率,因为ImageView就这么大,可以压缩图片,降低内存消耗
         options = RequestOptions.bitmapTransform(roundedCorners);
         ibPrevious = findViewById(R.id.ib1);
         ibPause = findViewById(R.id.ib2);
@@ -103,7 +101,6 @@ public class MusicPlayerActivity extends BaseActivity implements ServiceConnecti
         if(ctrlBinder.isLrcWindowShow()){
             needShowLrcWhenDestroy = true;
             ctrlBinder.showOrHideLrcFloatWindow();
-//            startActivity(new Intent(this,LrcFloatWindow.class));
         }
         timeProgressView.setMax((int) ctrlBinder.getExoPlayer().getDuration());
         updateSeek();
