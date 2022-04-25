@@ -1,5 +1,7 @@
 package com.zinhao.kikoeru;
 
+import static android.provider.ContactsContract.CommonDataKinds.Website.URL;
+
 import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
@@ -8,19 +10,27 @@ import androidx.collection.SimpleArrayMap;
 
 import com.koushikdutta.async.AsyncServer;
 import com.koushikdutta.async.ByteBufferList;
+import com.koushikdutta.async.DataEmitter;
+import com.koushikdutta.async.callback.CompletedCallback;
+import com.koushikdutta.async.future.SimpleFuture;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpRequest;
 import com.koushikdutta.async.http.AsyncHttpResponse;
+import com.koushikdutta.async.http.HttpUtil;
 import com.koushikdutta.async.http.callback.HttpConnectCallback;
+import com.koushikdutta.async.stream.OutputStreamDataCallback;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.BufferedOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.FileAlreadyExistsException;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +60,7 @@ public class DownloadUtils implements Closeable {
         private boolean completed = false;
         private AsyncHttpRequest request;
         private String hash;
-        private static final int SIZE = 1024*4;
+        private static final int BLOCK_SIZE = 1024*1024;
 
         public Mission(JSONObject jsonObject) {
             this.jsonObject = jsonObject;
@@ -186,9 +196,7 @@ public class DownloadUtils implements Closeable {
             request.setTimeout(5000);
             this.downLoadClient = new AsyncHttpClient(new AsyncServer());
             if(downloaded != 0){
-                request.addHeader("range",String.format(Locale.US,"bytes=%d-%d",downloaded,Math.min(downloaded+SIZE,total)));
-                request.addHeader("if-range",eTag);
-                downLoadClient.executeByteBufferList(request,downloadCallback);
+                continueDownLoad();
             }else {
                 if(mapFile.exists()){
                     App.getInstance().alertException(new FileAlreadyExistsException("文件已存在"));
@@ -199,38 +207,46 @@ public class DownloadUtils implements Closeable {
             setDownloading(true);
         }
 
-        private AsyncHttpClient.DownloadCallback downloadCallback = new AsyncHttpClient.DownloadCallback() {
-            @Override
-            public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, ByteBufferList byteBufferList) {
-                if(e!= null){
-                    App.getInstance().alertException(e);
-                    return;
-                }
-                if(asyncHttpResponse.code() == 200 || asyncHttpResponse.code() == 206){
-                    try {
-                        FileOutputStream fileOutputStream = new FileOutputStream(mapFile,true);
-                        byte[] data = byteBufferList.getAllByteArray();
-                        fileOutputStream.write(data);
-                        Mission.this.onProgress(asyncHttpResponse, downloaded+ data.length, total);
-                        fileOutputStream.flush();
-                        fileOutputStream.close();
-                    } catch (IOException fileNotFoundException) {
-                        fileNotFoundException.printStackTrace();
-                    }
-                    if(downloaded < total){
-                        request.setHeader("range",String.format(Locale.US,"bytes=%d-%d",downloaded,Math.min(downloaded+SIZE,total)));
-                        request.setHeader("if-range",eTag);
-                        downLoadClient.executeByteBufferList(request,this);
-                    }
-                }
-
+        private void continueDownLoad(){
+            request.addHeader("range",String.format(Locale.US,"bytes=%d-",downloaded));
+            request.addHeader("if-range",eTag);
+            final BufferedOutputStream fout;
+            try {
+                fout = new BufferedOutputStream(new FileOutputStream(mapFile,true), 8192);
+            } catch (FileNotFoundException var8) {
+                return;
             }
-
-            @Override
-            public void onProgress(AsyncHttpResponse response, long downloaded, long total) {
-                Log.d(TAG, "onProgress1: "+downloaded);
-            }
-        };
+            downLoadClient.execute(request, new HttpConnectCallback() {
+                @Override
+                public void onConnectCompleted(Exception e, AsyncHttpResponse response) {
+                    if (e != null) {
+                        try { fout.close(); } catch (IOException ignored) { }
+                    } else {
+                        response.setDataCallback(new OutputStreamDataCallback(fout) {
+                            public void onDataAvailable(DataEmitter emitter, ByteBufferList bb) {
+                                downloaded += bb.remaining();
+                                super.onDataAvailable(emitter, bb);
+                                Mission.this.onProgress(response, downloaded, total);
+                            }
+                        });
+                        response.setEndCallback(new CompletedCallback() {
+                            public void onCompleted(Exception ex) {
+                                try {
+                                    fout.close();
+                                } catch (IOException var3) {
+                                    Log.d(TAG, "onCompleted: close failed!");
+                                }
+                                if (ex != null) {
+                                    Mission.this.onCompleted(ex,response,mapFile);
+                                } else {
+                                    Mission.this.onCompleted(null,response,mapFile);
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        }
 
         public void stop(){
             if(downLoadClient!=null){
@@ -241,8 +257,14 @@ public class DownloadUtils implements Closeable {
 
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, File file) {
-            completed = true;
             update = true;
+            if(e != null){
+                App.getInstance().alertException(e);
+                return;
+            }
+            Log.d(TAG, String.format("onCompleted: rec: %d ,total: %d",mapFile.length(),total));
+            setDownloading(false);
+            completed = true;
         }
 
         public boolean isDownloading() {
