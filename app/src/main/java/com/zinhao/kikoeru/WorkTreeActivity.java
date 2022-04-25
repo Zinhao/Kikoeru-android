@@ -2,16 +2,23 @@ package com.zinhao.kikoeru;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.IBinder;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
@@ -19,8 +26,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -36,7 +41,6 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
@@ -59,9 +63,6 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
     private JSONArray jsonWorkTrees;
 
     private View bottomLayout;
-    private Animation outAnim;
-    private Animation inAnim;
-    private boolean shouldShowAnim = true;
     private ImageView ivCover;
     private TextView tvTitle;
     private TextView tvWorkTitle;
@@ -111,7 +112,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
     private final AsyncHttpClient.StringCallback lrcTextCallback = new AsyncHttpClient.StringCallback() {
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, String s) {
-            if(asyncHttpResponse ==null || asyncHttpResponse.code() !=200){
+            if(asyncHttpResponse == null || asyncHttpResponse.code() !=200){
                 Log.d(TAG, "onCompleted: lrcTextCallback err!");
                 return;
             }
@@ -153,8 +154,6 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         ibStatus = bottomLayout.findViewById(R.id.button);
 
         bindService(new Intent(this, AudioService.class),this,BIND_AUTO_CREATE);
-        outAnim = AnimationUtils.loadAnimation(this,R.anim.move_bottom_out);
-        inAnim = AnimationUtils.loadAnimation(this,R.anim.move_bottom_in);
         try {
             if(work.has("localWorK")){
                 boolean isLocalWork = work.getBoolean("localWorK");
@@ -169,30 +168,6 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         } catch (JSONException e) {
             e.printStackTrace();
             alertException(e);
-        }
-    }
-
-    private void toggleBottom(){
-        if (shouldShowAnim && bottomLayout.getVisibility() == View.VISIBLE){
-            shouldShowAnim = false;
-            bottomLayout.startAnimation(outAnim);
-            bottomLayout.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    bottomLayout.setVisibility(View.GONE);
-                    shouldShowAnim = true;
-                }
-            },outAnim.getDuration());
-        }else if(shouldShowAnim && bottomLayout.getVisibility() == View.GONE){
-            shouldShowAnim = false;
-            bottomLayout.setVisibility(View.VISIBLE);
-            bottomLayout.startAnimation(inAnim);
-            bottomLayout.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    shouldShowAnim = true;
-                }
-            },inAnim.getDuration());
         }
     }
 
@@ -265,94 +240,156 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
     public void onClick(View v) {
         JSONObject item = (JSONObject) v.getTag();
         try {
-            String itemTitle =item.getString("title");
             String itemType = item.getString("type");
-            String itemMediaStreamUrl = item.getString("mediaStreamUrl");
-            String itemHash = item.getString("hash");
             if("image".equals(itemType)){
-                List<String> imageList = new ArrayList<>();
-                int index = 0;
-                workTreeAdapter.getData().stream().filter(new Predicate<JSONObject>() {
-                    @Override
-                    public boolean test(JSONObject jsonObject) {
-                        try {
-                            return "image".equals(jsonObject.getString("type"));
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            alertException(e);
-                        }
-                        return false;
-                    }
-                }).forEach(new Consumer<JSONObject>() {
-                    @Override
-                    public void accept(JSONObject jsonObject) {
-
-                        try {
-                            String url = jsonObject.getString("mediaStreamUrl");
-                            if(!url.startsWith("http")){
-                                url = Api.HOST + url;
-                            }
-                            imageList.add(url);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            alertException(e);
-                        }
-                    }
-                });
-                for (int i = 0; i < imageList.size(); i++) {
-                    if(imageList.get(i).equals(itemMediaStreamUrl)){
-                        index = i;
-                        break;
-                    }
-                }
-                ImageBrowserActivity.start(WorkTreeActivity.this,imageList,index);
+                openImage(item);
             }else if("audio".equals(itemType)){
-                List<JSONObject> musicArray = new ArrayList<>();
-                int index = 0;
-                workTreeAdapter.getData().forEach(new Consumer<JSONObject>() {
-                    @Override
-                    public void accept(JSONObject jsonObject) {
-                        try {
-                            if("audio".equals(jsonObject.getString("type"))){
-                                musicArray.add(jsonObject);
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            alertException(e);
-                        }
-                    }
-                });
-                for (int i = 0; i < musicArray.size(); i++) {
-                    if(musicArray.get(i).getString("hash").equals(itemHash)){
-                        index = i;
-                        break;
-                    }
-                }
-                if(ctrlBinder.getCurrent()!=null && ctrlBinder.getCurrent().getString("mediaStreamUrl").equals(itemMediaStreamUrl)){
-
-                }else {
-                    ctrlBinder.setReap();
-                    ctrlBinder.setCurrentAlbumId(work.getInt("id"));
-                    ctrlBinder.play(musicArray,index);
-                }
-                if(itemTitle.toLowerCase(Locale.ROOT).endsWith("mp4")){
-                    startActivity(new Intent(WorkTreeActivity.this,VideoPlayerActivity.class));
-                }else {
-                    startActivity(new Intent(WorkTreeActivity.this, MusicPlayerActivity.class));
-                }
+                openAudioOrVideo(item);
             } else if("text".equals(itemType)){
-                if(itemTitle.toLowerCase(Locale.ROOT).endsWith("lrc")){
-                    if(ctrlBinder.equalsCurrentPlay(itemTitle)){
-                        isOpenCurrentPlayLrc = true;
-                    }else {
-                        isOpenCurrentPlayLrc = false;
-                    }
-                    Api.doGetMediaString(itemHash,lrcTextCallback);
-                }
+                openText(item);
+            }else {
+                openOther(item);
             }
         } catch (JSONException e) {
             e.printStackTrace();
             alertException(e);
+        }
+    }
+
+    private void openImage(JSONObject item) throws JSONException {
+        String itemMediaStreamUrl = item.getString("mediaStreamUrl");
+        List<String> imageList = new ArrayList<>();
+        int index = 0;
+        workTreeAdapter.getData().stream().filter(new Predicate<JSONObject>() {
+            @Override
+            public boolean test(JSONObject jsonObject) {
+                try {
+                    return "image".equals(jsonObject.getString("type"));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    alertException(e);
+                }
+                return false;
+            }
+        }).forEach(new Consumer<JSONObject>() {
+            @Override
+            public void accept(JSONObject jsonObject) {
+                String url;
+                try {
+                    if(jsonObject.has("local_file_path")){
+                        url = jsonObject.getString("local_file_path");
+                    }else {
+                        url = jsonObject.getString("mediaStreamUrl");
+                        if(!url.startsWith("http")){
+                            url = Api.HOST + url;
+                        }
+                    }
+                    imageList.add(url);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    alertException(e);
+                }
+            }
+        });
+        for (int i = 0; i < imageList.size(); i++) {
+            if(imageList.get(i).equals(itemMediaStreamUrl)){
+                index = i;
+                break;
+            }
+        }
+        ImageBrowserActivity.start(WorkTreeActivity.this,imageList,index);
+    }
+
+    private void openText(JSONObject item) throws JSONException {
+        int workId = work.getInt("id");
+        String itemTitle =item.getString("title");
+        if(itemTitle.toLowerCase(Locale.ROOT).endsWith("lrc")){
+            if(ctrlBinder.equalsCurrentPlay(itemTitle,workId)){
+                isOpenCurrentPlayLrc = true;
+            }else {
+                isOpenCurrentPlayLrc = false;
+            }
+            if(item.has("local_file_path")){
+                File file = new File(item.getString("local_file_path"));
+                LocalFileCache.getInstance().readText(file,lrcTextCallback);
+            }else {
+                Api.doGetMediaString(item.getString("hash"),lrcTextCallback);
+            }
+        }else {
+            isOpenCurrentPlayLrc = false;
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            if(item.has("local_file_path")){
+                File file = new File(item.getString("local_file_path"));
+                Uri uri = FileProvider.getUriForFile(this,getPackageName()+".fileProvider",file);
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                intent.setDataAndType(uri,"text/*");
+            }else {
+                String url  = item.getString("mediaStreamUrl");
+                if(!url.startsWith("http")){
+                    url = String.format("%s%s",Api.HOST,url);
+                }
+                intent.setData(Uri.parse(url));
+            }
+            try {
+                startActivity(intent);
+            }catch (ActivityNotFoundException e){
+                alertException(e);
+            }
+
+        }
+    }
+
+    private void openOther(JSONObject item) throws JSONException {
+        String url  = item.getString("mediaStreamUrl");
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        if(!url.startsWith("http")){
+            url = String.format("%s%s",Api.HOST,url);
+        }
+        intent.setData(Uri.parse(url));
+        try {
+            startActivity(intent);
+        }catch (ActivityNotFoundException e){
+            alertException(e);
+        }
+    }
+
+    private void openAudioOrVideo(JSONObject item) throws JSONException {
+        String itemHash = item.getString("hash");
+        String itemTitle = item.getString("title");
+        String itemMediaStreamUrl = item.getString("mediaStreamUrl");
+        List<JSONObject> musicArray = new ArrayList<>();
+        int index = 0;
+        workTreeAdapter.getData().forEach(new Consumer<JSONObject>() {
+            @Override
+            public void accept(JSONObject jsonObject) {
+                try {
+                    if("audio".equals(jsonObject.getString("type"))){
+                        musicArray.add(jsonObject);
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    alertException(e);
+                }
+            }
+        });
+        for (int i = 0; i < musicArray.size(); i++) {
+            if(musicArray.get(i).getString("hash").equals(itemHash)){
+                index = i;
+                break;
+            }
+        }
+        if(ctrlBinder.getCurrent()!=null && ctrlBinder.getCurrent().getString("mediaStreamUrl").equals(itemMediaStreamUrl)){
+
+        }else {
+            ctrlBinder.setReap();
+            ctrlBinder.setCurrentAlbumId(work.getInt("id"));
+            ctrlBinder.play(musicArray,index);
+        }
+        if(itemTitle.toLowerCase(Locale.ROOT).endsWith(".mp4")){
+            startActivity(new Intent(WorkTreeActivity.this,VideoPlayerActivity.class));
+        }else {
+            startActivity(new Intent(WorkTreeActivity.this, MusicPlayerActivity.class));
         }
     }
 
@@ -442,34 +479,24 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         JSONObject item = (JSONObject) v.getTag();
         if(item == null)
             return false;
+        if(work ==null)
+            return false;
         try {
-            if(jsonWorkTrees != null && work !=null){
+            if(jsonWorkTrees != null){
                 LocalFileCache.getInstance().saveWork(this,work,jsonWorkTrees);
             }
-            String type = item.getString("type");
-            String title = item.getString("title");
-            if(!"audio".equals(type) && !"text".equals(type) && !"image".equals(type)){
+            String itemType = item.getString("type");
+            if(!"audio".equals(itemType) && !"text".equals(itemType) && !"image".equals(itemType)){
                 return true;
             }
-            int id = work.getInt("id");
-            String relativePath = workTreeAdapter.getRelativePath();
-            item.put("relativePath",relativePath);
-            item.put("workId",id);
-            File itemFile = LocalFileCache.getInstance().mapLocalItemFile(item,id,relativePath);
-            if(itemFile == null)
-                return true;
+            if(!item.has("local_file_path")){
+                return false;
+            }
+            File itemFile = new File(item.getString("local_file_path"));
             AlertDialog.Builder builder= new AlertDialog.Builder(this);
             builder.setMessage(itemFile.getAbsolutePath());
             if(itemFile.exists()){
                 DownloadUtils.Mission mapMission = DownloadUtils.mapMission(item);
-                final String streamUrl = item.getString("mediaStreamUrl");
-                JSONObject currentPlay = ctrlBinder.getCurrent();
-                String currentPlayUrl;
-                if(currentPlay != null){
-                    currentPlayUrl = currentPlay.getString("mediaStreamUrl");
-                }else {
-                    currentPlayUrl = "";
-                }
                 if(mapMission != null){
                     builder.setTitle(R.string.downloading);
                     builder.setNegativeButton(R.string.cancel_download, new DialogInterface.OnClickListener() {
@@ -489,44 +516,67 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                     builder.setNegativeButton(R.string.open, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            if(type.equals("audio")){
-                                if(ctrlBinder.getCurrent()!=null && currentPlayUrl.equals(streamUrl)){
-
-                                }else {
-                                    ctrlBinder.setReap();
-                                    ctrlBinder.setCurrentAlbumId(id);
-                                    try {
-                                        item.put("local_file_path",itemFile.getAbsolutePath());
-                                        ctrlBinder.play(Arrays.asList(item),0);
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
-                                        alertException(e);
-                                    }
+                            try {
+                                if(itemType.equals("audio")){
+                                    openAudioOrVideo(item);
+                                } else if(itemType.equals("text")){
+                                    openText(item);
+                                }else if(itemType.equals("image")){
+                                   openImage(item);
                                 }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
                             }
-                            if(title.toLowerCase(Locale.ROOT).endsWith("mp4")){
-                                startActivity(new Intent(WorkTreeActivity.this,VideoPlayerActivity.class));
-                            }else if(title.toLowerCase(Locale.ROOT).endsWith("lrc")){
-//                                Api.doGetMediaString(hash,lrcTextCallback);
-                            }else if(title.toLowerCase(Locale.ROOT).endsWith("mp3")){
-                                startActivity(new Intent(WorkTreeActivity.this, MusicPlayerActivity.class));
-                            }
+
                         }
                     });
                 }
 
             }else {
-                builder.setTitle(getString(R.string.not_download))
-                        .setMessage(itemFile.getAbsolutePath())
-                        .setNegativeButton(R.string.download, new DialogInterface.OnClickListener() {
+                builder.setTitle(getString(R.string.not_download)).setMessage(itemFile.getAbsolutePath()).setNegativeButton(R.string.download, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
+                                boolean havePermission;
+                                final DownloadUtils.Mission downLoadMission = new DownloadUtils.Mission(item);
+                                downLoadMission.setSuccessCallback(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                if(!isDestroyed()){
+                                                    workTreeAdapter.notifyDataSetChanged();
+                                                }
+                                            }
+                                        });
+                                    }
+                                });
+                                if(App.getInstance().isSaveExternal()){
+                                    havePermission = requestReadWriteExternalPermission(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                                if(!Environment.isExternalStorageManager()){
+                                                    return;
+                                                }
+                                            }else {
+                                                if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED){
+                                                    return;
+                                                }
+                                            }
+                                            downLoadMission.start();
+                                        }
+                                    });
+                                }else {
+                                    havePermission = true;
+                                }
+                                if(havePermission){
+                                    downLoadMission.start();
+                                }
                                 dialog.dismiss();
-                                DownloadUtils.Mission downLoadMission = new DownloadUtils.Mission(item);
-                                downLoadMission.start();
-                                startActivity(new Intent(WorkTreeActivity.this,DownLoadMissionActivity.class));
+
                             }
-                        });
+                });
             }
             builder.create().show();
         } catch (JSONException e) {

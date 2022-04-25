@@ -1,12 +1,15 @@
 package com.zinhao.kikoeru;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Environment;
 
 import com.bumptech.glide.request.RequestOptions;
 import com.jil.swipeback.SwipeBackApplication;
@@ -32,10 +35,12 @@ public class App extends SwipeBackApplication {
     public static final String CONFIG_SORT = "sort";
     public static final String CONFIG_ORDER = "order";
     public static final String CONFIG_DEBUG = "debug";
+    public static final String CONFIG_SAVE_EXTERNAL = "save_at_external_dir";
 
     public static App getInstance() {
         return instance;
     }
+    private boolean saveExternal = false;
     private boolean appDebug = false;
     private RequestOptions defaultPic;
 
@@ -48,6 +53,15 @@ public class App extends SwipeBackApplication {
         return appDebug;
     }
 
+    public boolean isSaveExternal() {
+        return saveExternal;
+    }
+
+    public void setSaveExternal(boolean saveExternal) {
+        this.saveExternal = saveExternal;
+        setValue(CONFIG_SAVE_EXTERNAL,saveExternal?1:0);
+    }
+
     public RequestOptions getDefaultPic() {
         return defaultPic;
     }
@@ -57,6 +71,7 @@ public class App extends SwipeBackApplication {
         super.onCreate();
         instance = this;
         appDebug = getValue(App.CONFIG_DEBUG,0) == 1;
+        saveExternal = getValue(App.CONFIG_SAVE_EXTERNAL,0) == 1;
         defaultPic = new RequestOptions().placeholder(R.drawable.ic_no_cover);
         DownloadUtils.getInstance().init(this);
         NotificationChannel channelMusicService =
@@ -88,6 +103,30 @@ public class App extends SwipeBackApplication {
         }
         if(activity instanceof BaseActivity){
             ((BaseActivity) activity).alertMessage(e);
+        }
+    }
+
+    public void requestReadWriteExternalPermission(){
+        Activity activity = getBackHelper().getLastActivity();
+        if(activity == null){
+            return;
+        }
+        if(activity instanceof BaseActivity){
+            ((BaseActivity) activity).requestReadWriteExternalPermission(new Runnable() {
+                @Override
+                public void run() {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        if(!Environment.isExternalStorageManager()){
+                            return;
+                        }
+                    }else {
+                        if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED){
+                            return;
+                        }
+                    }
+                    setSaveExternal(true);
+                }
+            });
         }
     }
 

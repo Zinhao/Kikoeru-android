@@ -56,6 +56,11 @@ public class DownloadUtils implements Closeable {
         private AsyncHttpRequest request;
         private String hash;
         private static final int BLOCK_SIZE = 1024*1024;
+        private Runnable successCallback;
+
+        public void setSuccessCallback(Runnable successCallback) {
+            this.successCallback = successCallback;
+        }
 
         public Mission(JSONObject jsonObject) {
             this.jsonObject = jsonObject;
@@ -135,8 +140,11 @@ public class DownloadUtils implements Closeable {
         }
 
         public int getProgress(){
+            if(isCompleted()){
+                return 100;
+            }
             int progress = 0;
-            if(total!=0 && total >= downloaded){
+            if(total != 0 && total >= downloaded){
                 progress =  Math.round(downloaded*100f/total);
             }
             return progress;
@@ -190,13 +198,9 @@ public class DownloadUtils implements Closeable {
             }
             request.setTimeout(5000);
             this.downLoadClient = new AsyncHttpClient(new AsyncServer());
-            if(downloaded != 0){
+            if(downloaded != 0 && mapFile.exists()){
                 continueDownLoad();
             }else {
-                if(mapFile.exists()){
-                    App.getInstance().alertException(new FileAlreadyExistsException("文件已存在"));
-                    return;
-                }
                 downLoadClient.executeFile(request,mapFile.getAbsolutePath(),this);
             }
             setDownloading(true);
@@ -259,17 +263,8 @@ public class DownloadUtils implements Closeable {
                 App.getInstance().alertException(e);
                 return;
             }
-            String fileMapErr = String.format("Path:%s ,rec: %d ,total: %d !",mapFile.getPath(),mapFile.length(),total);
-            AppMessage fileNoMap = new AppMessage("file down load success!", fileMapErr, new Runnable() {
-                @Override
-                public void run() {
-                    if(mapFile.exists()){
-                        if(mapFile.delete()){
-                        }
-                    }
-                }
-            },"delete");
-            App.getInstance().alertMessage(fileNoMap);
+            if(successCallback!= null)
+                successCallback.run();
         }
 
         public boolean isDownloading() {
@@ -281,25 +276,28 @@ public class DownloadUtils implements Closeable {
         }
 
         public boolean isCompleted() {
-            if(total!=0 && downloaded!=0){
-                completed = total == downloaded;
+            if(total == -1){
+                if(mapFile.exists() && mapFile.length() == downloaded){
+                    return true;
+                }
+            }else {
+                if(total !=0 && downloaded!=0){
+                    completed = total == downloaded;
+                }
+                return completed;
             }
-            return completed;
+            return false;
         }
 
         @Override
         public void onProgress(AsyncHttpResponse response, long downloaded, long total) {
             super.onProgress(response, downloaded, total);
+            Log.d(TAG, String.format("onProgress: %d ,downloaded:%d ,total:%d",getProgress(),downloaded,total));
             String eTag = response.headers().get("etag");
             this.downloaded = downloaded;
             this.total = total;
             this.eTag = eTag;
-            Log.d(TAG, String.format("onProgress: %d",getProgress()));
             this.update = true;
-            if(downloaded == total){
-                downloading = false;
-                completed = true;
-            }
         }
 
         private JSONObject getJsonObject(){

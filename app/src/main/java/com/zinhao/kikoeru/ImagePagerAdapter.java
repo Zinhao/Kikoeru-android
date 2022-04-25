@@ -81,24 +81,33 @@ public class ImagePagerAdapter<T> extends PagerAdapter {
         final SubsamplingScaleImageView imageView =v.findViewById(R.id.imageView);
         RoundedCorners roundedCorners= new RoundedCorners(10);
         final RequestOptions requestOptions =RequestOptions.bitmapTransform(roundedCorners);
-        Glide.with(container.getContext()).asFile().load(ts.get(position)).apply(requestOptions)
-                .into(new CustomViewTarget<SubsamplingScaleImageView,File>(imageView) {
+        T t = ts.get(position);
+        CustomViewTarget<SubsamplingScaleImageView,File> target = new CustomViewTarget<SubsamplingScaleImageView,File>(imageView) {
+            @Override
+            public void onLoadFailed(@Nullable Drawable drawable) {
+            }
 
-                    @Override
-                    public void onLoadFailed(@Nullable Drawable drawable) {
-                    }
+            @Override
+            public void onResourceReady(@NonNull File file, @Nullable Transition<? super File> transition) {
+                imageView.setImage(ImageSource.uri(Uri.fromFile(file)));
+                pic = file;
+            }
 
-                    @Override
-                    public void onResourceReady(@NonNull File file, @Nullable Transition<? super File> transition) {
-                        imageView.setImage(ImageSource.uri(Uri.fromFile(file)));
-                        pic = file;
-                    }
+            @Override
+            protected void onResourceCleared(@Nullable Drawable drawable) {
 
-                    @Override
-                    protected void onResourceCleared(@Nullable Drawable drawable) {
+            }
+        };
+        if(t instanceof String){
+            if(((String) t).startsWith("http")){
+                Glide.with(container.getContext()).asFile().load(t).apply(requestOptions)
+                        .into(target);
+            }else {
+                Glide.with(container.getContext()).asFile().load(new File((String) t)).apply(requestOptions)
+                        .into(target);
+            }
+        }
 
-                    }
-                });
         imageView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(final View v) {

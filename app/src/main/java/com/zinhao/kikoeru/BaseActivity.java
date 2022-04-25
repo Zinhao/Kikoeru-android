@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.Settings;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -19,33 +21,79 @@ import java.util.function.Consumer;
 
 public class BaseActivity extends SlideOutActivity {
 
+    private static final int REQUEST_WRITE_READ_CODE = 23;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED){
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                requestPermissions(new String[]{Manifest.permission.MANAGE_EXTERNAL_STORAGE},23);
-            }else {
-                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},23);
-            }
-        }
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == REQUEST_WRITE_READ_CODE){
+            if(activityResultCallBack!=null){
+                activityResultCallBack.run();
+                activityResultCallBack = null;
+            }
+        }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if(requestCode == 23){
+        if(requestCode == REQUEST_WRITE_READ_CODE){
             for (int i = 0; i < grantResults.length; i++) {
                 if(grantResults[i] == PackageManager.PERMISSION_DENIED){
                     return;
                 }
             }
-            Toast.makeText(this,"获取读写权限成功",Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private Runnable activityResultCallBack;
+
+    protected boolean requestReadWriteExternalPermission(Runnable callback){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if(!Environment.isExternalStorageManager()){
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("Tip");
+                builder.setMessage("存储到自定义外部目录，即使应用被删除，你缓存的内容也不会被删除，检测到权限未打开，需要权限。");
+                builder.setNegativeButton("去授予", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                        startActivityForResult(intent,REQUEST_WRITE_READ_CODE);
+                        dialog.dismiss();
+                        activityResultCallBack = callback;
+                    }
+                });
+                builder.setPositiveButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                        if(callback!= null)
+                            callback.run();
+                    }
+                });
+                builder.create().show();
+                return false;
+            }else {
+                return true;
+            }
+        }else {
+            if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED){
+                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},REQUEST_WRITE_READ_CODE);
+                return false;
+            }else {
+                return true;
+            }
+
         }
     }
 
@@ -88,17 +136,16 @@ public class BaseActivity extends SlideOutActivity {
             public void run() {
                 AlertDialog.Builder builder = new AlertDialog.Builder(BaseActivity.this);
                 builder.setTitle(e.getTitle());
-                StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append(String.format("%s: %s",e.getClass().getSimpleName(),e.getMessage())).append('\n');
-                Arrays.stream(e.getStackTrace()).forEach(new Consumer<StackTraceElement>() {
-                    @Override
-                    public void accept(StackTraceElement stackTraceElement) {
-                        stringBuilder.append(stackTraceElement.getClassName()).append('.')
-                                .append(stackTraceElement.getMethodName()).append(':')
-                                .append(stackTraceElement.getLineNumber()).append('\n');
-                    }
-                });
-                builder.setMessage(stringBuilder.toString());
+                builder.setMessage(String.format("%s: %s", e.getClass().getSimpleName(), e.getMessage()) + '\n'
+//                Arrays.stream(e.getStackTrace()).forEach(new Consumer<StackTraceElement>() {
+//                    @Override
+//                    public void accept(StackTraceElement stackTraceElement) {
+//                        stringBuilder.append(stackTraceElement.getClassName()).append('.')
+//                                .append(stackTraceElement.getMethodName()).append(':')
+//                                .append(stackTraceElement.getLineNumber()).append('\n');
+//                    }
+//                });
+                );
                 builder.setPositiveButton(e.getActionName(), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {

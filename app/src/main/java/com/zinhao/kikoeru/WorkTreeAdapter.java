@@ -21,6 +21,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -122,9 +123,13 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 String itemTitle = item.getString("title");
                 ((SimpleViewHolder) holder).tvTitle.setText(itemTitle);
                 File mapFile = LocalFileCache.getInstance().mapLocalItemFile(item,headerInfo.getInt("id"),getRelativePath());
-                if(mapFile.exists()){
+                if(mapFile != null){
                     item.put("local_file_path",mapFile.getAbsolutePath());
-                    ((SimpleViewHolder) holder).ivCover.setBackgroundColor(cachedItemBackgroundColor);
+                    if(mapFile.exists()){
+                        ((SimpleViewHolder) holder).ivCover.setBackgroundColor(cachedItemBackgroundColor);
+                    }else {
+                        ((SimpleViewHolder) holder).ivCover.setBackgroundColor(unCacheItemBackgroundColor);
+                    }
                 }else {
                     ((SimpleViewHolder) holder).ivCover.setBackgroundColor(unCacheItemBackgroundColor);
                 }

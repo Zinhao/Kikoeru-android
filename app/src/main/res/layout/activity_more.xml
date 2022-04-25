@@ -63,6 +63,38 @@
     </RelativeLayout>
 
     <RelativeLayout
+        android:id="@+id/saveExternal"
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        android:background="@drawable/item_bg">
+
+        <TextView
+            android:id="@+id/textView16"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="20dp"
+            android:gravity="center"
+            android:text="@string/saveAtExternal"
+            android:textSize="20sp" />
+
+        <CheckBox
+            android:id="@+id/checkBox3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="20dp"
+            android:text="" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_alignParentBottom="true"
+            android:background="@color/black_tran" />
+    </RelativeLayout>
+
+    <RelativeLayout
         android:id="@+id/about"
         android:layout_width="match_parent"
         android:layout_height="70dp"

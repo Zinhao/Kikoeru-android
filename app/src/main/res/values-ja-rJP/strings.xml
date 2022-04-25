@@ -37,4 +37,6 @@
     <string name="not_download">未下载</string>
     <string name="download">下载</string>
     <string name="debug_mode">debug mode</string>
+    <string name="savePath">存储位置</string>
+    <string name="saveAtExternal">保存到外部文件夹</string>
 </resources>

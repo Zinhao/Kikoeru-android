@@ -57,48 +57,55 @@ public class LocalFileCache implements Runnable, Closeable {
     }
 
     public File getExternalAppRootDir() throws FileNotFoundException {
-        File rootDir = new File(Environment.getExternalStorageDirectory(),"KikoeruLib");
-        if(!rootDir.exists()){
-            if(rootDir.mkdir()){
-                return rootDir;
-            }else {
-                throw new FileNotFoundException("创建文件夹失败："+rootDir.getAbsolutePath());
+        File rootDir;
+        if(App.getInstance().isSaveExternal()){
+            rootDir = new File(Environment.getExternalStorageDirectory(),"KikoeruLib");
+            if(!rootDir.exists()){
+                if(rootDir.mkdir()){
+                    return rootDir;
+                }else {
+                    throw new FileNotFoundException("create dir failed："+rootDir.getAbsolutePath());
+                }
             }
+        }else {
+            rootDir = App.getInstance().getExternalCacheDir();
         }
         return rootDir;
     }
 
-    public File getExternalCacheDir(int id){
+
+    public File getExternalCacheDir(int id) {
         File cacheDir = null;
         try {
             cacheDir = getExternalAppRootDir();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            App.getInstance().alertException(e);
             return null;
         }
         File worksLibDir = new File(cacheDir,"libs_work");
         File workLibDir = new File(worksLibDir,String.valueOf(id));
         if(!workLibDir.exists()){
             if(!workLibDir.mkdirs()){
-                Log.e(TAG, "getCacheDir: mkdir failed！" );
                 return null;
             }
         }
-        Log.d(TAG, "getCacheDir: "+ workLibDir.getPath());
         return workLibDir;
     }
 
-    public File mapLocalItemFile(JSONObject item, int id,String relativePath) throws JSONException {
+    public File mapLocalItemFile(JSONObject item, int id,String relativePath) throws JSONException{
         if(!item.has("hash") && !item.has("title")){
             return null;
         }
-        File workDir = instance.getExternalCacheDir(id);
-        String title = item.getString("title");
-        return new File( workDir.getPath() + relativePath + File.separator + title);
+        File workDir =instance.getExternalCacheDir(id);
+        if(workDir == null){
+            return null;
+        }else {
+            String title = item.getString("title");
+            return new File( workDir.getPath() + relativePath + File.separator + title);
+        }
     }
 
-    public boolean getLrcText(Context context,File audioFile,AsyncHttpClient.StringCallback callback){
+    public boolean getLrcText(File audioFile,AsyncHttpClient.StringCallback callback){
         File dir = audioFile.getParentFile();
         String name = audioFile.getName();
         String beforeName = name.substring(0,name.lastIndexOf("."));
@@ -298,10 +305,10 @@ public class LocalFileCache implements Runnable, Closeable {
                     String text = null;
                     StringBuilder stringBuilder = new StringBuilder();
                     while ((text = bufferedReader.readLine())!= null){
-                        stringBuilder.append(text);
+                        stringBuilder.append(text).append('\n');
                     }
                     bufferedReader.close();
-                    callback.onCompleted(null,null,stringBuilder.toString());
+                    callback.onCompleted(null,new LocalResponse(200),stringBuilder.toString());
                 }catch (Exception e){
                     callback.onCompleted(e,null,null);
                 }

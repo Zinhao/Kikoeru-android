@@ -475,7 +475,10 @@ public class AudioService extends Service{
                 updateLastBottomView(listener);
         }
 
-        public boolean equalsCurrentPlay(String lrcTitle){
+        public boolean equalsCurrentPlay(String lrcTitle,int workId){
+            if(workId != currentAlbumId){
+                return false;
+            }
             if(lrcTitle == null)
                 return false;
             if(!lrcTitle.toLowerCase(Locale.ROOT).endsWith(".lrc"))
@@ -522,7 +525,7 @@ public class AudioService extends Service{
             if(music.has("local_file_path")){
                 path = music.getString("local_file_path");
                 File audioFile = new File(path);
-                LocalFileCache.getInstance().getLrcText(AudioService.this,audioFile,lrcCallBack);
+                LocalFileCache.getInstance().getLrcText(audioFile,lrcCallBack);
                 mediaItem = MediaItem.fromUri(Uri.fromFile(audioFile));
             }else {
                 Log.d(TAG, "play: network file");

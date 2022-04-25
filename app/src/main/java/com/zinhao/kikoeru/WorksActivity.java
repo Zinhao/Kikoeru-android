@@ -242,7 +242,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
             setTitle(vaName);
             Api.doGetWorkByVa(page,vaId,apisCallback);
         }else if(type == TYPE_LOCAL_WORK){
-            setTitle(R.string.local_works);
+            setTitle(String.format("%s",App.getInstance().isSaveExternal()?"外部公共目录":"内部私有目录"));
             try {
                 LocalFileCache.getInstance().readLocalWorks(this,apisCallback);
             } catch (JSONException e) {
