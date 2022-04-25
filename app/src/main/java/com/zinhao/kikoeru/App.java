@@ -20,8 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class App extends SwipeBackApplication {
-    public static final String ID_PLAY_SERVICE = "com.zinhao.kikoeru.play_control";
     private static App instance;
+    public static final String ID_PLAY_SERVICE = "com.zinhao.kikoeru.play_control";
     public static final String CONFIG_UPDATE_TIME = "update_time";
     public static final String CONFIG_TOKEN = "token";
     public static final String CONFIG_USER_ACCOUNT = "user";
@@ -31,12 +31,22 @@ public class App extends SwipeBackApplication {
     public static final String CONFIG_ONLY_DISPLAY_LRC = "only_display_lrc";
     public static final String CONFIG_SORT = "sort";
     public static final String CONFIG_ORDER = "order";
+    public static final String CONFIG_DEBUG = "debug";
 
     public static App getInstance() {
         return instance;
     }
-
+    private boolean appDebug = false;
     private RequestOptions defaultPic;
+
+    public void setAppDebug(boolean appDebug) {
+        this.appDebug = appDebug;
+        setValue(CONFIG_DEBUG,appDebug?1:0);
+    }
+
+    public boolean isAppDebug() {
+        return appDebug;
+    }
 
     public RequestOptions getDefaultPic() {
         return defaultPic;
@@ -46,6 +56,7 @@ public class App extends SwipeBackApplication {
     public void onCreate() {
         super.onCreate();
         instance = this;
+        appDebug = getValue(App.CONFIG_DEBUG,0) == 1;
         defaultPic = new RequestOptions().placeholder(R.drawable.ic_no_cover);
         DownloadUtils.getInstance().init(this);
         NotificationChannel channelMusicService =
@@ -67,6 +78,16 @@ public class App extends SwipeBackApplication {
         }
         if(activity instanceof BaseActivity){
             ((BaseActivity) activity).alertException(e);
+        }
+    }
+
+    public void alertMessage(AppMessage e){
+        Activity activity = getBackHelper().getLastActivity();
+        if(activity == null){
+            return;
+        }
+        if(activity instanceof BaseActivity){
+            ((BaseActivity) activity).alertMessage(e);
         }
     }
 

@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="5dp"
     tools:context=".MoreActivity">
 
     <RelativeLayout
         android:id="@+id/relativeLayout"
         android:layout_width="match_parent"
         android:layout_height="70dp"
-        android:background="@drawable/item_bg"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:background="@drawable/item_bg">
 
         <TextView
             android:id="@+id/textView6"
@@ -45,9 +44,7 @@
         android:id="@+id/license"
         android:layout_width="match_parent"
         android:layout_height="70dp"
-        android:background="@drawable/item_bg"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/relativeLayout">
+        android:background="@drawable/item_bg">
 
         <TextView
             android:id="@+id/textView10"
@@ -69,9 +66,7 @@
         android:id="@+id/about"
         android:layout_width="match_parent"
         android:layout_height="70dp"
-        android:background="@drawable/item_bg"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/license">
+        android:background="@drawable/item_bg">
 
         <TextView
             android:id="@+id/textView11"
@@ -89,5 +84,35 @@
             android:background="@color/black_tran" />
     </RelativeLayout>
 
+    <RelativeLayout
+        android:id="@+id/debug"
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        android:background="@drawable/item_bg">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <TextView
+            android:id="@+id/textView12"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="20dp"
+            android:gravity="center"
+            android:text="@string/debug_mode"
+            android:textSize="20sp" />
+
+        <CheckBox
+            android:id="@+id/checkBox1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="20dp"
+            android:text="" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_alignParentBottom="true"
+            android:background="@color/black_tran" />
+    </RelativeLayout>
+</LinearLayout>

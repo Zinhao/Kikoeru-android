@@ -37,7 +37,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends BaseActivity implements MusicChangeListener,ServiceConnection,LrcRowChangeListener,TagsView.TagClickListener<JSONObject> {
+public class WorksActivity extends BaseActivity implements MusicChangeListener,ServiceConnection,LrcRowChangeListener,TagsView.TagClickListener<JSONObject> {
     private static final String TAG = "MainActivity";
     private RecyclerView recyclerView;
     private WorkAdapter workAdapter;
@@ -303,9 +303,9 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
             public void onClick(View v) {
                 try {
                     if(ctrlBinder.getCurrentTitle().endsWith("mp4")){
-                        startActivity(new Intent(MainActivity.this,VideoPlayerActivity.class));
+                        startActivity(new Intent(WorksActivity.this,VideoPlayerActivity.class));
                     }else {
-                        startActivity(new Intent(MainActivity.this,MusicPlayerActivity.class));
+                        startActivity(new Intent(WorksActivity.this,MusicPlayerActivity.class));
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -508,11 +508,11 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
     private void initLayout(int layoutType) {
         RecyclerView.LayoutManager layoutManager = null;
         if (layoutType == WorkAdapter.LAYOUT_LIST) {
-            layoutManager = new LinearLayoutManager(MainActivity.this);
+            layoutManager = new LinearLayoutManager(WorksActivity.this);
         } else if (layoutType == WorkAdapter.LAYOUT_SMALL_GRID) {
-            layoutManager = new GridLayoutManager(MainActivity.this, 3);
+            layoutManager = new GridLayoutManager(WorksActivity.this, 3);
         } else if (layoutType == WorkAdapter.LAYOUT_BIG_GRID) {
-            layoutManager = new GridLayoutManager(MainActivity.this, 2);
+            layoutManager = new GridLayoutManager(WorksActivity.this, 2);
         }
         workAdapter = new WorkAdapter(works, layoutType);
         workAdapter.setTagClickListener(this);
@@ -521,9 +521,9 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
             @Override
             public void onClick(View v) {
                 JSONObject item = (JSONObject) v.getTag();
-                Intent intent = new Intent(v.getContext(), WorkActivity.class);
+                Intent intent = new Intent(v.getContext(), WorkTreeActivity.class);
                 intent.putExtra("work_json_str", item.toString());
-                ActivityCompat.startActivityForResult(MainActivity.this, intent, TAG_SELECT_RESULT, null);
+                ActivityCompat.startActivityForResult(WorksActivity.this, intent, TAG_SELECT_RESULT, null);
             }
         });
         recyclerView.setLayoutManager(layoutManager);
@@ -572,10 +572,10 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
             try {
                 String vaId = jsonObject.getString("id");
                 type = TYPE_VA_WORK;
-                if(!vaId.equals(MainActivity.this.vaId)){
+                if(!vaId.equals(WorksActivity.this.vaId)){
                     vaName = jsonObject.getString("name");
                     clearWork();
-                    MainActivity.this.vaId = vaId;
+                    WorksActivity.this.vaId = vaId;
                 }
                 getNextPage();
             } catch (JSONException e) {

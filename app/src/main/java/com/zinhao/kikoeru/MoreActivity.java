@@ -10,6 +10,7 @@ public class MoreActivity extends BaseActivity implements CompoundButton.OnCheck
     private CheckBox cbOnlyLrcWork;
     private View vLicense;
     private View vAbout;
+    private CheckBox cbDebug;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,6 +37,10 @@ public class MoreActivity extends BaseActivity implements CompoundButton.OnCheck
             }
         });
 
+        cbDebug = findViewById(R.id.checkBox1);
+        cbDebug.setChecked(App.getInstance().isAppDebug());
+        cbDebug.setOnCheckedChangeListener(this);
+
     }
 
     @Override
@@ -44,6 +49,10 @@ public class MoreActivity extends BaseActivity implements CompoundButton.OnCheck
             long value = b ? 1:0;
             App.getInstance().setValue(App.CONFIG_ONLY_DISPLAY_LRC,value);
             Api.setSubtitle((int) value);
+        }
+
+        if(compoundButton == cbDebug){
+            App.getInstance().setAppDebug(b);
         }
     }
 }

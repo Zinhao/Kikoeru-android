@@ -1,6 +1,7 @@
 package com.zinhao.kikoeru;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -54,11 +55,14 @@ public class BaseActivity extends SlideOutActivity {
     }
 
     protected void alertException(Exception e){
+        if(!App.getInstance().isAppDebug()){
+            return;
+        }
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 AlertDialog.Builder builder = new AlertDialog.Builder(BaseActivity.this);
-                builder.setTitle("发生错误");
+                builder.setTitle(e.getClass().getSimpleName());
                 StringBuilder stringBuilder = new StringBuilder();
                 stringBuilder.append(String.format("%s: %s",e.getClass().getSimpleName(),e.getMessage())).append('\n');
                 Arrays.stream(e.getStackTrace()).forEach(new Consumer<StackTraceElement>() {
@@ -70,6 +74,38 @@ public class BaseActivity extends SlideOutActivity {
                     }
                 });
                 builder.setMessage(stringBuilder.toString());
+                builder.create().show();
+            }
+        });
+    }
+
+    protected void alertMessage(AppMessage e){
+        if(!App.getInstance().isAppDebug()){
+            return;
+        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                AlertDialog.Builder builder = new AlertDialog.Builder(BaseActivity.this);
+                builder.setTitle(e.getTitle());
+                StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.append(String.format("%s: %s",e.getClass().getSimpleName(),e.getMessage())).append('\n');
+                Arrays.stream(e.getStackTrace()).forEach(new Consumer<StackTraceElement>() {
+                    @Override
+                    public void accept(StackTraceElement stackTraceElement) {
+                        stringBuilder.append(stackTraceElement.getClassName()).append('.')
+                                .append(stackTraceElement.getMethodName()).append(':')
+                                .append(stackTraceElement.getLineNumber()).append('\n');
+                    }
+                });
+                builder.setMessage(stringBuilder.toString());
+                builder.setPositiveButton(e.getActionName(), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        e.getAction().run();
+                        dialog.dismiss();
+                    }
+                });
                 builder.create().show();
             }
         });

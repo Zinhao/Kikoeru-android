@@ -1,7 +1,6 @@
 package com.zinhao.kikoeru;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -193,7 +192,7 @@ public class LoginAccountActivity extends BaseActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                startActivity(new Intent(LoginAccountActivity.this,MainActivity.class));
+                startActivity(new Intent(LoginAccountActivity.this, WorksActivity.class));
                 finish();
             }
         });

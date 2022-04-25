@@ -257,6 +257,19 @@ public class DownloadUtils implements Closeable {
                 App.getInstance().alertException(e);
                 return;
             }
+            if(mapFile.length() != total){
+                String fileMapErr = String.format("rec: %d ,total: %d !",mapFile.getPath(),mapFile.length(),total);
+                AppMessage fileNoMap = new AppMessage("file size not map!", fileMapErr, new Runnable() {
+                    @Override
+                    public void run() {
+                        if(mapFile.exists()){
+                            if(mapFile.delete()){
+                            }
+                        }
+                    }
+                },"try delete");
+                App.getInstance().alertMessage(fileNoMap);
+            }
             Log.d(TAG, String.format("onCompleted: rec: %d ,total: %d",mapFile.length(),total));
             setDownloading(false);
             completed = true;

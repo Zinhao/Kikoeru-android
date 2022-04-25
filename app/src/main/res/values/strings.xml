@@ -47,6 +47,7 @@
     <string name="open">打开</string>
     <string name="not_download">未下载</string>
     <string name="download">下载</string>
+    <string name="debug_mode">debug mode</string>
 
 
 </resources>

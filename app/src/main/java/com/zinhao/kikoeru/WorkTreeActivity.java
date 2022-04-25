@@ -42,7 +42,7 @@ import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-public class WorkActivity extends BaseActivity implements View.OnClickListener,MusicChangeListener,
+public class WorkTreeActivity extends BaseActivity implements View.OnClickListener,MusicChangeListener,
         ServiceConnection,LrcRowChangeListener,View.OnLongClickListener, TagsView.TagClickListener<JSONObject>,
         WorkTreeAdapter.RelativePathChangeListener{
     /**
@@ -89,15 +89,15 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                     @Override
                     public void run() {
                         workTreeAdapter = new WorkTreeAdapter(workTrees);
-                        workTreeAdapter.setItemClickListener(WorkActivity.this);
-                        workTreeAdapter.setTagClickListener(WorkActivity.this);
+                        workTreeAdapter.setItemClickListener(WorkTreeActivity.this);
+                        workTreeAdapter.setTagClickListener(WorkTreeActivity.this);
                         workTreeAdapter.setVaClickListener(vaClickListener);
-                        workTreeAdapter.setItemLongClickListener(WorkActivity.this);
-                        workTreeAdapter.setPathChangeListener(WorkActivity.this);
+                        workTreeAdapter.setItemLongClickListener(WorkTreeActivity.this);
+                        workTreeAdapter.setPathChangeListener(WorkTreeActivity.this);
                         workTreeAdapter.setHeaderInfo(work);
-                        RecyclerView.ItemDecoration itemDecoration = new DividerItemDecoration(WorkActivity.this,DividerItemDecoration.VERTICAL);
+                        RecyclerView.ItemDecoration itemDecoration = new DividerItemDecoration(WorkTreeActivity.this,DividerItemDecoration.VERTICAL);
                         recyclerView.addItemDecoration(itemDecoration);
-                        recyclerView.setLayoutManager(new LinearLayoutManager(WorkActivity.this));
+                        recyclerView.setLayoutManager(new LinearLayoutManager(WorkTreeActivity.this));
                         recyclerView.setAdapter(workTreeAdapter);
                     }
                 });
@@ -119,9 +119,9 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                 @Override
                 public void run() {
                     if(isOpenCurrentPlayLrc){
-                        LrcShowActivity.start(WorkActivity.this,ctrlBinder.getLrc().getText(),true);
+                        LrcShowActivity.start(WorkTreeActivity.this,ctrlBinder.getLrc().getText(),true);
                     }else {
-                        LrcShowActivity.start(WorkActivity.this,s,false);
+                        LrcShowActivity.start(WorkTreeActivity.this,s,false);
                     }
 
                 }
@@ -250,7 +250,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            Toast.makeText(WorkActivity.this,message,Toast.LENGTH_SHORT).show();
+                            Toast.makeText(WorkTreeActivity.this,message,Toast.LENGTH_SHORT).show();
                         }
                     });
                 } catch (JSONException jsonException) {
@@ -305,7 +305,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                         break;
                     }
                 }
-                ImageBrowserActivity.start(WorkActivity.this,imageList,index);
+                ImageBrowserActivity.start(WorkTreeActivity.this,imageList,index);
             }else if("audio".equals(itemType)){
                 List<JSONObject> musicArray = new ArrayList<>();
                 int index = 0;
@@ -336,9 +336,9 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                     ctrlBinder.play(musicArray,index);
                 }
                 if(itemTitle.toLowerCase(Locale.ROOT).endsWith("mp4")){
-                    startActivity(new Intent(WorkActivity.this,VideoPlayerActivity.class));
+                    startActivity(new Intent(WorkTreeActivity.this,VideoPlayerActivity.class));
                 }else {
-                    startActivity(new Intent(WorkActivity.this, MusicPlayerActivity.class));
+                    startActivity(new Intent(WorkTreeActivity.this, MusicPlayerActivity.class));
                 }
             } else if("text".equals(itemType)){
                 if(itemTitle.toLowerCase(Locale.ROOT).endsWith("lrc")){
@@ -409,7 +409,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
             public void onClick(View v) {
                 try {
                     if(ctrlBinder.getCurrentTitle().endsWith("mp4")){
-                        startActivity(new Intent(WorkActivity.this,VideoPlayerActivity.class));
+                        startActivity(new Intent(WorkTreeActivity.this,VideoPlayerActivity.class));
                     }else if(ctrlBinder.getCurrentTitle().endsWith("mp3")){
 
                     }
@@ -481,7 +481,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                     builder.setPositiveButton(R.string.check_mission, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
-                            startActivity(new Intent(WorkActivity.this,DownLoadMissionActivity.class));
+                            startActivity(new Intent(WorkTreeActivity.this,DownLoadMissionActivity.class));
                             dialogInterface.dismiss();
                         }
                     });
@@ -505,11 +505,11 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                                 }
                             }
                             if(title.toLowerCase(Locale.ROOT).endsWith("mp4")){
-                                startActivity(new Intent(WorkActivity.this,VideoPlayerActivity.class));
+                                startActivity(new Intent(WorkTreeActivity.this,VideoPlayerActivity.class));
                             }else if(title.toLowerCase(Locale.ROOT).endsWith("lrc")){
 //                                Api.doGetMediaString(hash,lrcTextCallback);
                             }else if(title.toLowerCase(Locale.ROOT).endsWith("mp3")){
-                                startActivity(new Intent(WorkActivity.this, MusicPlayerActivity.class));
+                                startActivity(new Intent(WorkTreeActivity.this, MusicPlayerActivity.class));
                             }
                         }
                     });
@@ -524,7 +524,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                                 dialog.dismiss();
                                 DownloadUtils.Mission downLoadMission = new DownloadUtils.Mission(item);
                                 downLoadMission.start();
-                                startActivity(new Intent(WorkActivity.this,DownLoadMissionActivity.class));
+                                startActivity(new Intent(WorkTreeActivity.this,DownLoadMissionActivity.class));
                             }
                         });
             }

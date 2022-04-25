@@ -78,7 +78,7 @@ public class MissionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 LocalFileCache.getInstance().readLocalWorkById(item.getWorkId(), new AsyncHttpClient.JSONObjectCallback() {
                     @Override
                     public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
-                        Intent intent = new Intent(v.getContext(), WorkActivity.class);
+                        Intent intent = new Intent(v.getContext(), WorkTreeActivity.class);
                         intent.putExtra("work_json_str", jsonObject.toString());
                         ActivityCompat.startActivity(v.getContext(), intent,null);
                         dialog.dismiss();

@@ -43,10 +43,10 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".WorkActivity"
+            android:name=".WorkTreeActivity"
             android:exported="true" />
         <activity
-            android:name=".MainActivity"
+            android:name=".WorksActivity"
             android:exported="true" />
         <activity android:name=".LrcShowActivity" />
         <activity
