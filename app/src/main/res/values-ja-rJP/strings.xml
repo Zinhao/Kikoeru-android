@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="channel_description">play control</string>
+    <string name="action_settings">Settings</string>
+    <string name="sign_out">登出</string>
+    <string name="my_progress">我的进度</string>
+    <string name="about">关于</string>
+    <string name="all_works">全部作品</string>
+    <string name="works_layout">布局</string>
+    <string name="list_layout">列表布局</string>
+    <string name="cover_layout">封面网格</string>
+    <string name="detail_layout">详细网格</string>
+    <string name="tag">标签</string>
+    <string name="local_works">本地缓存</string>
+    <string name="sort">排序</string>
+    <string name="release_date">发布时间</string>
+    <string name="rj_number">RJ号码</string>
+    <string name="prize">价格</string>
+    <string name="last_in_lib">最新收录</string>
+    <string name="va_voicer">声优</string>
+    <string name="download_mission">下载任务</string>
+    <string name="only_load_has_lrc">仅加载有字幕作品</string>
+    <string name="more">更多</string>
+    <string name="this_is_a_open_source_project">这是一个开源项目</string>
+    <string name="marked">MARKED</string>
+    <string name="listening">LISTENING</string>
+    <string name="listened">LISTENED</string>
+    <string name="replay">REPLAY</string>
+    <string name="postponed">POSTPONED</string>
+    <string name="confirm">确定</string>
+    <string name="view">查看</string>
+    <string name="mark_action">action</string>
+    <string name="downloading">下载中</string>
+    <string name="cancel_download">取消下载</string>
+    <string name="check_mission">查看任务</string>
+    <string name="open">打开</string>
+    <string name="not_download">未下载</string>
+    <string name="download">下载</string>
+</resources>

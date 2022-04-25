@@ -1,7 +1,5 @@
 package com.zinhao.kikoeru;
 
-import static android.provider.ContactsContract.CommonDataKinds.Website.URL;
-
 import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
@@ -12,11 +10,9 @@ import com.koushikdutta.async.AsyncServer;
 import com.koushikdutta.async.ByteBufferList;
 import com.koushikdutta.async.DataEmitter;
 import com.koushikdutta.async.callback.CompletedCallback;
-import com.koushikdutta.async.future.SimpleFuture;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpRequest;
 import com.koushikdutta.async.http.AsyncHttpResponse;
-import com.koushikdutta.async.http.HttpUtil;
 import com.koushikdutta.async.http.callback.HttpConnectCallback;
 import com.koushikdutta.async.stream.OutputStreamDataCallback;
 
@@ -30,7 +26,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.FileAlreadyExistsException;
 import java.util.ArrayList;
 import java.util.List;

@@ -124,10 +124,9 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 File mapFile = LocalFileCache.getInstance().mapLocalItemFile(item,headerInfo.getInt("id"),getRelativePath());
                 if(mapFile.exists()){
                     item.put("local_file_path",mapFile.getAbsolutePath());
-                    holder.itemView.setBackgroundColor(cachedItemBackgroundColor);
+                    ((SimpleViewHolder) holder).ivCover.setBackgroundColor(cachedItemBackgroundColor);
                 }else {
-
-                    holder.itemView.setBackgroundColor(unCacheItemBackgroundColor);
+                    ((SimpleViewHolder) holder).ivCover.setBackgroundColor(unCacheItemBackgroundColor);
                 }
                 ((SimpleViewHolder) holder).tvCount.setText(item.getString("type"));
                 if("folder".equals(item.getString("type"))){
@@ -153,24 +152,28 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                         @SuppressLint("NotifyDataSetChanged")
                         @Override
                         public void onClick(View v) {
-                            try {
-                                parentData.add(data);
-                                JSONArray jsonArray = item.getJSONArray("children");
-                                List<JSONObject> list = new ArrayList<>();
-                                pathList.add(item.getString("title"));
-                                for (int i = 0; i < jsonArray.length(); i++) {
-                                    list.add(jsonArray.getJSONObject(i));
+                            v.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        parentData.add(data);
+                                        JSONArray jsonArray = item.getJSONArray("children");
+                                        List<JSONObject> list = new ArrayList<>();
+                                        pathList.add(item.getString("title"));
+                                        for (int i = 0; i < jsonArray.length(); i++) {
+                                            list.add(jsonArray.getJSONObject(i));
+                                        }
+                                        data = list;
+                                        if(pathChangeListener != null){
+                                            pathChangeListener.onPathChange(getRelativePath());
+                                        }
+                                        notifyDataSetChanged();
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                        App.getInstance().alertException(e);
+                                    }
                                 }
-                                data = list;
-                                if(pathChangeListener != null){
-                                    pathChangeListener.onPathChange(getRelativePath());
-                                }
-                                notifyDataSetChanged();
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                                App.getInstance().alertException(e);
-                            }
-
+                            },300);
                         }
                     });
                     holder.itemView.setOnLongClickListener(null);

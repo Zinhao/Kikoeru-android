@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:id="@+id/tvName"
+    android:gravity="center_vertical"
+    android:paddingLeft="20dp"
+    android:text="ExoPlayer"
+    android:textSize="20sp"
+    android:background="@drawable/item_bg"
+    android:layout_height="70dp">
+</TextView>

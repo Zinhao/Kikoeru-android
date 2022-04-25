@@ -8,7 +8,8 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+    <uses-permission
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
 
     <application
@@ -22,11 +23,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Kikoeru">
         <activity
-            android:name=".DownLoadMissionActivity"
+            android:name=".LicenseActivity"
             android:exported="true" />
         <activity
-            android:name=".SettingActivity"
-            android:exported="true" />
+            android:name=".DownLoadMissionActivity"
+            android:exported="true"
+            android:label="@string/download_mission" />
+        <activity
+            android:name=".MoreActivity"
+            android:exported="true"
+            android:label="@string/more" />
         <activity
             android:name=".LoginAccountActivity"
             android:exported="true">
@@ -55,8 +61,9 @@
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity
             android:name=".TagsActivity"
+            android:label="@string/tag"
             android:exported="true" />
-        <activity android:name=".AboutActivity" />
+        <activity android:name=".AboutActivity" android:label="@string/about"/>
         <activity android:name=".VasActivity" />
 
         <service android:name=".AudioService" />

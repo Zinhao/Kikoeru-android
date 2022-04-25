@@ -10,7 +10,6 @@ import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.SubMenu;
 import android.view.View;
 import android.view.animation.Animation;
@@ -18,12 +17,9 @@ import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -49,7 +45,6 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
     private RecyclerView.OnScrollListener scrollListener;
     private int page = 1;
     private int totalCount = 0;
-    private int retryCount =0;
 
     private View bottomLayout;
     private Animation outAnim;
@@ -111,7 +106,6 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
                         ivCover.postDelayed(new Runnable() {
                             @Override
                             public void run() {
-                                retryCount++;
                                 getNextPage();
                             }
                         },3000);
@@ -227,19 +221,19 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
             setTitle(getString(R.string.app_name));
             Api.doGetWorks(page,apisCallback);
         }else if(type == TYPE_SELF_LISTENING){
-            setTitle("在听");
+            setTitle(R.string.listening);
             Api.doGetReview(Api.FILTER_LISTENING,page,apisCallback);
         }else if(type == TYPE_SELF_LISTENED){
-            setTitle("听过");
+            setTitle(R.string.listened);
             Api.doGetReview(Api.FILTER_LISTENED,page,apisCallback);
         }else if(type == TYPE_SELF_MARKED){
-            setTitle("标记");
+            setTitle(R.string.marked);
             Api.doGetReview(Api.FILTER_MARKED,page,apisCallback);
         }else if(type == TYPE_SELF_REPLAY){
-            setTitle("重听");
+            setTitle(R.string.replay);
             Api.doGetReview(Api.FILTER_REPLAY,page,apisCallback);
         }else if(type == TYPE_SELF_POSTPONED){
-            setTitle("推迟");
+            setTitle(R.string.postponed);
             Api.doGetReview(Api.FILTER_POSTPONED,page,apisCallback);
         }else if(type == TYPE_TAG_WORK){
             setTitle(tagStr);
@@ -248,7 +242,7 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
             setTitle(vaName);
             Api.doGetWorkByVa(page,vaId,apisCallback);
         }else if(type == TYPE_LOCAL_WORK){
-            setTitle("本地緩存");
+            setTitle(R.string.local_works);
             try {
                 LocalFileCache.getInstance().readLocalWorks(this,apisCallback);
             } catch (JSONException e) {
@@ -339,46 +333,45 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuItem signOutMenu = menu.add(0,0,0,"登出");
-        SubMenu menuProgress = menu.addSubMenu(0,1,1,"我的进度");
+        MenuItem signOutMenu = menu.add(0,0,0, R.string.sign_out);
+        SubMenu menuProgress = menu.addSubMenu(0,1,1, R.string.my_progress);
         menuProgress.setIcon(R.drawable.ic_baseline_favorite_24);
-        MenuItem aboutMenu =menu.add(0,2,2,"关于");
-        MenuItem menuItem4 =menu.add(1,3,3,"全部作品");
+        MenuItem menuItem4 =menu.add(1,3,3, R.string.all_works);
         menuItem4.setIcon(R.drawable.ic_baseline_widgets_24);
         menuItem4.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         menuProgress.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
-        menuProgress.add(1,4,4,Api.FILTER_MARKED);
-        menuProgress.add(1,5,5,Api.FILTER_LISTENING);
-        menuProgress.add(1,6,6,Api.FILTER_LISTENED);
-        menuProgress.add(1,7,7,Api.FILTER_REPLAY);
-        menuProgress.add(1,8,8,Api.FILTER_POSTPONED);
+        menuProgress.add(1,4,4,R.string.marked);
+        menuProgress.add(1,5,5,R.string.listening);
+        menuProgress.add(1,6,6,R.string.listened);
+        menuProgress.add(1,7,7,R.string.replay);
+        menuProgress.add(1,8,8,R.string.postponed);
 
-        SubMenu layoutMenu = menu.addSubMenu(0,9,9,"布局");
+        SubMenu layoutMenu = menu.addSubMenu(0,9,9, R.string.works_layout);
         layoutMenu.setIcon(R.drawable.ic_baseline_view_column_24);
-        layoutMenu.add(2,10,10,"列表视图");
-        layoutMenu.add(2,11,11,"封面网格");
-        layoutMenu.add(2,12,12,"详细网格");
+        layoutMenu.add(2,10,10, R.string.list_layout);
+        layoutMenu.add(2,11,11, R.string.cover_layout);
+        layoutMenu.add(2,12,12, R.string.detail_layout);
         layoutMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
 
-        MenuItem tagMenu = menu.add(0,13,13,"标签");
+        MenuItem tagMenu = menu.add(0,13,13, R.string.tag);
         tagMenu.setIcon(R.drawable.ic_baseline_tag_24);
         tagMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
-        MenuItem localSaveMenu = menu.add(0,14,14,"本地缓存");
+        MenuItem localSaveMenu = menu.add(0,14,14, R.string.local_works);
         localSaveMenu.setIcon(R.drawable.ic_baseline_storage_24);
         localSaveMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
 
-        menu.add(0,15,15,"设置");
+        menu.add(0,15,15,R.string.more);
 
-        SubMenu sortMenu = menu.addSubMenu(0,16,16,"排序");
-        sortMenu.add(3,17,17,"发布时间");
-        sortMenu.add(3,18,18,"RJ号码");
-        sortMenu.add(3,19,19,"价格");
-        sortMenu.add(3,20,20,"最新收录");
+        SubMenu sortMenu = menu.addSubMenu(0,16,16, R.string.sort);
+        sortMenu.add(3,17,17, R.string.release_date);
+        sortMenu.add(3,18,18, R.string.rj_number);
+        sortMenu.add(3,19,19, R.string.prize);
+        sortMenu.add(3,20,20, R.string.last_in_lib);
 
-        menu.add(0,21,21,"声优");
-        menu.add(0,22,22,"下载任务");
+        menu.add(0,21,21, R.string.va_voicer);
+        menu.add(0,22,22, R.string.download_mission);
      return super.onCreateOptionsMenu(menu);
     }
 
@@ -463,8 +456,6 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
             startActivity(new Intent(this,LoginAccountActivity.class));
             finish();
         }else if(item.getItemId() == 1){
-        }else if(item.getItemId() == 2){
-            startActivity(new Intent(this,AboutActivity.class));
         }else if(item.getItemId() == 13){
             startActivityForResult(new Intent(this,TagsActivity.class),TAG_SELECT_RESULT);
         }else if(item.getItemId() == 14){
@@ -474,7 +465,7 @@ public class MainActivity extends BaseActivity implements MusicChangeListener,Se
                 getNextPage();
             }
         }else if(item.getItemId() == 15){
-            startActivity(new Intent(this,SettingActivity.class));
+            startActivity(new Intent(this, MoreActivity.class));
         }else if(item.getItemId() == 21){
             startActivityForResult(new Intent(this,VasActivity.class),VA_SELECT_RESULT);
         }else if(item.getItemId() == 22){

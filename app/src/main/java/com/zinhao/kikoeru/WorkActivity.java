@@ -205,12 +205,12 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        SubMenu subMenu = menu.addSubMenu(0,0,0,"action");
-        subMenu.add(1,1,1,Api.FILTER_MARKED);
-        subMenu.add(1,2,2,Api.FILTER_LISTENING);
-        subMenu.add(1,3,3,Api.FILTER_LISTENED);
-        subMenu.add(1,4,4,Api.FILTER_REPLAY);
-        subMenu.add(1,5,5,Api.FILTER_POSTPONED);
+        SubMenu subMenu = menu.addSubMenu(0,0,0, R.string.mark_action);
+        subMenu.add(1,1,1, R.string.marked);
+        subMenu.add(1,2,2, R.string.listening);
+        subMenu.add(1,3,3, R.string.listened);
+        subMenu.add(1,4,4, R.string.replay);
+        subMenu.add(1,5,5, R.string.postponed);
         subMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         return super.onCreateOptionsMenu(menu);
     }
@@ -305,7 +305,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                         break;
                     }
                 }
-                ImageBrowserActivity.start(this,imageList,index);
+                ImageBrowserActivity.start(WorkActivity.this,imageList,index);
             }else if("audio".equals(itemType)){
                 List<JSONObject> musicArray = new ArrayList<>();
                 int index = 0;
@@ -336,9 +336,9 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                     ctrlBinder.play(musicArray,index);
                 }
                 if(itemTitle.toLowerCase(Locale.ROOT).endsWith("mp4")){
-                    startActivity(new Intent(this,VideoPlayerActivity.class));
+                    startActivity(new Intent(WorkActivity.this,VideoPlayerActivity.class));
                 }else {
-                    startActivity(new Intent(this, MusicPlayerActivity.class));
+                    startActivity(new Intent(WorkActivity.this, MusicPlayerActivity.class));
                 }
             } else if("text".equals(itemType)){
                 if(itemTitle.toLowerCase(Locale.ROOT).endsWith("lrc")){
@@ -471,14 +471,14 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                     currentPlayUrl = "";
                 }
                 if(mapMission != null){
-                    builder.setTitle("下载中");
-                    builder.setNegativeButton("取消下载", new DialogInterface.OnClickListener() {
+                    builder.setTitle(R.string.downloading);
+                    builder.setNegativeButton(R.string.cancel_download, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             mapMission.stop();
                         }
                     });
-                    builder.setPositiveButton("查看任务", new DialogInterface.OnClickListener() {
+                    builder.setPositiveButton(R.string.check_mission, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
                             startActivity(new Intent(WorkActivity.this,DownLoadMissionActivity.class));
@@ -486,7 +486,7 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                         }
                     });
                 }else {
-                    builder.setNegativeButton("打开", new DialogInterface.OnClickListener() {
+                    builder.setNegativeButton(R.string.open, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             if(type.equals("audio")){
@@ -516,9 +516,9 @@ public class WorkActivity extends BaseActivity implements View.OnClickListener,M
                 }
 
             }else {
-                builder.setTitle("未下载")
+                builder.setTitle(getString(R.string.not_download))
                         .setMessage(itemFile.getAbsolutePath())
-                        .setNegativeButton("下载", new DialogInterface.OnClickListener() {
+                        .setNegativeButton(R.string.download, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 dialog.dismiss();
