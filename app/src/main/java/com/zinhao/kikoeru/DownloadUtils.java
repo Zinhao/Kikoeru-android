@@ -253,26 +253,23 @@ public class DownloadUtils implements Closeable {
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, File file) {
             update = true;
+            setDownloading(false);
+            completed = true;
             if(e != null){
                 App.getInstance().alertException(e);
                 return;
             }
-            if(mapFile.length() != total){
-                String fileMapErr = String.format("rec: %d ,total: %d !",mapFile.getPath(),mapFile.length(),total);
-                AppMessage fileNoMap = new AppMessage("file size not map!", fileMapErr, new Runnable() {
-                    @Override
-                    public void run() {
-                        if(mapFile.exists()){
-                            if(mapFile.delete()){
-                            }
+            String fileMapErr = String.format("Path:%s ,rec: %d ,total: %d !",mapFile.getPath(),mapFile.length(),total);
+            AppMessage fileNoMap = new AppMessage("file down load success!", fileMapErr, new Runnable() {
+                @Override
+                public void run() {
+                    if(mapFile.exists()){
+                        if(mapFile.delete()){
                         }
                     }
-                },"try delete");
-                App.getInstance().alertMessage(fileNoMap);
-            }
-            Log.d(TAG, String.format("onCompleted: rec: %d ,total: %d",mapFile.length(),total));
-            setDownloading(false);
-            completed = true;
+                }
+            },"delete");
+            App.getInstance().alertMessage(fileNoMap);
         }
 
         public boolean isDownloading() {

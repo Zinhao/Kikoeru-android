@@ -75,10 +75,10 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
             if(e!=null){
-//                e.printStackTrace();
-//                alertException(e);
+                e.printStackTrace();
+                alertException(e);
                 /**
-                 * I do not why?
+                 * why?
                  * javax.net.ssl.SSLHandshakeException: Read error: ssl=0x798b43bc58: Failure in SSL library, usually a protocol error
                  * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err: error:10000065:SSL routines:OPENSSL_internal:ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT (external/boringssl/src/ssl/tls13_client.cc:385 0x78de42cc60:0x00000000)
                  * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.SSLUtils.toSSLHandshakeException(SSLUtils.java:363)

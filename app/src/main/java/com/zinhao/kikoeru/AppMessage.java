@@ -13,14 +13,27 @@ public class AppMessage extends Exception{
     }
 
     public String getTitle() {
+        if(title == null)
+            return "";
         return title;
     }
 
+    public Runnable NONE = new Runnable() {
+        @Override
+        public void run() {
+        }
+    };
+
     public Runnable getAction() {
+        if(action == null){
+            return NONE;
+        }
         return action;
     }
 
     public String getActionName() {
+        if(title == null)
+            return "no name";
         return actionName;
     }
 }
