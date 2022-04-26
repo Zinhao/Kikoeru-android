@@ -388,7 +388,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         }else if(item.getItemId() == 21){
             startActivityForResult(new Intent(this,VasActivity.class),VA_SELECT_RESULT);
         }else if(item.getItemId() == 22){
-            startActivityForResult(new Intent(this,DownLoadMissionActivity.class),VA_SELECT_RESULT);
+            startActivity(new Intent(this,DownLoadMissionActivity.class));
         }
         return super.onOptionsItemSelected(item);
     }
@@ -442,7 +442,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
                 JSONObject item = (JSONObject) v.getTag();
                 Intent intent = new Intent(v.getContext(), WorkTreeActivity.class);
                 intent.putExtra("work_json_str", item.toString());
-                ActivityCompat.startActivityForResult(WorksActivity.this, intent, TAG_SELECT_RESULT, null);
+                ActivityCompat.startActivity(WorksActivity.this, intent,null);
             }
         });
         recyclerView.setLayoutManager(layoutManager);
@@ -463,15 +463,45 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         ctrlBinder.removeMusicChangeListener(this);
         ctrlBinder.removeLrcRowChangeListener(this);
 
-        int state = ctrlBinder.getController().getPlaybackState().getState();
-        if(state == PlaybackStateCompat.STATE_STOPPED || state == PlaybackStateCompat.STATE_PAUSED){
+        PlaybackStateCompat playbackStateCompat = ctrlBinder.getController().getPlaybackState();
+        if(playbackStateCompat == null){
             stopService(new Intent(this,AudioService.class));
+        }else {
+            int state = ctrlBinder.getController().getPlaybackState().getState();
+            if(state == PlaybackStateCompat.STATE_STOPPED || state == PlaybackStateCompat.STATE_PAUSED){
+                stopService(new Intent(this,AudioService.class));
+            }
         }
-
         unbindService(this);
         super.onDestroy();
     }
 
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        String resultType = intent.getStringExtra("resultType");
+        if(resultType == null){
+            return;
+        }
+        if(resultType.equals("va")){
+            String vaId = intent.getStringExtra("id");
+            type = TYPE_VA_WORK;
+            if(!vaId.equals(this.vaId)){
+                vaName = intent.getStringExtra("name");
+                clearWork();
+                this.vaId = vaId;
+            }
+        }else if(resultType.equals("tag")){
+            int tagId = intent.getIntExtra("id",-1);
+            type = TYPE_TAG_WORK;
+            if(tagId != this.tagId){
+                tagStr = intent.getStringExtra("name");
+                clearWork();
+                this.tagId = tagId;
+            }
+        }
+        getNextPage();
+    }
 
     @Override
     public void onTagClick(JSONObject jsonObject) {

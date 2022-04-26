@@ -118,6 +118,27 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         ibStatus = bottomLayout.findViewById(R.id.button);
 
         bindService(new Intent(this, AudioService.class),this,BIND_AUTO_CREATE);
+        init();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        String workStr = intent.getStringExtra("work_json_str");
+        Log.d(TAG, "onNewIntent: " + workStr);
+        if(workStr!=null && !workStr.isEmpty()){
+            try {
+                work = new JSONObject(workStr);
+                init();
+            } catch (JSONException e) {
+                e.printStackTrace();
+                alertException(e);
+                return;
+            }
+        }
+    }
+
+    private void init(){
         try {
             if(work.has("localWorK")){
                 boolean isLocalWork = work.getBoolean(JSONConst.Work.IS_LOCAL_WORK);
@@ -128,7 +149,6 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
             }else {
                 Api.doGetDocTree(work.getInt("id"), docTreeCallback);
             }
-
         } catch (JSONException e) {
             e.printStackTrace();
             alertException(e);
@@ -533,12 +553,11 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
             int tagId = jsonObject.getInt("id");
             String tagName = jsonObject.getString("name");
             setTitle(tagName);
-            Intent intent = new Intent();
+            Intent intent = new Intent(WorkTreeActivity.this,WorksActivity.class);
             intent.putExtra("resultType","tag");
             intent.putExtra("id",tagId);
             intent.putExtra("name",tagName);
-            setResult(RESULT_OK,intent);
-            finish();
+            startActivity(intent);
         } catch (JSONException e) {
             e.printStackTrace();
             alertException(e);
@@ -554,12 +573,11 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                 Log.d(TAG, "onTagClick: "+ vaId);
                 String vaName = jsonObject.getString("name");
                 setTitle(vaName);
-                Intent intent = new Intent();
+                Intent intent = new Intent(WorkTreeActivity.this,WorksActivity.class);
                 intent.putExtra("resultType","va");
                 intent.putExtra("id",vaId);
                 intent.putExtra("name",vaName);
-                setResult(RESULT_OK,intent);
-                finish();
+                startActivity(intent);
             } catch (JSONException e) {
                 e.printStackTrace();
                 alertException(e);

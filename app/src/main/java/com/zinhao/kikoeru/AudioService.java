@@ -646,11 +646,15 @@ public class AudioService extends Service{
         public void close() throws IOException {
             mLrcUpdateTimer.cancel();
             long seek = 0;
-            if(getController().getPlaybackState().getState() != PlaybackStateCompat.STATE_STOPPED){
-                seek = getExoPlayer().getCurrentPosition();
-                getController().getTransportControls().stop();
+            PlaybackStateCompat playbackStateCompat = getController().getPlaybackState();
+            if(playbackStateCompat != null){
+                if(playbackStateCompat.getState() != PlaybackStateCompat.STATE_STOPPED){
+                    seek = getExoPlayer().getCurrentPosition();
+                    getController().getTransportControls().stop();
+                }
+                LocalFileCache.getInstance().savePlayList(AudioService.this,playList,currentIndex,seek);
             }
-            LocalFileCache.getInstance().savePlayList(AudioService.this,playList,currentIndex,seek);
+
         }
     }
 }

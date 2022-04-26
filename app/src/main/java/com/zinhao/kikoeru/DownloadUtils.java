@@ -294,7 +294,7 @@ public class DownloadUtils implements Closeable {
         @Override
         public void onProgress(AsyncHttpResponse response, long downloaded, long total) {
             super.onProgress(response, downloaded, total);
-            Log.d(TAG, String.format("onProgress: %d ,downloaded:%d ,total:%d",getProgress(),downloaded,total));
+//            Log.d(TAG, String.format("onProgress: %d ,downloaded:%d ,total:%d",getProgress(),downloaded,total));
             String eTag = response.headers().get("etag");
             this.downloaded = downloaded;
             this.total = total;
