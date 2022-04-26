@@ -46,6 +46,7 @@
     <string name="debug_mode">debug mode</string>
     <string name="savePath">save position</string>
     <string name="saveAtExternal">save at external storage</string>
+    <string name="search">search</string>
 
 
 </resources>

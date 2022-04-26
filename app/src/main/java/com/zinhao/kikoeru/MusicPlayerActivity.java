@@ -13,12 +13,16 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
+import com.koushikdutta.async.http.AsyncHttpClient;
+import com.koushikdutta.async.http.AsyncHttpResponse;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -29,6 +33,7 @@ public class MusicPlayerActivity extends BaseActivity implements ServiceConnecti
     private ImageButton ibPrevious;
     private ImageButton ibPause;
     private ImageButton ibNext;
+    private ImageButton ibWork;
     private TextView tvLrc;
     private TextView tvUpLrc;
     private TextView tvNextLrc;
@@ -45,6 +50,7 @@ public class MusicPlayerActivity extends BaseActivity implements ServiceConnecti
         ibPrevious = findViewById(R.id.ib1);
         ibPause = findViewById(R.id.ib2);
         ibNext = findViewById(R.id.ib3);
+        ibWork = findViewById(R.id.imageButton2);
         tvLrc = findViewById(R.id.tvLrc);
         tvUpLrc = findViewById(R.id.tvUpLrc);
         tvNextLrc = findViewById(R.id.tvNextLrc);
@@ -92,6 +98,33 @@ public class MusicPlayerActivity extends BaseActivity implements ServiceConnecti
         bindService(new Intent(this,AudioService.class),this,BIND_AUTO_CREATE);
     }
 
+    private AsyncHttpClient.JSONObjectCallback searchWorkCallback = new AsyncHttpClient.JSONObjectCallback() {
+        @Override
+        public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
+            if(e!= null){
+                alertException(e);
+                return;
+            }
+            if(asyncHttpResponse.code() == 200){
+                try {
+                    int totalCount = jsonObject.getJSONObject("pagination").getInt("totalCount");
+                    if(totalCount<1)
+                        return;
+                    JSONArray works = jsonObject.getJSONArray("works");
+                    if(works.length() != 0){
+                        JSONObject item = works.getJSONObject(0);
+                        Intent intent = new Intent(MusicPlayerActivity.this, WorkTreeActivity.class);
+                        intent.putExtra("work_json_str", item.toString());
+                        ActivityCompat.startActivity(MusicPlayerActivity.this, intent,null);
+                    }
+                } catch (JSONException jsonException) {
+                    jsonException.printStackTrace();
+                }
+
+            }
+        }
+    };
+
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         ctrlBinder = (AudioService.CtrlBinder) service;
@@ -101,6 +134,12 @@ public class MusicPlayerActivity extends BaseActivity implements ServiceConnecti
             needShowLrcWhenDestroy = true;
             ctrlBinder.showOrHideLrcFloatWindow();
         }
+        ibWork.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Api.doGetWork(String.valueOf(ctrlBinder.getCurrentAlbumId()),1,searchWorkCallback);
+            }
+        });
         timeProgressView.setMax((int) ctrlBinder.getExoPlayer().getDuration());
         updateSeek();
     }

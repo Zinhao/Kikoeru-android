@@ -291,6 +291,9 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
 
         menu.add(0,21,21, R.string.va_voicer);
         menu.add(0,22,22, R.string.download_mission);
+        MenuItem searchMenu = menu.add(0,23,23, R.string.search);
+        searchMenu.setIcon(R.drawable.ic_baseline_search_24);
+        searchMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
      return super.onCreateOptionsMenu(menu);
     }
 
@@ -389,6 +392,8 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
             startActivityForResult(new Intent(this,VasActivity.class),VA_SELECT_RESULT);
         }else if(item.getItemId() == 22){
             startActivity(new Intent(this,DownLoadMissionActivity.class));
+        }else if(item.getItemId() == 23){
+            startActivity(new Intent(this,SearchActivity.class));
         }
         return super.onOptionsItemSelected(item);
     }

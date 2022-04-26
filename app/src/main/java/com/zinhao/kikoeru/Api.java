@@ -114,6 +114,14 @@ public class Api {
         AsyncHttpClient.getDefaultInstance().executeJSONArray(request, callback);
     }
 
+    public static void doGetWork(String keyword,int page,AsyncHttpClient.JSONObjectCallback callback){
+//        http://localhost:8888/api/search/RJ381400?order=release&sort=desc&page=1&seed=18
+        AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST+String.format("/api/search/%s?order=%s&sort=%s&page=%d&seed=18&subtitle=%d",keyword,order,makeSort(),page,subtitle)),"GET");
+        request.setTimeout(5000);
+        request.addHeader("authorization",authorization);
+        AsyncHttpClient.getDefaultInstance().executeJSONObject(request, callback);
+    }
+
     public static void checkLrc(String hash,AsyncHttpClient.JSONObjectCallback callback){
         AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST+String.format("/api/media/check-lrc/%s?token=%s",hash,token)),"GET");
         request.setTimeout(5000);
@@ -186,6 +194,23 @@ public class Api {
         request.setTimeout(5000);
         request.addHeader("authorization",authorization);
         AsyncHttpClient.getDefaultInstance().executeJSONObject(request, callback);
+    }
+
+    public static String formatGetUrl(String path,boolean useToken){
+        if(path.startsWith("http")){
+            if(useToken){
+                return String.format("%s?token=%s",path,token);
+            }else {
+                return path;
+            }
+        }else {
+            if(useToken){
+                return String.format("%s%s?token=%s",HOST,path,token);
+            }else {
+                return String.format("%s%s",HOST,path);
+            }
+
+        }
     }
 
 }

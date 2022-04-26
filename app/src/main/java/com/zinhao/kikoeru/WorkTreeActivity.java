@@ -248,16 +248,10 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
             if(_item.getString("type").equals("image")){
                 String url;
                 try {
-                    if(_item.has(JSONConst.WorkTree.MAP_FILE_PATH)){
-                        url = _item.getString(JSONConst.WorkTree.MAP_FILE_PATH);
-                        if(!new File(url).exists()){
-                            url = _item.getString(JSONConst.WorkTree.MEDIA_STREAM_URL);
-                        }
-                    }else {
+                    url = _item.getString(JSONConst.WorkTree.MAP_FILE_PATH);
+                    if(!new File(url).exists()){
                         url = _item.getString(JSONConst.WorkTree.MEDIA_STREAM_URL);
-                        if(!url.startsWith("http")){
-                            url = Api.HOST + url;
-                        }
+                        url = Api.formatGetUrl(url,true);
                     }
                     imageList.add(url);
                     if(_item.getString(JSONConst.WorkTree.HASH).equals(item.getString(JSONConst.WorkTree.HASH))){

@@ -68,7 +68,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="无歌词"
+        android:text=""
         android:textColor="@color/white"
         app:layout_constraintEnd_toEndOf="@+id/ivCover"
         app:layout_constraintStart_toStartOf="@+id/ivCover"
@@ -79,7 +79,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="无歌词"
+        android:text=""
         android:textColor="@color/white"
         app:layout_constraintEnd_toEndOf="@+id/ivCover"
         app:layout_constraintStart_toStartOf="@+id/ivCover"
@@ -90,10 +90,21 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="无歌词"
+        android:text=""
         android:textColor="@color/white"
         app:layout_constraintEnd_toEndOf="@+id/ivCover"
         app:layout_constraintStart_toStartOf="@+id/ivCover"
         app:layout_constraintTop_toBottomOf="@+id/tvLrc" />
+
+    <ImageButton
+        android:id="@+id/imageButton2"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="24dp"
+        android:background="@drawable/item_bg"
+        app:layout_constraintBottom_toBottomOf="@+id/ib3"
+        app:layout_constraintStart_toEndOf="@+id/ib3"
+        app:layout_constraintTop_toTopOf="@+id/ib3"
+        app:srcCompat="@drawable/ic_baseline_work_24" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

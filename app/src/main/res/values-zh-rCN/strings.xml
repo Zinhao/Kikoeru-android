@@ -39,4 +39,5 @@
     <string name="debug_mode">调试模式</string>
     <string name="savePath">存储位置</string>
     <string name="saveAtExternal">保存到外部文件夹</string>
+    <string name="search">search</string>
 </resources>

@@ -23,6 +23,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Kikoeru">
         <activity
+            android:name=".SearchActivity"
+            android:exported="true" />
+        <activity
             android:name=".LicenseActivity"
             android:exported="true" />
         <activity
@@ -44,31 +47,38 @@
         </activity>
         <activity
             android:name=".WorkTreeActivity"
-            android:launchMode="singleTask"
-            android:exported="true" />
+            android:exported="true"
+            android:launchMode="singleTask" />
         <activity
             android:name=".WorksActivity"
-            android:launchMode="singleTask"
-            android:exported="true" />
+            android:exported="true"
+            android:launchMode="singleTask" />
         <activity android:name=".TextRowActivity" />
         <activity
             android:name=".VideoPlayerActivity"
+            android:launchMode="singleTask"
             android:theme="@style/Theme.Kikoeru.NoActionBar" />
-        <activity android:name=".MusicPlayerActivity" />
+        <activity
+            android:name=".MusicPlayerActivity"
+            android:launchMode="singleTask" />
         <activity
             android:name=".LrcFloatWindow"
             android:theme="@style/Theme.AppCompat.Dialog.MinWidth" />
         <activity
             android:name=".ImageBrowserActivity"
+            android:launchMode="singleTask"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity
             android:name=".TagsActivity"
-            android:label="@string/tag"
-            android:exported="true" />
-        <activity android:name=".AboutActivity" android:label="@string/about"/>
+            android:exported="true"
+            android:label="@string/tag" />
+        <activity
+            android:name=".AboutActivity"
+            android:label="@string/about" />
         <activity android:name=".VasActivity" />
 
         <service android:name=".AudioService" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="@string/file_provider"
@@ -78,7 +88,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths_public" />
         </provider>
-
     </application>
 
 </manifest>
