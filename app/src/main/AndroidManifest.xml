@@ -48,7 +48,7 @@
         <activity
             android:name=".WorksActivity"
             android:exported="true" />
-        <activity android:name=".LrcShowActivity" />
+        <activity android:name=".TextRowActivity" />
         <activity
             android:name=".VideoPlayerActivity"
             android:theme="@style/Theme.Kikoeru.NoActionBar" />
