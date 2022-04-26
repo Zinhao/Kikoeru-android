@@ -70,87 +70,6 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
     private static final int TYPE_VA_WORK = 499;
 
     private int type = TYPE_ALL_WORK;
-
-    private AsyncHttpClient.JSONObjectCallback apisCallback = new AsyncHttpClient.JSONObjectCallback() {
-        @Override
-        public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
-            if(e!=null){
-                e.printStackTrace();
-                alertException(e);
-                /**
-                 * why?
-                 * javax.net.ssl.SSLHandshakeException: Read error: ssl=0x798b43bc58: Failure in SSL library, usually a protocol error
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err: error:10000065:SSL routines:OPENSSL_internal:ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT (external/boringssl/src/ssl/tls13_client.cc:385 0x78de42cc60:0x00000000)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.SSLUtils.toSSLHandshakeException(SSLUtils.java:363)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.ConscryptEngine.convertException(ConscryptEngine.java:1134)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:919)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:747)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:712)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.Java8EngineWrapper.unwrap(Java8EngineWrapper.java:237)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncSSLSocketWrapper$6.onDataAvailable(AsyncSSLSocketWrapper.java:296)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.Util.emitAllData(Util.java:23)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncNetworkSocket.onReadable(AsyncNetworkSocket.java:160)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncServer.runLoop(AsyncServer.java:878)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncServer.run(AsyncServer.java:726)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncServer.access$800(AsyncServer.java:46)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncServer$8.run(AsyncServer.java:680)
-                 */
-                return;
-            }
-            if(asyncHttpResponse == null || asyncHttpResponse.code() !=200){
-                if(jsonObject != null && jsonObject.has("works")){
-                    Log.d(TAG, "onCompleted: load local cache!");
-                }else {
-                    Log.d(TAG, String.format("onCompleted:failed! "));
-                    if(!isDestroyed()){
-                        ivCover.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                getNextPage();
-                            }
-                        },3000);
-                    }
-                    return;
-                }
-            }
-            try {
-                JSONArray jsonArray = jsonObject.getJSONArray("works");
-                totalCount = jsonObject.getJSONObject("pagination").getInt("totalCount");
-                page = jsonObject.getJSONObject("pagination").getInt("currentPage") +1;
-
-                if(jsonArray.length() != 0){
-                    page = Math.min(page,totalCount/jsonArray.length() + 1);
-                }
-                runOnUiThread(new Runnable() {
-                    @SuppressLint("DefaultLocale")
-                    @Override
-                    public void run() {
-                        if(type == TYPE_ALL_WORK){
-                            setTitle(String.format("%s(%d)",getString(R.string.app_name),totalCount));
-                        }
-                        for (int i = 0; i < jsonArray.length(); i++) {
-                            try {
-                                works.add(jsonArray.getJSONObject(i));
-                            } catch (JSONException jsonException) {
-                                jsonException.printStackTrace();
-                                alertException(jsonException);
-                            }
-                        }
-                        if(workAdapter == null){
-                            initLayout((int) App.getInstance().getValue(App.CONFIG_LAYOUT_TYPE,WorkAdapter.LAYOUT_SMALL_GRID));
-                            recyclerView.addOnScrollListener(scrollListener);
-                        }else {
-                            workAdapter.notifyItemRangeInserted(Math.max(0,works.size() - jsonArray.length()),jsonArray.length());
-                            workAdapter.notifyItemRangeChanged(Math.max(0,works.size() - jsonArray.length()),jsonArray.length());
-                        }
-                    }
-                });
-            } catch (JSONException jsonException) {
-                jsonException.printStackTrace();
-                alertException(jsonException);
-            }
-        }
-    };
     private AudioService.CtrlBinder ctrlBinder;
     private static final int TAG_SELECT_RESULT = 14;
     private static final int VA_SELECT_RESULT = 15;
@@ -287,14 +206,14 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         ibStatus.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(ctrlBinder.getCtrl().getPlaybackState() == null){
-                    ctrlBinder.getCtrl().getTransportControls().play();
+                if(ctrlBinder.getController().getPlaybackState() == null){
+                    ctrlBinder.getController().getTransportControls().play();
                     return;
                 }
-                if(ctrlBinder.getCtrl().getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING){
-                    ctrlBinder.getCtrl().getTransportControls().pause();
+                if(ctrlBinder.getController().getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING){
+                    ctrlBinder.getController().getTransportControls().pause();
                 }else {
-                    ctrlBinder.getCtrl().getTransportControls().play();
+                    ctrlBinder.getController().getTransportControls().play();
                 }
             }
         });
@@ -543,6 +462,12 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
     protected void onDestroy() {
         ctrlBinder.removeMusicChangeListener(this);
         ctrlBinder.removeLrcRowChangeListener(this);
+
+        int state = ctrlBinder.getController().getPlaybackState().getState();
+        if(state == PlaybackStateCompat.STATE_STOPPED || state == PlaybackStateCompat.STATE_PAUSED){
+            stopService(new Intent(this,AudioService.class));
+        }
+
         unbindService(this);
         super.onDestroy();
     }
@@ -581,6 +506,87 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
             } catch (JSONException e) {
                 e.printStackTrace();
                 alertException(e);
+            }
+        }
+    };
+
+    private AsyncHttpClient.JSONObjectCallback apisCallback = new AsyncHttpClient.JSONObjectCallback() {
+        @Override
+        public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
+            if(e!=null){
+                e.printStackTrace();
+                alertException(e);
+                /**
+                 * why?
+                 * javax.net.ssl.SSLHandshakeException: Read error: ssl=0x798b43bc58: Failure in SSL library, usually a protocol error
+                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err: error:10000065:SSL routines:OPENSSL_internal:ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT (external/boringssl/src/ssl/tls13_client.cc:385 0x78de42cc60:0x00000000)
+                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.SSLUtils.toSSLHandshakeException(SSLUtils.java:363)
+                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.ConscryptEngine.convertException(ConscryptEngine.java:1134)
+                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:919)
+                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:747)
+                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:712)
+                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.Java8EngineWrapper.unwrap(Java8EngineWrapper.java:237)
+                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncSSLSocketWrapper$6.onDataAvailable(AsyncSSLSocketWrapper.java:296)
+                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.Util.emitAllData(Util.java:23)
+                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncNetworkSocket.onReadable(AsyncNetworkSocket.java:160)
+                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncServer.runLoop(AsyncServer.java:878)
+                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncServer.run(AsyncServer.java:726)
+                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncServer.access$800(AsyncServer.java:46)
+                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncServer$8.run(AsyncServer.java:680)
+                 */
+                return;
+            }
+            if(asyncHttpResponse == null || asyncHttpResponse.code() !=200){
+                if(jsonObject != null && jsonObject.has("works")){
+                    Log.d(TAG, "onCompleted: load local cache!");
+                }else {
+                    Log.d(TAG, String.format("onCompleted:failed! "));
+                    if(!isDestroyed()){
+                        ivCover.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                getNextPage();
+                            }
+                        },3000);
+                    }
+                    return;
+                }
+            }
+            try {
+                JSONArray jsonArray = jsonObject.getJSONArray("works");
+                totalCount = jsonObject.getJSONObject("pagination").getInt("totalCount");
+                page = jsonObject.getJSONObject("pagination").getInt("currentPage") +1;
+
+                if(jsonArray.length() != 0){
+                    page = Math.min(page,totalCount/jsonArray.length() + 1);
+                }
+                runOnUiThread(new Runnable() {
+                    @SuppressLint("DefaultLocale")
+                    @Override
+                    public void run() {
+                        if(type == TYPE_ALL_WORK){
+                            setTitle(String.format("%s(%d)",getString(R.string.app_name),totalCount));
+                        }
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            try {
+                                works.add(jsonArray.getJSONObject(i));
+                            } catch (JSONException jsonException) {
+                                jsonException.printStackTrace();
+                                alertException(jsonException);
+                            }
+                        }
+                        if(workAdapter == null){
+                            initLayout((int) App.getInstance().getValue(App.CONFIG_LAYOUT_TYPE,WorkAdapter.LAYOUT_SMALL_GRID));
+                            recyclerView.addOnScrollListener(scrollListener);
+                        }else {
+                            workAdapter.notifyItemRangeInserted(Math.max(0,works.size() - jsonArray.length()),jsonArray.length());
+                            workAdapter.notifyItemRangeChanged(Math.max(0,works.size() - jsonArray.length()),jsonArray.length());
+                        }
+                    }
+                });
+            } catch (JSONException jsonException) {
+                jsonException.printStackTrace();
+                alertException(jsonException);
             }
         }
     };

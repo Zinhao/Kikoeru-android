@@ -4,16 +4,14 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
-import android.media.ExifInterface;
+import android.media.session.PlaybackState;
 import android.net.Uri;
 import android.os.Binder;
-import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.media.MediaMetadataCompat;
@@ -22,8 +20,6 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
@@ -31,7 +27,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
-import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
@@ -39,8 +34,6 @@ import com.bumptech.glide.request.transition.Transition;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.Timeline;
-import com.google.android.exoplayer2.audio.AudioAttributes;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
 
@@ -48,17 +41,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.Buffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
@@ -115,6 +102,7 @@ public class AudioService extends Service{
             mediaPlayer.stop();
         }
     };
+    private static final int NOTIFICATION_ID = 12;
 
     @Nullable
     @Override
@@ -195,7 +183,7 @@ public class AudioService extends Service{
                     .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, null)
                     .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, null)
                     .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, null)
-                    .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, Api.HOST+ctrlBinder.current.getString("mediaStreamUrl"))
+                    .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, Api.HOST+ctrlBinder.current.getString(JSONConst.WorkTree.MEDIA_STREAM_URL))
                     .putLong(MediaMetadataCompat.METADATA_KEY_DURATION,mediaPlayer.getDuration())
                     .build();
         } catch (JSONException e) {
@@ -234,7 +222,6 @@ public class AudioService extends Service{
             mediaStyle.setMediaSession(mediaSession.getSessionToken());
             notificationBuilder.setStyle(mediaStyle);
 
-
             Intent previousIntent = new Intent(this,LrcFloatWindow.class);
             previousIntent.setAction(ACTION_SHOW_LRC);
             previousIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -272,19 +259,18 @@ public class AudioService extends Service{
                 @Override
                 public void onResourceReady(@NonNull Bitmap bitmap, @Nullable Transition<? super Bitmap> transition) {
                     notificationBuilder.setLargeIcon(bitmap);
-                    startForeground(12, notificationBuilder.build());
+                    startForeground(NOTIFICATION_ID, notificationBuilder.build());
                 }
 
                 @Override
                 public void onLoadFailed(@Nullable Drawable errorDrawable) {
                     super.onLoadFailed(errorDrawable);
-                    Log.e(TAG, "onLoadFailed: load notification large icon fail.");
-                    startForeground(12, notificationBuilder.build());
+                    alertException(new Exception("load notification cover failed!"));
+                    startForeground(NOTIFICATION_ID, notificationBuilder.build());
                 }
             });
             notificationBuilder.setColor(Color.WHITE);
         }
-
     }
 
     @Override
@@ -304,8 +290,6 @@ public class AudioService extends Service{
         return super.onStartCommand(intent, flags, startId);
     }
 
-    private CtrlBinder ctrlBinder;
-
     private void alertException(Exception e){
         Activity activity = App.getInstance().getBackHelper().getLastActivity();
         if(activity == null){
@@ -316,8 +300,20 @@ public class AudioService extends Service{
         }
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        try {
+            ctrlBinder.close();
+            ctrlBinder = null;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private CtrlBinder ctrlBinder;
     public class CtrlBinder extends Binder implements Closeable {
-        private List<JSONObject> playList;
+        private final List<JSONObject> playList = new ArrayList<>();
         private JSONObject current;
         private int currentIndex;
         private int currentAlbumId;
@@ -330,29 +326,31 @@ public class AudioService extends Service{
         private AsyncHttpClient.JSONObjectCallback lastPlayListCallback = new AsyncHttpClient.JSONObjectCallback() {
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
+                if(e!= null){
+                    alertException(e);
+                    return;
+                }
                 if(asyncHttpResponse.code() == 200){
                     JSONArray jsonArray = null;
-                    if(playList == null)
-                        playList = new ArrayList<>();
+                    List<JSONObject> lastPlayList = new ArrayList<>();
                     try {
                         jsonArray = jsonObject.getJSONArray("playlist");
                         for (int i = 0; i < jsonArray.length(); i++) {
-                            playList.add(jsonArray.getJSONObject(i));
+                            lastPlayList.add(jsonArray.getJSONObject(i));
                         }
-                        if(playList.size()!=0){
+                        if(lastPlayList.size()!=0){
                             mHandler.post(new Runnable() {
                                 @Override
                                 public void run() {
                                     setReap();
                                     try {
-                                        setCurrentAlbumId(jsonObject.getInt("id"));
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
-                                        alertException(e);
-                                    }
-                                    try {
-                                        play(playList,0);
-                                        getCtrl().getTransportControls().pause();
+                                        int index = jsonObject.getInt(JSONConst.LastPlayList.INDEX);
+                                        long seek = jsonObject.getLong(JSONConst.LastPlayList.SEEK);
+                                        play(lastPlayList,index);
+                                        if(seek!= 0){
+                                            getController().getTransportControls().seekTo(seek);
+                                        }
+                                        getController().getTransportControls().pause();
                                     } catch (JSONException e) {
                                         e.printStackTrace();
                                         alertException(e);
@@ -427,7 +425,7 @@ public class AudioService extends Service{
                 try {
                     boolean exist = lrcResult.getBoolean("result");
                     if(exist){
-                        Api.doGetMediaString(lrcResult.getString("hash"),lrcCallBack);
+                        Api.doGetMediaString(lrcResult.getString(JSONConst.WorkTree.HASH),lrcCallBack);
                     }else{
                         mLrc = Lrc.NONE;
                     }
@@ -465,7 +463,7 @@ public class AudioService extends Service{
         private final List<MusicChangeListener> musicChangeListeners = new ArrayList<>();
         private final List<LrcRowChangeListener> lrcRowChangeListeners = new ArrayList<>();
 
-        public MediaControllerCompat getCtrl(){
+        public MediaControllerCompat getController(){
             return mediaSession.getController();
         }
 
@@ -516,29 +514,31 @@ public class AudioService extends Service{
         private void play(JSONObject music) throws JSONException {
             current = music;
             MediaItem mediaItem;
-            String path =current.getString("mediaStreamUrl");
-            if(path.startsWith("http")){
-                path = path + "?token=" + Api.token;
-            }else {
-                path = Api.HOST + path + "?token=" + Api.token;
-            }
-            if(music.has("local_file_path")){
-                path = music.getString("local_file_path");
-                File audioFile = new File(path);
-                LocalFileCache.getInstance().getLrcText(audioFile,lrcCallBack);
+            String path = music.getString(JSONConst.WorkTree.MAP_FILE_PATH);
+            File audioFile = new File(path);
+            if(audioFile.exists()){
                 mediaItem = MediaItem.fromUri(Uri.fromFile(audioFile));
             }else {
-                Log.d(TAG, "play: network file");
-                Api.checkLrc(current.getString("hash"),checkLrcCallBack);
+                path =current.getString(JSONConst.WorkTree.MEDIA_STREAM_URL);
+                if(path.startsWith("http")){
+                    path = path + "?token=" + Api.token;
+                }else {
+                    path = Api.HOST + path + "?token=" + Api.token;
+                }
                 mediaItem = MediaItem.fromUri(path);
             }
+            if(!LocalFileCache.getInstance().getLrcText(audioFile,lrcCallBack)){
+                Api.checkLrc(current.getString(JSONConst.WorkTree.HASH),checkLrcCallBack);
+            }
+            int currentAlbumId = music.getInt(JSONConst.WorkTree.WORK_ID);
+            setCurrentAlbumId(currentAlbumId);
             Log.d(TAG, "play: "+path);
             mediaPlayer.setMediaItem(mediaItem);
             mediaPlayer.prepare();
             mediaPlayer.play();
         }
 
-        public void setCurrentAlbumId(int currentAlbumId) {
+        private void setCurrentAlbumId(int currentAlbumId) {
             this.currentAlbumId = currentAlbumId;
             ctrlBinder.musicChangeListeners.forEach(new Consumer<MusicChangeListener>() {
                 @Override
@@ -549,7 +549,10 @@ public class AudioService extends Service{
         }
 
         public void play(List<JSONObject> playList, int index) throws JSONException {
-            this.playList = playList;
+            if(playList.size() ==0)
+                return;
+            this.playList.clear();
+            this.playList.addAll(playList);
             currentIndex = index;
             play(playList.get(index));
         }
@@ -642,18 +645,12 @@ public class AudioService extends Service{
         @Override
         public void close() throws IOException {
             mLrcUpdateTimer.cancel();
-            LocalFileCache.getInstance().savePlayList(AudioService.this,playList,currentAlbumId);
-        }
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        try {
-            ctrlBinder.close();
-            ctrlBinder = null;
-        } catch (IOException e) {
-            e.printStackTrace();
+            long seek = 0;
+            if(getController().getPlaybackState().getState() != PlaybackStateCompat.STATE_STOPPED){
+                seek = getExoPlayer().getCurrentPosition();
+                getController().getTransportControls().stop();
+            }
+            LocalFileCache.getInstance().savePlayList(AudioService.this,playList,currentIndex,seek);
         }
     }
 }
