@@ -26,12 +26,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    private List<JSONObject> data;
+    private JSONArray data;
     private View.OnClickListener itemClickListener;
     private View.OnLongClickListener longClickListener;
     private TagsView.TagClickListener tagClickListener;
     private TagsView.TagClickListener vaClickListener;
-    private List<List<JSONObject>> parentData;
+    private List<JSONArray> parentData;
     private List<String> pathList;
     private RelativePathChangeListener pathChangeListener;
     private JSONObject headerInfo;
@@ -64,14 +64,16 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         this.longClickListener = longClickListener;
     }
 
-    public List<JSONObject> getData() {
+    public JSONArray getData() {
         return data;
     }
 
-    public WorkTreeAdapter(List<JSONObject> data) {
+    public WorkTreeAdapter(JSONArray data,JSONObject headerInfo) {
         this.data = data;
+        this.headerInfo = headerInfo;
         this.pathList = new ArrayList<>();
         parentData =new ArrayList<>();
+        notifyWorkDataSetChanged();
     }
 
     @Override
@@ -108,28 +110,29 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         return new SimpleViewHolder(v);
     }
 
+    public void notifyWorkDataSetChanged(){
+        for (int i = 0; i < data.length(); i++) {
+            JSONObject item = null;
+            try {
+                item = data.getJSONObject(i);
+                LocalFileCache.getInstance().mapLocalItemFile(item,headerInfo.getInt("id"),getRelativePath());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     @SuppressLint("DefaultLocale")
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        JSONObject item;
-        if(position == 0){
-            item = headerInfo;
-        }else {
-            item= data.get(position-1);
-        }
-
         if(holder instanceof SimpleViewHolder){
             try {
+                JSONObject item= data.getJSONObject(position-1);
                 String itemTitle = item.getString("title");
                 ((SimpleViewHolder) holder).tvTitle.setText(itemTitle);
-                File mapFile = LocalFileCache.getInstance().mapLocalItemFile(item,headerInfo.getInt("id"),getRelativePath());
-                if(mapFile != null){
-                    item.put("local_file_path",mapFile.getAbsolutePath());
-                    if(mapFile.exists()){
-                        ((SimpleViewHolder) holder).ivCover.setBackgroundColor(cachedItemBackgroundColor);
-                    }else {
-                        ((SimpleViewHolder) holder).ivCover.setBackgroundColor(unCacheItemBackgroundColor);
-                    }
+                boolean exists = item.getBoolean(JSONConst.WorkTree.EXISTS);
+                if(exists){
+                    ((SimpleViewHolder) holder).ivCover.setBackgroundColor(cachedItemBackgroundColor);
                 }else {
                     ((SimpleViewHolder) holder).ivCover.setBackgroundColor(unCacheItemBackgroundColor);
                 }
@@ -161,17 +164,12 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                                 @Override
                                 public void run() {
                                     try {
-                                        parentData.add(data);
-                                        JSONArray jsonArray = item.getJSONArray("children");
-                                        List<JSONObject> list = new ArrayList<>();
-                                        pathList.add(item.getString("title"));
-                                        for (int i = 0; i < jsonArray.length(); i++) {
-                                            list.add(jsonArray.getJSONObject(i));
-                                        }
-                                        data = list;
+                                        changeDir(item.getString("title"));
+                                        data = item.getJSONArray("children");
                                         if(pathChangeListener != null){
                                             pathChangeListener.onPathChange(getRelativePath());
                                         }
+                                        notifyWorkDataSetChanged();
                                         notifyDataSetChanged();
                                     } catch (JSONException e) {
                                         e.printStackTrace();
@@ -182,15 +180,10 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                         }
                     });
                     holder.itemView.setOnLongClickListener(null);
-                }else if("audio".equals(item.getString("type")) ||
-                        "image".equals(item.getString("type")) ||
-                        "text".equals(item.getString("type"))){
+                }else{
                     holder.itemView.setTag(item);
                     holder.itemView.setOnClickListener(itemClickListener);
                     holder.itemView.setOnLongClickListener(longClickListener);
-                } else {
-                    holder.itemView.setOnLongClickListener(null);
-                    holder.itemView.setOnClickListener(null);
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -199,17 +192,17 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         } else if(holder instanceof DetailViewHolder){
             DetailViewHolder girdHolder = (DetailViewHolder) holder;
             try {
-                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d",item.getInt("id"))).apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
-                girdHolder.tvTitle.setText(item.getString("title"));
-                girdHolder.tvArt.setTags(App.getVasList(item),TagsView.JSON_TEXT_GET.setKey("name"));
+                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d",headerInfo.getInt("id"))).apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
+                girdHolder.tvTitle.setText(headerInfo.getString("title"));
+                girdHolder.tvArt.setTags(App.getVasList(headerInfo),TagsView.JSON_TEXT_GET.setKey("name"));
                 girdHolder.tvArt.setTagClickListener(vaClickListener);
-                girdHolder.tvCom.setText(item.getString("name"));
-                girdHolder.tvTags.setTags(App.getTagsList(item),TagsView.JSON_TEXT_GET.setKey("name"));
+                girdHolder.tvCom.setText(headerInfo.getString("name"));
+                girdHolder.tvTags.setTags(App.getTagsList(headerInfo),TagsView.JSON_TEXT_GET.setKey("name"));
                 girdHolder.tvTags.setTagClickListener(tagClickListener);
-                girdHolder.tvRjNumber.setText(String.format("RJ%d",item.getInt("id")));
-                girdHolder.tvDate.setText(item.getString("release"));
-                girdHolder.tvPrice.setText(String.format("%d 日元",item.getInt("price")));
-                girdHolder.tvSaleCount.setText(String.format("售出：%d",item.getInt("dl_count")));
+                girdHolder.tvRjNumber.setText(String.format("RJ%d",headerInfo.getInt("id")));
+                girdHolder.tvDate.setText(headerInfo.getString("release"));
+                girdHolder.tvPrice.setText(String.format("%d 日元",headerInfo.getInt("price")));
+                girdHolder.tvSaleCount.setText(String.format("售出：%d",headerInfo.getInt("dl_count")));
             } catch (JSONException e) {
                 e.printStackTrace();
                 App.getInstance().alertException(e);
@@ -217,15 +210,18 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         }
     }
 
+    private void changeDir(String title){
+        parentData.add(data);
+        pathList.add(title);
+    }
+
     public boolean parentDir(){
         if(parentData == null ||parentData.size() == 0){
             return true;
         }
         data = parentData.remove(parentData.size()-1);
-        if(pathList.size()!=0){
-            pathList.remove(pathList.size()-1);
-            pathChangeListener.onPathChange(getRelativePath());
-        }
+        pathList.remove(pathList.size()-1);
+        pathChangeListener.onPathChange(getRelativePath());
         notifyDataSetChanged();
         return false;
     }
@@ -244,7 +240,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     @Override
     public int getItemCount() {
-        return data.size() + 1;
+        return data.length() + 1;
     }
 
     public static class SimpleViewHolder extends RecyclerView.ViewHolder{

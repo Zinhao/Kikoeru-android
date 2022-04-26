@@ -37,7 +37,6 @@ public class ImageBrowserActivity extends BaseActivity {
         int position = getIntent().getIntExtra("position",0);
         if(imageList == null)
             imageList = new ArrayList<>();
-        ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
         ViewPager viewPager = findViewById(R.id.image_pager);
         imageIndicator = findViewById(R.id.imageIndicator);
         adapter = new ImagePagerAdapter<>(imageList);

@@ -142,10 +142,10 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     public static class SimpleViewHolder extends RecyclerView.ViewHolder{
-        private ImageView ivCover;
-        private TextView tvTitle;
-        private TextView tvComArt;
-        private TextView tvTags;
+        private final ImageView ivCover;
+        private final TextView tvTitle;
+        private final TextView tvComArt;
+        private final TextView tvTags;
 
 
         public SimpleViewHolder(@NonNull View itemView) {
@@ -158,15 +158,15 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     public static class GirdViewHolder extends RecyclerView.ViewHolder{
-        private ImageView ivCover;
-        private TextView tvTitle;
-        private TextView tvCom;
-        private TagsView<JSONArray> tvArt;
-        private TagsView<JSONArray> tvTags;
-        private TextView tvRjNumber;
-        private TextView tvDate;
-        private TextView tvPrice;
-        private TextView tvSaleCount;
+        private final ImageView ivCover;
+        private final TextView tvTitle;
+        private final TextView tvCom;
+        private final TagsView<JSONArray> tvArt;
+        private final TagsView<JSONArray> tvTags;
+        private final TextView tvRjNumber;
+        private final TextView tvDate;
+        private final TextView tvPrice;
+        private final TextView tvSaleCount;
 
         public GirdViewHolder(@NonNull View itemView) {
             super(itemView);

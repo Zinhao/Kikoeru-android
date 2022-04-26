@@ -13,7 +13,6 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
@@ -56,14 +55,14 @@ public class MusicPlayerActivity extends BaseActivity implements ServiceConnecti
             public void onClick(View v) {
                 if(ctrlBinder ==null)
                     return;
-                if(ctrlBinder.getCtrl() == null || ctrlBinder.getCtrl().getTransportControls() == null)
+                if(ctrlBinder.getController() == null || ctrlBinder.getController().getTransportControls() == null)
                     return;
                 PlaybackStateCompat playbackStateCompat;
-                playbackStateCompat = ctrlBinder.getCtrl().getPlaybackState();
+                playbackStateCompat = ctrlBinder.getController().getPlaybackState();
                 if(playbackStateCompat != null && playbackStateCompat.getState() == PlaybackStateCompat.STATE_PLAYING){
-                    ctrlBinder.getCtrl().getTransportControls().pause();
+                    ctrlBinder.getController().getTransportControls().pause();
                 }else {
-                    ctrlBinder.getCtrl().getTransportControls().play();
+                    ctrlBinder.getController().getTransportControls().play();
                 }
 
             }
@@ -73,9 +72,9 @@ public class MusicPlayerActivity extends BaseActivity implements ServiceConnecti
             public void onClick(View v) {
                 if(ctrlBinder ==null)
                     return;
-                if(ctrlBinder.getCtrl() == null || ctrlBinder.getCtrl().getTransportControls() == null)
+                if(ctrlBinder.getController() == null || ctrlBinder.getController().getTransportControls() == null)
                     return;
-                ctrlBinder.getCtrl().getTransportControls().skipToPrevious();
+                ctrlBinder.getController().getTransportControls().skipToPrevious();
             }
         });
         ibNext.setOnClickListener(new View.OnClickListener() {
@@ -83,9 +82,9 @@ public class MusicPlayerActivity extends BaseActivity implements ServiceConnecti
             public void onClick(View v) {
                 if(ctrlBinder ==null)
                     return;
-                if(ctrlBinder.getCtrl() == null || ctrlBinder.getCtrl().getTransportControls() == null)
+                if(ctrlBinder.getController() == null || ctrlBinder.getController().getTransportControls() == null)
                     return;
-                ctrlBinder.getCtrl().getTransportControls().skipToNext();
+                ctrlBinder.getController().getTransportControls().skipToNext();
             }
         });
         timeProgressView.setOnSeekBarChangeListener(this);
@@ -181,7 +180,7 @@ public class MusicPlayerActivity extends BaseActivity implements ServiceConnecti
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
         if(fromUser){
-            ctrlBinder.getCtrl().getTransportControls().seekTo(progress);
+            ctrlBinder.getController().getTransportControls().seekTo(progress);
         }
     }
 

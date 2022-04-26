@@ -13,6 +13,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.ActivityCompat;
 
 import com.jil.swipeback.SlideOutActivity;
 
@@ -43,10 +44,9 @@ public class BaseActivity extends SlideOutActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if(requestCode == REQUEST_WRITE_READ_CODE){
-            for (int i = 0; i < grantResults.length; i++) {
-                if(grantResults[i] == PackageManager.PERMISSION_DENIED){
-                    return;
-                }
+            if(activityResultCallBack!=null){
+                activityResultCallBack.run();
+                activityResultCallBack = null;
             }
         }
     }
@@ -88,7 +88,8 @@ public class BaseActivity extends SlideOutActivity {
             }
         }else {
             if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED){
-                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},REQUEST_WRITE_READ_CODE);
+                ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},REQUEST_WRITE_READ_CODE);
+                activityResultCallBack = callback;
                 return false;
             }else {
                 return true;
@@ -103,7 +104,7 @@ public class BaseActivity extends SlideOutActivity {
     }
 
     protected void alertException(Exception e){
-        if(!App.getInstance().isAppDebug()){
+        if(!App.getInstance().isAppDebug() || isDestroyed()){
             return;
         }
         runOnUiThread(new Runnable() {
@@ -128,7 +129,7 @@ public class BaseActivity extends SlideOutActivity {
     }
 
     protected void alertMessage(AppMessage e){
-        if(!App.getInstance().isAppDebug()){
+        if(!App.getInstance().isAppDebug() || isDestroyed()){
             return;
         }
         runOnUiThread(new Runnable() {
@@ -136,16 +137,7 @@ public class BaseActivity extends SlideOutActivity {
             public void run() {
                 AlertDialog.Builder builder = new AlertDialog.Builder(BaseActivity.this);
                 builder.setTitle(e.getTitle());
-                builder.setMessage(String.format("%s: %s", e.getClass().getSimpleName(), e.getMessage()) + '\n'
-//                Arrays.stream(e.getStackTrace()).forEach(new Consumer<StackTraceElement>() {
-//                    @Override
-//                    public void accept(StackTraceElement stackTraceElement) {
-//                        stringBuilder.append(stackTraceElement.getClassName()).append('.')
-//                                .append(stackTraceElement.getMethodName()).append(':')
-//                                .append(stackTraceElement.getLineNumber()).append('\n');
-//                    }
-//                });
-                );
+                builder.setMessage(String.format("%s: %s", e.getClass().getSimpleName(), e.getMessage()) + '\n');
                 builder.setPositiveButton(e.getActionName(), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {

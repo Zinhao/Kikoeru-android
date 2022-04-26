@@ -76,10 +76,12 @@ public class DownloadUtils implements Closeable {
                 if(jsonObject.has("total")){
                     this.total = jsonObject.getLong("total");
                 }
-                if(jsonObject.has("relativePath") && jsonObject.has("workId")){
-                    String relativePath = jsonObject.getString("relativePath");
-                    workId = jsonObject.getInt("workId");
-                    mapFile = LocalFileCache.getInstance().mapLocalItemFile(jsonObject,workId,relativePath);
+                if(jsonObject.has(JSONConst.WorkTree.MAP_FILE_PATH)){
+                    String mapPath = jsonObject.getString(JSONConst.WorkTree.MAP_FILE_PATH);
+                    mapFile = new File(mapPath);
+                }
+                if(jsonObject.has(JSONConst.WorkTree.WORK_ID)){
+                    workId = jsonObject.getInt(JSONConst.WorkTree.WORK_ID);
                 }
                 if(jsonObject.has("eTag")){
                     this.eTag = jsonObject.getString("eTag");
@@ -90,10 +92,10 @@ public class DownloadUtils implements Closeable {
                 if(jsonObject.has("type")){
                     this.type = jsonObject.getString("type");
                 }
-                if(jsonObject.has("hash")){
-                    this.hash = jsonObject.getString("hash");
+                if(jsonObject.has(JSONConst.WorkTree.HASH)){
+                    this.hash = jsonObject.getString(JSONConst.WorkTree.HASH);
                 }
-                getInstance().hashMissionMap.put(jsonObject.getString("hash"),this);
+                getInstance().hashMissionMap.put(jsonObject.getString(JSONConst.WorkTree.HASH),this);
                 getInstance().missionList.add(this);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -103,7 +105,7 @@ public class DownloadUtils implements Closeable {
 
         public boolean equals(JSONObject jsonObject) {
             try {
-                return hash.equals(jsonObject.getString("hash"));
+                return hash.equals(jsonObject.getString(JSONConst.WorkTree.HASH));
             } catch (JSONException e) {
                 e.printStackTrace();
                 return false;
