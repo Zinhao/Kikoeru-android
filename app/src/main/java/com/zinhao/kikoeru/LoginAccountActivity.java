@@ -43,7 +43,7 @@ public class LoginAccountActivity extends BaseActivity {
         host = App.getInstance().getValue(App.CONFIG_HOST,Api.REMOTE_HOST);
 
         long lastGetToken = App.getInstance().getValue(App.CONFIG_UPDATE_TIME,0);
-        if(System.currentTimeMillis() - lastGetToken < 24*60*60*1000){
+        if(System.currentTimeMillis() - lastGetToken < 72*60*60*1000){
             String token = App.getInstance().getValue(App.CONFIG_TOKEN,"");
             if(!token.isEmpty() && !host.isEmpty()){
                 Api.init(token,host);

@@ -76,6 +76,13 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                 return;
             }
             jsonWorkTrees = jsonArray;
+            if(jsonWorkTrees != null){
+                try {
+                    LocalFileCache.getInstance().saveWork(work,jsonWorkTrees);
+                } catch (JSONException jsonException) {
+                    jsonException.printStackTrace();
+                }
+            }
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -140,15 +147,14 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
 
     private void init(){
         try {
-            if(work.has("localWorK")){
+            if(work.has(JSONConst.Work.IS_LOCAL_WORK)){
                 boolean isLocalWork = work.getBoolean(JSONConst.Work.IS_LOCAL_WORK);
                 if(isLocalWork){
                     LocalFileCache.getInstance().readLocalWorkTree(this,work.getInt("id"),docTreeCallback);
-                    Toast.makeText(this,"local work",Toast.LENGTH_SHORT).show();
+                    return;
                 }
-            }else {
-                Api.doGetDocTree(work.getInt("id"), docTreeCallback);
             }
+            Api.doGetDocTree(work.getInt("id"), docTreeCallback);
         } catch (JSONException e) {
             e.printStackTrace();
             alertException(e);
@@ -401,9 +407,6 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         if(work ==null)
             return false;
         try {
-            if(jsonWorkTrees != null){
-                LocalFileCache.getInstance().saveWork(work,jsonWorkTrees);
-            }
             String itemType = item.getString("type");
             if(!item.has(JSONConst.WorkTree.MAP_FILE_PATH)){
                 return false;

@@ -219,6 +219,18 @@ public class TagsView<T> extends View{
         this.textGet = textGet;
         tagsRectFs.clear();
         setMeasuredDimension(getWidth(),makeTagsRectF(getWidth()));
+        if(!isInLayout()){
+            requestLayout();
+        }else {
+            postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    if(!isInLayout()){
+                        requestLayout();
+                    }
+                }
+            },500);
+        }
     }
 
     /**
