@@ -22,6 +22,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class TagsView<T> extends View{
@@ -113,24 +114,37 @@ public class TagsView<T> extends View{
         Paint.FontMetrics fontMetrics =textPaint.getFontMetrics();
         textDistance = (fontMetrics.bottom -fontMetrics.top)/2 -fontMetrics.bottom;
         rectFH =  fontMetrics.bottom -fontMetrics.top;
+        setPadding(10,7,0,7);
+        TypedArray array = context.obtainStyledAttributes(attrs,R.styleable.TagsView);
+        tagBg = array.getDrawable(R.styleable.TagsView_tagBackground);
+        String tagStr = array.getString(R.styleable.TagsView_tags);
+        if(tagStr!=null && !tagStr.isEmpty()){
+            String[] tagStrs = tagStr.split(" ");
+            if(tagStrs.length!=0){
+                List<String> tags = Arrays.asList(tagStrs);
+                this.tags = (T) tags;
+                textGet = STRING_TEXT_GET;
+            }
+        }
+        array.recycle();
         tagsRectFs = new ArrayList<>();
         for (int i = 0; i < getTagsLen(); i++) {
             tagsRectFs.add(new RectF());
         }
-        setPadding(10,7,0,7);
-        TypedArray array = context.obtainStyledAttributes(attrs,R.styleable.TagsView);
-        tagBg = array.getDrawable(R.styleable.TagsView_tagBackground);
-        array.recycle();
         simpleOnGestureListener = new GestureDetector.SimpleOnGestureListener(){
             @Override
             public boolean onContextClick(MotionEvent e) {
                 Log.d(TAG, "onContextClick: ");
+                if(tagClickListener == null)
+                    return false;
                 return true;
             }
 
             @Override
             public boolean onSingleTapUp(MotionEvent e) {
                 Log.d(TAG, "onSingleTapUp: ");
+                if(tagClickListener == null)
+                    return false;
                 return true;
             }
 
@@ -142,6 +156,8 @@ public class TagsView<T> extends View{
             @Override
             public boolean onDown(MotionEvent e) {
                 Log.d(TAG, "onDown: ");
+                if(tagClickListener == null)
+                    return false;
                 return true;
             }
 
@@ -152,7 +168,6 @@ public class TagsView<T> extends View{
                     return false;
                 for (int i = 0; i < tagsRectFs.size(); i++) {
                     if(tagsRectFs.get(i).contains(e.getX(),e.getY())){
-
                         tagClickListener.onTagClick(getTagByIndex(i));
                     }
                 }

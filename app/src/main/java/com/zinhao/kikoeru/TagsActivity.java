@@ -42,6 +42,7 @@ public class TagsActivity extends BaseActivity implements TagsView.TagClickListe
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                     tagsView.setTags(filterTag(v.getText().toString().trim()),textGet);
+                    return true;
                 }
                 return false;
             }

@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="70dp">
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <ImageView
         android:id="@+id/ivCover"
         android:layout_width="60dp"
         android:layout_height="60dp"
+        android:layout_centerVertical="true"
         android:layout_marginStart="5dp"
         android:layout_marginTop="5dp"
         android:layout_marginEnd="5dp"
@@ -24,24 +26,26 @@
         android:text="title"
         android:textColor="@color/black" />
 
-    <TextView
+    <com.zinhao.kikoeru.TagsView
         android:id="@+id/tvComArt"
         android:layout_width="match_parent"
-        android:layout_height="20dp"
+        android:layout_height="wrap_content"
         android:layout_below="@+id/tvTitle"
         android:layout_alignStart="@+id/tvTitle"
         android:layout_marginStart="0dp"
         android:layout_marginTop="0dp"
-        android:text="com / art" />
+        app:tagBackground="@drawable/card_bg_lrc"
+        app:tags="健全 纯爱 校园" />
 
-    <TextView
+    <com.zinhao.kikoeru.TagsView
         android:id="@+id/tvTags"
         android:layout_width="match_parent"
-        android:layout_height="20dp"
+        android:layout_height="wrap_content"
         android:layout_below="@+id/tvComArt"
         android:layout_alignStart="@+id/tvComArt"
         android:layout_marginStart="0dp"
         android:layout_marginTop="0dp"
-        android:text="tag" />
+        app:tagBackground="@drawable/card_bg_tagview"
+        app:tags="こやまはる kikoeru" />
 
 </RelativeLayout>

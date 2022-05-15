@@ -90,8 +90,10 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if(holder instanceof SimpleViewHolder){
             try {
                 ((SimpleViewHolder) holder).tvTitle.setText(item.getString("title"));
-                ((SimpleViewHolder) holder).tvComArt.setText(item.getString("name"));
-                ((SimpleViewHolder) holder).tvTags.setText(App.getTagsStr(item));
+                ((SimpleViewHolder) holder).tvComArt.setTags(App.getVasList(item),TagsView.JSON_TEXT_GET.setKey("name"));
+                ((SimpleViewHolder) holder).tvComArt.setTagClickListener(vaClickListener);
+                ((SimpleViewHolder) holder).tvTags.setTags(App.getTagsList(item),textGet);
+                ((SimpleViewHolder) holder).tvTags.setTagClickListener(tagClickListener);
                 Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d?type=sam",item.getInt("id")))
                         .apply(App.getInstance().getDefaultPic()).into(((SimpleViewHolder) holder).ivCover);
             } catch (JSONException e) {
@@ -144,8 +146,8 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public static class SimpleViewHolder extends RecyclerView.ViewHolder{
         private final ImageView ivCover;
         private final TextView tvTitle;
-        private final TextView tvComArt;
-        private final TextView tvTags;
+        private final TagsView<JSONArray> tvComArt;
+        private final TagsView<JSONArray> tvTags;
 
 
         public SimpleViewHolder(@NonNull View itemView) {

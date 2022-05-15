@@ -21,6 +21,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -84,6 +85,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         tvTitle = bottomLayout.findViewById(R.id.textView);
         tvWorkTitle = bottomLayout.findViewById(R.id.textView2);
         ibStatus = bottomLayout.findViewById(R.id.button);
+        dividerItemDecoration =  new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
         startService(new Intent(this,AudioService.class));
         bindService(new Intent(this, AudioService.class), this,BIND_AUTO_CREATE);
         outAnim = AnimationUtils.loadAnimation(this,R.anim.move_bottom_out);
@@ -429,14 +431,18 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         }
     }
 
+    private DividerItemDecoration dividerItemDecoration;
     private void initLayout(int layoutType) {
         RecyclerView.LayoutManager layoutManager = null;
         if (layoutType == WorkAdapter.LAYOUT_LIST) {
             layoutManager = new LinearLayoutManager(WorksActivity.this);
+            recyclerView.addItemDecoration(dividerItemDecoration);
         } else if (layoutType == WorkAdapter.LAYOUT_SMALL_GRID) {
             layoutManager = new GridLayoutManager(WorksActivity.this, 3);
+            recyclerView.removeItemDecoration(dividerItemDecoration);
         } else if (layoutType == WorkAdapter.LAYOUT_BIG_GRID) {
             layoutManager = new GridLayoutManager(WorksActivity.this, 2);
+            recyclerView.removeItemDecoration(dividerItemDecoration);
         }
         workAdapter = new WorkAdapter(works, layoutType);
         workAdapter.setTagClickListener(this);

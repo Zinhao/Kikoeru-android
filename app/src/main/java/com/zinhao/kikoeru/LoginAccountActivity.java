@@ -16,6 +16,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -117,19 +118,28 @@ public class LoginAccountActivity extends BaseActivity {
                     }
                 }
             }else{
-                if(jsonObject.has("error")){
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                Toast.makeText(LoginAccountActivity.this,String.format("%d:%s",asyncHttpResponse.code(),jsonObject.getString("error")),Toast.LENGTH_SHORT).show();
-                            } catch (JSONException jsonException) {
-                                jsonException.printStackTrace();
-                                alertException(jsonException);
-                            }
+                StringBuilder stringBuilder = new StringBuilder();
+                try {
+                    if(jsonObject.has("error")){
+                        stringBuilder.append(jsonObject.getString("error"));
+                    }else if(jsonObject.has("errors")){
+                        JSONArray errors = jsonObject.getJSONArray("errors");
+                        for (int i = 0; i < errors.length(); i++) {
+                            JSONObject error = errors.getJSONObject(i);
+                            String errorValue = error.getString("msg");
+                            stringBuilder.append(errorValue);
                         }
-                    });
+                    }
+                }catch (JSONException e1){
+                    alertException(e);
+                    return;
                 }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(LoginAccountActivity.this,String.format("%d:%s",asyncHttpResponse.code(),stringBuilder.toString()),Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         }
     };

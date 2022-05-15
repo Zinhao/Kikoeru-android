@@ -89,6 +89,7 @@
         android:layout_height="wrap_content"
         android:padding="4dp"
         app:tagBackground="@drawable/card_bg_tagview"
+        app:tags="健全 青春"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/tvPrice"
         app:layout_constraintTop_toBottomOf="@+id/tvPrice" />
@@ -100,6 +101,7 @@
         android:layout_marginBottom="10dp"
         android:padding="5dp"
         android:text="こやまはる"
+        app:tags="こやまはる Kikoeru"
         app:tagBackground="@drawable/card_bg_lrc"
         android:textColor="@color/white"
         app:layout_constraintBottom_toBottomOf="parent"
