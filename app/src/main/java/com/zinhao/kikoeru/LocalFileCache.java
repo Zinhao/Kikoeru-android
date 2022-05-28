@@ -26,7 +26,8 @@ import java.util.function.Consumer;
 
 public class LocalFileCache implements Runnable, Closeable {
     private static final String TAG = "LocalFileCache";
-
+    private static final String CONFIG_PLAY_LIST = "playList.json";
+    private static final String CONFIG_USERS = "users.json";
     private static LocalFileCache instance;
     private Thread workThread;
     private final List<Runnable> mission;
@@ -324,39 +325,66 @@ public class LocalFileCache implements Runnable, Closeable {
     }
 
     public void savePlayList(Context context,List<JSONObject> playList,int index,long seek){
+        JSONObject jsonObject = new JSONObject();
+        JSONArray jsonArray = new JSONArray();
+        if(playList == null || playList.size() == 0)
+            return;
+        playList.forEach(new Consumer<JSONObject>() {
+            @Override
+            public void accept(JSONObject jsonObject) {
+                jsonArray.put(jsonObject);
+            }
+        });
+        try {
+            jsonObject.put(JSONConst.LastPlayList.LIST_AUDIO,jsonArray);
+            jsonObject.put(JSONConst.LastPlayList.INDEX,index);
+            jsonObject.put(JSONConst.LastPlayList.SEEK,seek);
+            saveJSONObject(context,jsonObject,CONFIG_PLAY_LIST);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void readLastPlayList(Context context,AsyncHttpClient.JSONObjectCallback callback){
+        readJSONObject(context,CONFIG_PLAY_LIST,callback);
+    }
+
+    public void saveUsers(Context context,JSONObject users){
+        saveJSONObject(context,users,CONFIG_USERS);
+    }
+
+    public void readUsers(Context context,AsyncHttpClient.JSONObjectCallback callback){
+        readJSONObject(context,CONFIG_USERS,callback);
+    }
+
+    /**
+     * 保存JSONObject到内部私有目录
+     */
+    private void saveJSONObject(Context context,JSONObject jsonObject,String name){
+        if(jsonObject == null)
+            return;
         mission.add(new Runnable() {
             @Override
             public void run() {
-                JSONObject jsonObject = new JSONObject();
-                JSONArray jsonArray = new JSONArray();
-                if(playList == null || playList.size() == 0)
-                    return;
-                playList.forEach(new Consumer<JSONObject>() {
-                    @Override
-                    public void accept(JSONObject jsonObject) {
-                        jsonArray.put(jsonObject);
-                    }
-                });
+                File file = new File(context.getCacheDir(),name);
                 try {
-                    jsonObject.put(JSONConst.LastPlayList.LIST_AUDIO,jsonArray);
-                    jsonObject.put(JSONConst.LastPlayList.INDEX,index);
-                    jsonObject.put(JSONConst.LastPlayList.SEEK,seek);
-                    File file = new File(context.getCacheDir(),"playList.json");
                     writeTextSync(file,jsonObject.toString());
-                } catch (IOException | JSONException e) {
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         });
-
     }
 
-    public void readLastPlayList(Context context,AsyncHttpClient.JSONObjectCallback callback){
+    /**
+     * 从内部私有目录读取JSONObject
+     */
+    private void readJSONObject(Context context,String name,AsyncHttpClient.JSONObjectCallback callback){
+        File file = new File(context.getCacheDir(),name);
         mission.add(new Runnable() {
             @Override
             public void run() {
                 try {
-                    File file = new File(context.getCacheDir(),"playList.json");
                     String result = readTextSync(file);
                     JSONObject jsonObject = new JSONObject(result);
                     callback.onCompleted(null,new LocalResponse(200),jsonObject);

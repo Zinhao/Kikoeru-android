@@ -254,7 +254,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuItem signOutMenu = menu.add(0,0,0, R.string.sign_out);
+        MenuItem signOutMenu = menu.add(0,0,0, "切换账号");
         SubMenu menuProgress = menu.addSubMenu(0,1,1, R.string.my_progress);
         menuProgress.setIcon(R.drawable.ic_baseline_favorite_24);
         MenuItem menuItem4 =menu.add(1,3,3, R.string.all_works);
@@ -377,7 +377,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
 
         if(item.getItemId() == 0){
             App.getInstance().setValue(App.CONFIG_UPDATE_TIME,0);
-            startActivity(new Intent(this,LoginAccountActivity.class));
+            startActivity(new Intent(this,UserSwitchActivity.class));
             finish();
         }else if(item.getItemId() == 1){
         }else if(item.getItemId() == 13){

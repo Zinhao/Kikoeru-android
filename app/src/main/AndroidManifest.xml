@@ -23,6 +23,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Kikoeru">
         <activity
+            android:name=".UserSwitchActivity"
+            android:exported="true" />
+        <activity
             android:name=".SearchActivity"
             android:exported="true" />
         <activity
@@ -39,11 +42,6 @@
         <activity
             android:name=".LoginAccountActivity"
             android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
         <activity
             android:name=".WorkTreeActivity"
@@ -76,6 +74,14 @@
             android:name=".AboutActivity"
             android:label="@string/about" />
         <activity android:name=".VasActivity" />
+        <activity android:name=".LauncherActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <service android:name=".AudioService" />
 

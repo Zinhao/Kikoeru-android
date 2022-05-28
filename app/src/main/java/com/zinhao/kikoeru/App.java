@@ -2,7 +2,6 @@ package com.zinhao.kikoeru;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
@@ -13,14 +12,12 @@ import android.os.Environment;
 
 import com.bumptech.glide.request.RequestOptions;
 import com.jil.swipeback.SwipeBackApplication;
+import com.koushikdutta.async.http.AsyncHttpClient;
+import com.koushikdutta.async.http.AsyncHttpResponse;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class App extends SwipeBackApplication {
     private static App instance;
@@ -42,11 +39,16 @@ public class App extends SwipeBackApplication {
     }
     private boolean saveExternal = false;
     private boolean appDebug = false;
+    private JSONObject usersJSONObject;
     private RequestOptions defaultPic;
 
     public void setAppDebug(boolean appDebug) {
         this.appDebug = appDebug;
         setValue(CONFIG_DEBUG,appDebug?1:0);
+    }
+
+    public JSONObject getUsersJSONObject() {
+        return usersJSONObject;
     }
 
     public boolean isAppDebug() {
@@ -73,6 +75,17 @@ public class App extends SwipeBackApplication {
         appDebug = getValue(App.CONFIG_DEBUG,0) == 1;
         saveExternal = getValue(App.CONFIG_SAVE_EXTERNAL,0) == 1;
         defaultPic = new RequestOptions().placeholder(R.drawable.ic_no_cover);
+        LocalFileCache.getInstance().readUsers(this, new AsyncHttpClient.JSONObjectCallback() {
+            @Override
+            public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
+                if(e!=null){
+//                    alertException(e);
+                    usersJSONObject = new JSONObject();
+                    return;
+                }
+                usersJSONObject = jsonObject;
+            }
+        });
         DownloadUtils.getInstance().init(this);
         NotificationChannel channelMusicService =
                 new NotificationChannel(

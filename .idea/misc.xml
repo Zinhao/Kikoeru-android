@@ -6,6 +6,7 @@
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/card_bg_lrc.xml" value="0.4203125" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/card_bg_tagview.xml" value="0.33" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/card_bg_text.xml" value="0.48854166666666665" />
+        <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/card_bg_user.xml" value="0.5697916666666667" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/card_bg_work.xml" value="0.48854166666666665" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/ic_baseline_audiotrack_24.xml" value="0.48854166666666665" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/ic_baseline_folder_24.xml" value="0.5697916666666667" />
@@ -29,6 +30,7 @@
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/activity_more.xml" value="0.5536458333333333" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/activity_player.xml" value="0.5536458333333333" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/activity_search.xml" value="0.5536458333333333" />
+        <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/activity_user_switch.xml" value="0.43125" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/activity_video_player.xml" value="0.4041666666666667" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/activity_work.xml" value="0.5536458333333333" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/app_bar_main_home.xml" value="0.39427083333333335" />
@@ -38,6 +40,7 @@
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/item_image.xml" value="0.5536458333333333" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/item_lrc_row.xml" value="0.31927083333333334" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/item_mission_progress.xml" value="0.67" />
+        <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/item_server_and_user.xml" value="0.5536458333333333" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/item_work_1.xml" value="0.5" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/item_work_2.xml" value="0.5536458333333333" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/item_work_3.xml" value="0.5536458333333333" />

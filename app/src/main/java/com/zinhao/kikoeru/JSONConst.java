@@ -17,4 +17,12 @@ public class JSONConst {
         public static final String LIST_AUDIO = "playlist";
         public static final String SEEK = "seek";
     }
+
+    static class User{
+        public static final String NAME = "name";
+        public static final String PASS = "password";
+        public static final String HOST = "host";
+        public static final String TOKEN = "token";
+        public static final String POSITION = "position";
+    }
 }

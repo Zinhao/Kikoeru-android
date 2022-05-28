@@ -42,20 +42,8 @@ public class LoginAccountActivity extends BaseActivity {
         btSignUp = findViewById(R.id.button3);
 
         host = App.getInstance().getValue(App.CONFIG_HOST,Api.REMOTE_HOST);
-
-        long lastGetToken = App.getInstance().getValue(App.CONFIG_UPDATE_TIME,0);
-        if(System.currentTimeMillis() - lastGetToken < 72*60*60*1000){
-            String token = App.getInstance().getValue(App.CONFIG_TOKEN,"");
-            if(!token.isEmpty() && !host.isEmpty()){
-                Api.init(token,host);
-                next();
-                return;
-            }
-        }
-
         String userName = App.getInstance().getValue(App.CONFIG_USER_ACCOUNT,"guest");
         String password = App.getInstance().getValue(App.CONFIG_USER_PASSWORD,"guest");
-
         initEdit(userName,password);
 
         btSignIn.setOnClickListener(new View.OnClickListener() {
@@ -111,7 +99,7 @@ public class LoginAccountActivity extends BaseActivity {
                         App.getInstance().setValue(App.CONFIG_HOST,host);
                         App.getInstance().setValue(App.CONFIG_TOKEN,token);
                         App.getInstance().setValue(App.CONFIG_UPDATE_TIME,System.currentTimeMillis());
-                        next();
+                        saveAndNext();
                     } catch (JSONException jsonException) {
                         jsonException.printStackTrace();
                         alertException(jsonException);
@@ -198,7 +186,31 @@ public class LoginAccountActivity extends BaseActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void next(){
+
+    private void saveAndNext(){
+        App app = (App) getApplication();
+        try {
+            JSONObject usersJSON = app.getUsersJSONObject();
+            JSONArray users;
+            if(usersJSON.has("users")){
+                users = app.getUsersJSONObject().getJSONArray("users");
+            }else {
+                users= new JSONArray();
+                usersJSON.put("users",users);
+            }
+
+            JSONObject user = new JSONObject();
+            user.put(JSONConst.User.NAME,app.getValue(App.CONFIG_USER_ACCOUNT,"guest"));
+            user.put(JSONConst.User.PASS,app.getValue(App.CONFIG_USER_PASSWORD,"guest"));
+            user.put(JSONConst.User.POSITION,System.currentTimeMillis());
+            user.put(JSONConst.User.TOKEN,Api.token);
+            user.put(JSONConst.User.HOST,Api.HOST);
+            users.put(user);
+            LocalFileCache.getInstance().saveUsers(this,usersJSON);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            alertException(e);
+        }
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
