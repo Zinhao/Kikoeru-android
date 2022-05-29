@@ -9,7 +9,6 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
-import android.media.session.PlaybackState;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
@@ -33,7 +32,9 @@ import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.MediaMetadata;
 import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.metadata.Metadata;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
 
@@ -43,7 +44,6 @@ import org.json.JSONObject;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -65,7 +65,7 @@ public class AudioService extends Service{
 
     private WindowManager.LayoutParams lrcWindowParams;
 
-    private MediaSessionCompat.Callback callback = new MediaSessionCompat.Callback() {
+    private final MediaSessionCompat.Callback callback = new MediaSessionCompat.Callback() {
         @Override
         public void onSeekTo(long pos) {
             super.onSeekTo(pos);
@@ -87,13 +87,15 @@ public class AudioService extends Service{
         @Override
         public void onSkipToNext() {
             super.onSkipToNext();
-            ctrlBinder.skipToNext();
+            Log.d(TAG, "onSkipToNext: ");
+            mediaPlayer.seekToNextMediaItem();
         }
 
         @Override
         public void onSkipToPrevious() {
             super.onSkipToPrevious();
-            ctrlBinder.skipToPrevious();
+            Log.d(TAG, "onSkipToPrevious: ");
+            mediaPlayer.seekToPreviousMediaItem();
         }
 
         @Override
@@ -122,38 +124,89 @@ public class AudioService extends Service{
         mediaPlayer.addListener(new Player.Listener() {
             @Override
             public void onIsPlayingChanged(boolean isPlaying) {
-                Log.d(TAG, "onIsPlayingChanged: ");
-                try {
-                    updateMediaSessionMetaData();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    alertException(e);
-
-                }
+                Log.d(TAG, "onIsPlayingChanged: "+isPlaying);
                 ctrlBinder.musicChangeListeners.forEach(new Consumer<MusicChangeListener>() {
                     @Override
                     public void accept(MusicChangeListener listener) {
                         listener.onStatusChange(mediaPlayer.isPlaying()?1:0);
                     }
                 });
+                try {
+                    updateNotificationState();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
 
             @Override
             public void onPlaybackStateChanged(int playbackState) {
-                Log.d(TAG, "onPlaybackStateChanged: "+playbackState);
-                if(playbackState == Player.STATE_ENDED && mediaPlayer.getRepeatMode() != Player.REPEAT_MODE_ONE){
-                    ctrlBinder.skipToNext();
-                }
-                if(playbackState == Player.STATE_READY){
-                    ctrlBinder.musicChangeListeners.forEach(new Consumer<MusicChangeListener>() {
-                        @Override
-                        public void accept(MusicChangeListener listener) {
-                            listener.onAudioChange(ctrlBinder.current);
-                        }
-                    });
+                Log.d(TAG, String.format("onPlaybackStateChanged:playbackState: %d ,index: %d",playbackState,mediaPlayer.getCurrentMediaItemIndex()));
+                ctrlBinder.musicChangeListeners.forEach(new Consumer<MusicChangeListener>() {
+                    @Override
+                    public void accept(MusicChangeListener listener) {
+                        listener.onStatusChange(mediaPlayer.isPlaying()?1:0);
+                    }
+                });
+                try {
+                    if(playbackState == Player.STATE_READY){
+                        MediaMetadataCompat metadata = new MediaMetadataCompat.Builder()
+                                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, (String) mediaPlayer.getMediaMetadata().title)
+                                .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, null)
+                                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, (String) mediaPlayer.getMediaMetadata().artist)
+                                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, null)
+                                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION,mediaPlayer.getDuration())
+                                .build();
+                        mediaSession.setMetadata(metadata);
+                    }
+                    updateNotificationState();
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
             }
+
+            @Override
+            public void onMediaMetadataChanged(@NonNull MediaMetadata mediaMetadata) {
+                Log.d(TAG, "onMediaMetadataChanged: "+mediaMetadata.title);
+                ctrlBinder.current = ctrlBinder.playList.get(mediaPlayer.getCurrentMediaItemIndex());
+
+                MediaMetadataCompat metadata = new MediaMetadataCompat.Builder()
+                        .putString(MediaMetadataCompat.METADATA_KEY_TITLE, (String) mediaMetadata.title)
+                        .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, null)
+                        .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, null)
+                        .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, null)
+                        .putLong(MediaMetadataCompat.METADATA_KEY_DURATION,mediaPlayer.getDuration())
+                        .build();
+                mediaSession.setMetadata(metadata);
+                try {
+                    updateNotificationState();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                try {
+                    String path = ctrlBinder.current.getString(JSONConst.WorkTree.MAP_FILE_PATH);
+                    File audioFile = new File(path);
+                    if(!LocalFileCache.getInstance().getLrcText(audioFile,ctrlBinder.lrcCallBack)){
+                        Api.checkLrc(ctrlBinder.current.getString(JSONConst.WorkTree.HASH),ctrlBinder.checkLrcCallBack);
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                ctrlBinder.musicChangeListeners.forEach(new Consumer<MusicChangeListener>() {
+                    @Override
+                    public void accept(MusicChangeListener listener) {
+                        listener.onAudioChange(ctrlBinder.current);
+                    }
+                });
+            }
+
+            @Override
+            public void onMetadata(@NonNull Metadata metadata) {
+                Log.d(TAG, "onMetadata: "+metadata.toString());
+            }
         });
+
         ctrlBinder = new CtrlBinder();
     }
 
@@ -175,22 +228,7 @@ public class AudioService extends Service{
     PlaybackStateCompat.Builder builder = new PlaybackStateCompat.Builder();
 
     @SuppressLint("DefaultLocale")
-    private void updateMediaSessionMetaData() throws JSONException {
-        MediaMetadataCompat metadata = null;
-        try {
-            metadata = new MediaMetadataCompat.Builder()
-                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE,ctrlBinder.current.getString("title"))
-                    .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, null)
-                    .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, null)
-                    .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, null)
-                    .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, Api.HOST+ctrlBinder.current.getString(JSONConst.WorkTree.MEDIA_STREAM_URL))
-                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION,mediaPlayer.getDuration())
-                    .build();
-        } catch (JSONException e) {
-            e.printStackTrace();
-            alertException(e);
-        }
-        mediaSession.setMetadata(metadata);
+    private void updateNotificationState() throws JSONException {
         if(mediaPlayer.getPlaybackState() == Player.STATE_BUFFERING){
             mediaSession.setActive(false);
             builder.setState(PlaybackStateCompat.STATE_PAUSED, mediaPlayer.getCurrentPosition(), 1);
@@ -342,7 +380,7 @@ public class AudioService extends Service{
                             mHandler.post(new Runnable() {
                                 @Override
                                 public void run() {
-                                    setReap();
+                                    setReapAll();
                                     try {
                                         int index = jsonObject.getInt(JSONConst.LastPlayList.INDEX);
                                         long seek = jsonObject.getLong(JSONConst.LastPlayList.SEEK);
@@ -511,33 +549,6 @@ public class AudioService extends Service{
             lrcRowChangeListeners.remove(listener);
         }
 
-        private void play(JSONObject music) throws JSONException {
-            current = music;
-            MediaItem mediaItem;
-            String path = music.getString(JSONConst.WorkTree.MAP_FILE_PATH);
-            File audioFile = new File(path);
-            if(audioFile.exists()){
-                mediaItem = MediaItem.fromUri(Uri.fromFile(audioFile));
-            }else {
-                path =current.getString(JSONConst.WorkTree.MEDIA_STREAM_URL);
-                if(path.startsWith("http")){
-                    path = path + "?token=" + Api.token;
-                }else {
-                    path = Api.HOST + path + "?token=" + Api.token;
-                }
-                mediaItem = MediaItem.fromUri(path);
-            }
-            if(!LocalFileCache.getInstance().getLrcText(audioFile,lrcCallBack)){
-                Api.checkLrc(current.getString(JSONConst.WorkTree.HASH),checkLrcCallBack);
-            }
-            int currentAlbumId = music.getInt(JSONConst.WorkTree.WORK_ID);
-            setCurrentAlbumId(currentAlbumId);
-            Log.d(TAG, "play: "+path);
-            mediaPlayer.setMediaItem(mediaItem);
-            mediaPlayer.prepare();
-            mediaPlayer.play();
-        }
-
         private void setCurrentAlbumId(int currentAlbumId) {
             this.currentAlbumId = currentAlbumId;
             ctrlBinder.musicChangeListeners.forEach(new Consumer<MusicChangeListener>() {
@@ -554,21 +565,38 @@ public class AudioService extends Service{
             this.playList.clear();
             this.playList.addAll(playList);
             currentIndex = index;
-            play(playList.get(index));
-        }
+            current = playList.get(index);
+            int currentAlbumId = current.getInt(JSONConst.WorkTree.WORK_ID);
+            setCurrentAlbumId(currentAlbumId);
+            List<MediaItem> mediaItemList = new ArrayList<>();
+            for (int i = 0; i < playList.size(); i++) {
+                MediaItem mediaItem;
+                MediaItem.Builder builder = new MediaItem.Builder();
+                JSONObject music = playList.get(i);
+                String path = music.getString(JSONConst.WorkTree.MAP_FILE_PATH);
+                File audioFile = new File(path);
+                if(audioFile.exists()){
+                    builder.setUri(Uri.fromFile(audioFile));
+                }else {
+                    path =music.getString(JSONConst.WorkTree.MEDIA_STREAM_URL);
+                    if(path.startsWith("http")){
+                        path = path + "?token=" + Api.token;
+                    }else {
+                        path = Api.HOST + path + "?token=" + Api.token;
+                    }
+                    builder.setUri(path);
+                }
+                MediaMetadata.Builder metaBuilder = new MediaMetadata.Builder();
+                metaBuilder.setTitle(music.getString("title"));
+                builder.setMediaMetadata(metaBuilder.build());
 
-        public void skipToNext(){
-            if(currentIndex == playList.size()-1){
-                currentIndex = 0;
-            }else{
-                currentIndex++;
+                mediaItem = builder.build();
+
+                mediaItemList.add(mediaItem);
             }
-            try {
-                play(playList.get(currentIndex));
-            } catch (JSONException e) {
-                e.printStackTrace();
-                alertException(e);
-            }
+            mediaPlayer.setMediaItems(mediaItemList,index,0);
+            mediaPlayer.prepare();
+            mediaPlayer.play();
         }
 
         public JSONObject getCurrent() {
@@ -581,20 +609,6 @@ public class AudioService extends Service{
 
         public Lrc getLrc(){
             return mLrc;
-        }
-
-        public void skipToPrevious(){
-            if(currentIndex == 0){
-                currentIndex = playList.size()-1;
-            }else{
-                currentIndex--;
-            }
-            try {
-                play(playList.get(currentIndex));
-            } catch (JSONException e) {
-                e.printStackTrace();
-                alertException(e);
-            }
         }
 
         public WindowManager.LayoutParams getLrcWindowParams(){
@@ -619,8 +633,16 @@ public class AudioService extends Service{
             }
         }
 
-        public void setReap(){
+        public void setReapAll(){
+            mediaPlayer.setRepeatMode(Player.REPEAT_MODE_ALL);
+        }
+
+        public void setReapOne(){
             mediaPlayer.setRepeatMode(Player.REPEAT_MODE_ONE);
+        }
+
+        public void setReapOff(){
+            mediaPlayer.setRepeatMode(Player.REPEAT_MODE_OFF);
         }
 
         public String getCurrentTitle() throws JSONException {

@@ -378,7 +378,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         if(item.getItemId() == 0){
             App.getInstance().setValue(App.CONFIG_UPDATE_TIME,0);
             startActivity(new Intent(this,UserSwitchActivity.class));
-            finish();
+//            finish();
         }else if(item.getItemId() == 1){
         }else if(item.getItemId() == 13){
             startActivityForResult(new Intent(this,TagsActivity.class),TAG_SELECT_RESULT);
@@ -491,10 +491,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         String resultType = intent.getStringExtra("resultType");
-        if(resultType == null){
-            return;
-        }
-        if(resultType.equals("va")){
+        if("va".equals(resultType)){
             String vaId = intent.getStringExtra("id");
             type = TYPE_VA_WORK;
             if(!vaId.equals(this.vaId)){
@@ -502,7 +499,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
                 clearWork();
                 this.vaId = vaId;
             }
-        }else if(resultType.equals("tag")){
+        }else if("tag".equals(resultType)){
             int tagId = intent.getIntExtra("id",-1);
             type = TYPE_TAG_WORK;
             if(tagId != this.tagId){
@@ -510,6 +507,9 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
                 clearWork();
                 this.tagId = tagId;
             }
+        }else {
+            type = TYPE_ALL_WORK;
+            clearWork();
         }
         getNextPage();
     }

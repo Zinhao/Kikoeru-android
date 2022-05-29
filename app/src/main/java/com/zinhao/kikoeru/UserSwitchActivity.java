@@ -87,6 +87,7 @@ public class UserSwitchActivity extends BaseActivity {
                     String host = user.getString(JSONConst.User.HOST);
                     String token = user.getString(JSONConst.User.TOKEN);
                     Api.init(token,host);
+                    stopService(new Intent(UserSwitchActivity.this,AudioService.class));
                     App.getInstance().setValue(App.CONFIG_HOST,host);
                     App.getInstance().setValue(App.CONFIG_TOKEN,token);
                     startActivity(new Intent(UserSwitchActivity.this,LauncherActivity.class));

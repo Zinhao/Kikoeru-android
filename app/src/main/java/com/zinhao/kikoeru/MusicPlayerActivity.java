@@ -63,8 +63,7 @@ public class MusicPlayerActivity extends BaseActivity implements ServiceConnecti
                     return;
                 if(ctrlBinder.getController() == null || ctrlBinder.getController().getTransportControls() == null)
                     return;
-                PlaybackStateCompat playbackStateCompat;
-                playbackStateCompat = ctrlBinder.getController().getPlaybackState();
+                PlaybackStateCompat playbackStateCompat = ctrlBinder.getController().getPlaybackState();
                 if(playbackStateCompat != null && playbackStateCompat.getState() == PlaybackStateCompat.STATE_PLAYING){
                     ctrlBinder.getController().getTransportControls().pause();
                 }else {
@@ -171,6 +170,7 @@ public class MusicPlayerActivity extends BaseActivity implements ServiceConnecti
             @Override
             public void run() {
                 try {
+                    timeProgressView.setMax((int) ctrlBinder.getExoPlayer().getDuration());
                     setTitle(ctrlBinder.getCurrentTitle());
                 } catch (JSONException e) {
                     e.printStackTrace();

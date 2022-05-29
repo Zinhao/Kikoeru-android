@@ -308,7 +308,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         if(ctrlBinder.getCurrent()!=null && ctrlBinder.getCurrent().getString(JSONConst.WorkTree.MEDIA_STREAM_URL).equals(itemMediaStreamUrl)){
 
         }else {
-            ctrlBinder.setReap();
+            ctrlBinder.setReapAll();
             ctrlBinder.play(musicArray,index);
         }
         if(itemTitle.toLowerCase(Locale.ROOT).endsWith(".mp4")){
