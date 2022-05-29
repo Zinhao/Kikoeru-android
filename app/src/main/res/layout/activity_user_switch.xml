@@ -10,7 +10,6 @@
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="10dp"
         tools:listitem="@layout/item_server_and_user"
         tools:itemCount="3"
         app:layout_constraintBottom_toBottomOf="parent"

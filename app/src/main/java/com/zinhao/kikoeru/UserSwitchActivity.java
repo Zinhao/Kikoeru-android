@@ -118,7 +118,12 @@ public class UserSwitchActivity extends BaseActivity {
                             switchUser(user);
                         }
                     });
-                    ((UserViewHolder) holder).tvName.setText(user.getString(JSONConst.User.NAME));
+                    if(Api.token.equals(user.getString(JSONConst.User.TOKEN))){
+                        ((UserViewHolder) holder).tvName.setText(user.getString(JSONConst.User.NAME)+"(当前)");
+                    }else {
+                        ((UserViewHolder) holder).tvName.setText(user.getString(JSONConst.User.NAME));
+                    }
+
                     ((UserViewHolder) holder).tvServer.setText(user.getString(JSONConst.User.HOST));
                 }
             } catch (JSONException e) {

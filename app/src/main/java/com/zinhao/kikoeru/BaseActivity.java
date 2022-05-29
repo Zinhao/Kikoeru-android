@@ -100,7 +100,7 @@ public class BaseActivity extends SlideOutActivity {
 
     @Override
     protected boolean enableSlide() {
-        return true;
+        return false;
     }
 
     protected void alertException(Exception e){
