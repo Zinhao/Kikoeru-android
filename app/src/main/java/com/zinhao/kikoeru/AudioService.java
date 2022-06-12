@@ -645,6 +645,10 @@ public class AudioService extends Service{
             mediaPlayer.setRepeatMode(Player.REPEAT_MODE_OFF);
         }
 
+        public int getReapMode(){
+            return mediaPlayer.getRepeatMode();
+        }
+
         public String getCurrentTitle() throws JSONException {
             if(current == null)
                 return "";

@@ -107,4 +107,15 @@
         app:layout_constraintTop_toTopOf="@+id/ib3"
         app:srcCompat="@drawable/ic_baseline_work_24" />
 
+    <ImageButton
+        android:id="@+id/ibLoop"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="24dp"
+        android:background="@null"
+        android:src="@drawable/ic_baseline_loop_24"
+        app:layout_constraintBottom_toBottomOf="@+id/ib1"
+        app:layout_constraintEnd_toStartOf="@+id/ib1"
+        app:layout_constraintTop_toTopOf="@+id/ib1" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

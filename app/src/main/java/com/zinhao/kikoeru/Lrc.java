@@ -31,8 +31,10 @@ public class Lrc {
                 try{
                     long timeLong = transToLong(timeStr);
                     String content = row.substring(timeEnd+1);
-                    LrcRow lrcRow = new LrcRow(timeStr,timeLong,content);
-                    lrcRows.add(lrcRow);
+                    if(!content.trim().isEmpty()){
+                        LrcRow lrcRow = new LrcRow(timeStr,timeLong,content);
+                        lrcRows.add(lrcRow);
+                    }
                 }catch (Exception e){
                     Log.e(TAG, "Lrc: err lrc row:" + timeStr);
                     continue;

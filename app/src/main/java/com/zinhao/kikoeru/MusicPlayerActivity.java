@@ -19,6 +19,7 @@ import androidx.core.content.ContextCompat;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
+import com.google.android.exoplayer2.Player;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
 
@@ -34,6 +35,7 @@ public class MusicPlayerActivity extends BaseActivity implements ServiceConnecti
     private ImageButton ibPause;
     private ImageButton ibNext;
     private ImageButton ibWork;
+    private ImageButton ibLoop;
     private TextView tvLrc;
     private TextView tvUpLrc;
     private TextView tvNextLrc;
@@ -51,6 +53,7 @@ public class MusicPlayerActivity extends BaseActivity implements ServiceConnecti
         ibPause = findViewById(R.id.ib2);
         ibNext = findViewById(R.id.ib3);
         ibWork = findViewById(R.id.imageButton2);
+        ibLoop = findViewById(R.id.ibLoop);
         tvLrc = findViewById(R.id.tvLrc);
         tvUpLrc = findViewById(R.id.tvUpLrc);
         tvNextLrc = findViewById(R.id.tvNextLrc);
@@ -90,6 +93,30 @@ public class MusicPlayerActivity extends BaseActivity implements ServiceConnecti
                 if(ctrlBinder.getController() == null || ctrlBinder.getController().getTransportControls() == null)
                     return;
                 ctrlBinder.getController().getTransportControls().skipToNext();
+            }
+        });
+        ibLoop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(ctrlBinder ==null)
+                    return;
+                if(ctrlBinder.getController() == null || ctrlBinder.getController().getTransportControls() == null)
+                    return;
+                if(ctrlBinder.getReapMode() == Player.REPEAT_MODE_ONE){
+                    ctrlBinder.setReapAll();
+                }else if(ctrlBinder.getReapMode() == Player.REPEAT_MODE_ALL){
+                    ctrlBinder.setReapOff();
+                }else if(ctrlBinder.getReapMode() == Player.REPEAT_MODE_OFF){
+                    ctrlBinder.setReapOne();
+                }
+                if(ctrlBinder.getReapMode() == Player.REPEAT_MODE_ONE){
+                    ibLoop.setImageResource(R.drawable.ic_baseline_flip_camera_android_24);
+                }else if(ctrlBinder.getReapMode() == Player.REPEAT_MODE_ALL){
+                    ibLoop.setImageResource(R.drawable.ic_baseline_loop_24);
+                }else if(ctrlBinder.getReapMode() == Player.REPEAT_MODE_OFF){
+                    ibLoop.setImageResource(R.drawable.ic_baseline_close_24);
+                }
+
             }
         });
         timeProgressView.setOnSeekBarChangeListener(this);
