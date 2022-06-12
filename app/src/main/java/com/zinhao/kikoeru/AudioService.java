@@ -141,6 +141,9 @@ public class AudioService extends Service{
             @Override
             public void onPlaybackStateChanged(int playbackState) {
                 Log.d(TAG, String.format("onPlaybackStateChanged:playbackState: %d ,index: %d",playbackState,mediaPlayer.getCurrentMediaItemIndex()));
+                if(ctrlBinder == null){
+                    return;
+                }
                 ctrlBinder.musicChangeListeners.forEach(new Consumer<MusicChangeListener>() {
                     @Override
                     public void accept(MusicChangeListener listener) {

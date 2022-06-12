@@ -1,14 +1,15 @@
 package com.zinhao.kikoeru;
 
+import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.print.PageRange;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -16,8 +17,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.koushikdutta.async.http.AsyncHttpClient;
-import com.koushikdutta.async.http.AsyncHttpResponse;
 import com.zinhao.kikoeru.databinding.ActivityUserSwitchBinding;
 
 import org.json.JSONArray;
@@ -28,30 +27,6 @@ public class UserSwitchActivity extends BaseActivity {
     private ActivityUserSwitchBinding binding;
     private JSONArray users;
     private UserAdapter adapter;
-
-    private AsyncHttpClient.JSONObjectCallback usersCallback = new AsyncHttpClient.JSONObjectCallback() {
-        @Override
-        public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
-            if(e!=null){
-                alertException(e);
-                return;
-            }
-            try {
-                users = jsonObject.getJSONArray("users");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        adapter = new UserAdapter();
-                        binding.recyclerView.setAdapter(adapter);
-                        binding.recyclerView.setLayoutManager(new LinearLayoutManager(UserSwitchActivity.this));
-                    }
-                });
-            } catch (JSONException jsonException) {
-                jsonException.printStackTrace();
-                alertException(jsonException);
-            }
-        }
-    };
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -73,7 +48,15 @@ public class UserSwitchActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityUserSwitchBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        LocalFileCache.getInstance().readUsers(this,usersCallback);
+        App app = (App) getApplication();
+        try {
+            users = app.getUsersJSONObject().getJSONArray("users");
+            adapter = new UserAdapter();
+            binding.recyclerView.setAdapter(adapter);
+            binding.recyclerView.setLayoutManager(new LinearLayoutManager(UserSwitchActivity.this));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     public void switchUser(JSONObject user){
@@ -109,7 +92,7 @@ public class UserSwitchActivity extends BaseActivity {
         }
 
         @Override
-        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, @SuppressLint("RecyclerView") int position) {
             try {
                 JSONObject user = users.getJSONObject(position);
                 if(holder instanceof UserViewHolder){
@@ -126,6 +109,16 @@ public class UserSwitchActivity extends BaseActivity {
                     }
 
                     ((UserViewHolder) holder).tvServer.setText(user.getString(JSONConst.User.HOST));
+                    ((UserViewHolder) holder).ibDelete.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            notifyItemRemoved(position);
+                            users.remove(position);
+                            notifyItemRangeChanged(position,users.length()-position);
+                            App app = (App) getApplication();
+                            LocalFileCache.getInstance().saveUsers(v.getContext(),app.getUsersJSONObject());
+                        }
+                    });
                 }
             } catch (JSONException e) {
             }
@@ -140,11 +133,13 @@ public class UserSwitchActivity extends BaseActivity {
     private static class UserViewHolder extends RecyclerView.ViewHolder{
         private TextView tvName;
         private TextView tvServer;
+        private ImageButton ibDelete;
 
         public UserViewHolder(@NonNull View itemView) {
             super(itemView);
             tvName = itemView.findViewById(R.id.tvName);
             tvServer = itemView.findViewById(R.id.tvServer);
+            ibDelete = itemView.findViewById(R.id.imageButton3);
         }
     }
 }

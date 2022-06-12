@@ -20,6 +20,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
@@ -180,19 +182,29 @@ public class LocalFileCache implements Runnable, Closeable {
                             return pathname.isFile() && pathname.getName().endsWith(".json");
                         }
                     });
-                    if(workFiles == null)
+                    if(workFiles == null){
+                        callback.onCompleted(new FileNotFoundException("本地缓存为空"),null,null);
                         return;
+                    }
+                    List<File> sortFiles = Arrays.asList(workFiles);
+                    sortFiles.sort(new Comparator<File>() {
+                        @Override
+                        public int compare(File o1, File o2) {
+                            return o2.getName().compareTo(o1.getName());
+                        }
+                    });
+
                     JSONObject rootJson = new JSONObject();
                     JSONArray works = new JSONArray();
                     JSONObject pagination = new JSONObject();
                     try {
                         pagination.put("currentPage",1);
                         pagination.put("pageSize",1);
-                        pagination.put("totalCount",workFiles.length);
+                        pagination.put("totalCount",sortFiles.size());
                         rootJson.put("pagination",pagination);
-                        for (int i = 0; i < workFiles.length; i++) {
+                        for (int i = 0; i < sortFiles.size(); i++) {
                             String workStr;
-                            workStr = readTextSync(workFiles[i]);
+                            workStr = readTextSync(sortFiles.get(i));
                             if(workStr!=null && !workStr.isEmpty()){
                                 JSONObject work = new JSONObject(workStr);
                                 work.put(JSONConst.Work.IS_LOCAL_WORK,true);

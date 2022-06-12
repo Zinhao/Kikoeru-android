@@ -3,6 +3,7 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/card_bg_currnet_play.xml" value="0.4197916666666667" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/card_bg_lrc.xml" value="0.4203125" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/card_bg_tagview.xml" value="0.33" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/card_bg_text.xml" value="0.48854166666666665" />
@@ -25,7 +26,7 @@
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/activity_about.xml" value="0.5536458333333333" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/activity_local_work.xml" value="0.5260416666666666" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/activity_login_account.xml" value="0.5536458333333333" />
-        <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/activity_main.xml" value="0.5390625" />
+        <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/activity_main.xml" value="0.4" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/activity_main_home.xml" value="0.5536458333333333" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/activity_more.xml" value="0.5536458333333333" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/activity_player.xml" value="0.4" />
@@ -42,7 +43,7 @@
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/item_mission_progress.xml" value="0.67" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/item_server_and_user.xml" value="0.5536458333333333" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/item_work_1.xml" value="0.5" />
-        <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/item_work_2.xml" value="0.5536458333333333" />
+        <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/item_work_2.xml" value="0.4" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/item_work_3.xml" value="0.5536458333333333" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/item_work_tree_1.xml" value="0.5536458333333333" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/layout_current_play.xml" value="0.5536458333333333" />

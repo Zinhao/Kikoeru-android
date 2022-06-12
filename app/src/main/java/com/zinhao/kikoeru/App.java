@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Environment;
 
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
 import com.jil.swipeback.SwipeBackApplication;
 import com.koushikdutta.async.http.AsyncHttpClient;
@@ -74,13 +75,17 @@ public class App extends SwipeBackApplication {
         instance = this;
         appDebug = getValue(App.CONFIG_DEBUG,0) == 1;
         saveExternal = getValue(App.CONFIG_SAVE_EXTERNAL,0) == 1;
-        defaultPic = new RequestOptions().placeholder(R.drawable.ic_no_cover);
+        defaultPic = new RequestOptions().placeholder(R.drawable.ic_no_cover).apply(RequestOptions.bitmapTransform(new RoundedCorners(10)));
         LocalFileCache.getInstance().readUsers(this, new AsyncHttpClient.JSONObjectCallback() {
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
                 if(e!=null){
-//                    alertException(e);
                     usersJSONObject = new JSONObject();
+                    try {
+                        usersJSONObject.put("users",new JSONArray());
+                    } catch (JSONException jsonException) {
+                        jsonException.printStackTrace();
+                    }
                     return;
                 }
                 usersJSONObject = jsonObject;

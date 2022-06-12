@@ -41,7 +41,7 @@ public class Api {
         HOST = host;
         subtitle = (int) App.getInstance().getValue(App.CONFIG_ONLY_DISPLAY_LRC,1);
         order = App.getInstance().getValue(App.CONFIG_ORDER,"id");
-        sort = (int) App.getInstance().getValue(App.CONFIG_SORT,1);
+        sort = (int) App.getInstance().getValue(App.CONFIG_SORT,0);
     }
 
     private static String makeSort(){

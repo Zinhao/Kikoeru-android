@@ -3,24 +3,22 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:padding="2dp"
+    android:layout_height="wrap_content"
     android:layout_margin="10dp"
-    android:elevation="10dp"
     android:background="@drawable/card_bg_work"
-    android:layout_height="wrap_content">
+    android:elevation="8dp">
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/ivCover"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:scaleType="fitStart"
-        app:layout_constraintEnd_toEndOf="parent"
         android:adjustViewBounds="true"
-        app:layout_constraintHorizontal_bias="0.0"
+        android:scaleType="fitStart"
         android:src="@drawable/ic_no_cover"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/tvTitle"
@@ -44,17 +42,17 @@
 
     <TextView
         android:id="@+id/tvRjNumber"
-        android:layout_margin="5dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="RJ23435"
-        android:paddingStart="5dp"
-        android:paddingEnd="5dp"
-        android:paddingTop="2dp"
-        android:paddingBottom="2dp"
-        android:textSize="12sp"
-        android:textColor="@color/white"
+        android:layout_margin="5dp"
         android:background="@drawable/card_bg_text"
+        android:paddingStart="5dp"
+        android:paddingTop="2dp"
+        android:paddingEnd="5dp"
+        android:paddingBottom="2dp"
+        android:text="RJ23435"
+        android:textColor="@color/white"
+        android:textSize="12sp"
         app:layout_constraintStart_toStartOf="@+id/ivCover"
         app:layout_constraintTop_toTopOf="@+id/ivCover" />
 
@@ -63,14 +61,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="5dp"
-        android:text="2022-01-02"
-        android:paddingStart="5dp"
-        android:paddingEnd="5dp"
-        android:paddingTop="2dp"
-        android:paddingBottom="2dp"
-        android:textSize="12sp"
         android:background="@drawable/card_bg_text"
+        android:paddingStart="5dp"
+        android:paddingTop="2dp"
+        android:paddingEnd="5dp"
+        android:paddingBottom="2dp"
+        android:text="2022-01-02"
         android:textColor="@color/white"
+        android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="@+id/ivCover"
         app:layout_constraintEnd_toEndOf="@+id/ivCover" />
 
@@ -88,11 +86,11 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:padding="4dp"
-        app:tagBackground="@drawable/card_bg_tagview"
-        app:tags="健全 青春"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/tvPrice"
-        app:layout_constraintTop_toBottomOf="@+id/tvPrice" />
+        app:layout_constraintTop_toBottomOf="@+id/tvPrice"
+        app:tagBackground="@drawable/card_bg_tagview"
+        app:tags="健全 青春" />
 
     <com.zinhao.kikoeru.TagsView
         android:id="@+id/tvArt"
@@ -101,12 +99,12 @@
         android:layout_marginBottom="10dp"
         android:padding="5dp"
         android:text="こやまはる"
-        app:tags="こやまはる Kikoeru"
-        app:tagBackground="@drawable/card_bg_lrc"
         android:textColor="@color/white"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="@+id/tvTags"
-        app:layout_constraintTop_toBottomOf="@+id/tvTags" />
+        app:layout_constraintTop_toBottomOf="@+id/tvTags"
+        app:tagBackground="@drawable/card_bg_lrc"
+        app:tags="こやまはる Kikoeru" />
 
     <TextView
         android:id="@+id/tvSaleCount"
