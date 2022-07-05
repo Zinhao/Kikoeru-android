@@ -493,20 +493,20 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         String resultType = intent.getStringExtra("resultType");
         if("va".equals(resultType)){
             String vaId = intent.getStringExtra("id");
-            type = TYPE_VA_WORK;
-            if(!vaId.equals(this.vaId)){
+            if(!vaId.equals(this.vaId)|| type != TYPE_VA_WORK){
                 vaName = intent.getStringExtra("name");
                 clearWork();
                 this.vaId = vaId;
             }
+            type = TYPE_VA_WORK;
         }else if("tag".equals(resultType)){
             int tagId = intent.getIntExtra("id",-1);
-            type = TYPE_TAG_WORK;
-            if(tagId != this.tagId){
+            if(tagId != this.tagId || type != TYPE_TAG_WORK){
                 tagStr = intent.getStringExtra("name");
                 clearWork();
                 this.tagId = tagId;
             }
+            type = TYPE_TAG_WORK;
         }else {
             type = TYPE_ALL_WORK;
             clearWork();
@@ -519,12 +519,12 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         try {
             int tagId = jsonObject.getInt("id");
             Log.d(TAG, "onTagClick: "+ tagId);
-            type = TYPE_TAG_WORK;
-            if(tagId != this.tagId){
+            if(tagId != this.tagId || type != TYPE_TAG_WORK){
                 tagStr = jsonObject.getString("name");
                 clearWork();
                 this.tagId = tagId;
             }
+            type = TYPE_TAG_WORK;
             getNextPage();
         } catch (JSONException e) {
             e.printStackTrace();
@@ -537,12 +537,12 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         public void onTagClick(JSONObject jsonObject) {
             try {
                 String vaId = jsonObject.getString("id");
-                type = TYPE_VA_WORK;
-                if(!vaId.equals(WorksActivity.this.vaId)){
+                if(!vaId.equals(WorksActivity.this.vaId) || type != TYPE_VA_WORK){
                     vaName = jsonObject.getString("name");
                     clearWork();
                     WorksActivity.this.vaId = vaId;
                 }
+                type = TYPE_VA_WORK;
                 getNextPage();
             } catch (JSONException e) {
                 e.printStackTrace();

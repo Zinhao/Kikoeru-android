@@ -182,7 +182,7 @@ public class Api {
     public static void doPutReview(long id,@Filter String progress,AsyncHttpClient.JSONObjectCallback callback){
         AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST+"/api/review?starOnly=false&progressOnly=true"),"PUT");
         JSONObject jsonObject = new JSONObject();
-        String userName = App.getInstance().getValue(App.CONFIG_USER_ACCOUNT,"guest");
+        String userName = App.getInstance().currentUser().getName();
         try {
             jsonObject.put("user_name",userName);
             jsonObject.put("work_id",id);

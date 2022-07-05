@@ -28,7 +28,7 @@ public class LoginAccountActivity extends BaseActivity {
     private Button btSignIn;
     private Button btGuest;
     private Button btSignUp;
-    private String host;
+    private User user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,10 +41,18 @@ public class LoginAccountActivity extends BaseActivity {
         btGuest = findViewById(R.id.button4);
         btSignUp = findViewById(R.id.button3);
 
-        host = App.getInstance().getValue(App.CONFIG_HOST,Api.REMOTE_HOST);
-        String userName = App.getInstance().getValue(App.CONFIG_USER_ACCOUNT,"guest");
-        String password = App.getInstance().getValue(App.CONFIG_USER_PASSWORD,"guest");
-        initEdit(userName,password);
+        user = new User();
+        user.setHost(Api.REMOTE_HOST);
+        user.setName("guest");
+        user.setPassword("guest");
+        User currentUser = App.getInstance().currentUser();
+        if(currentUser!=null){
+            user.setHost(currentUser.getHost());
+            user.setName(currentUser.getName());
+            user.setPassword(currentUser.getPassword());
+        }
+
+        initEdit(user.getName(), user.getPassword());
 
         btSignIn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -93,12 +101,11 @@ public class LoginAccountActivity extends BaseActivity {
             if(asyncHttpResponse.code() == 200){
                 if(jsonObject.has("token")){
                     try {
+                        App app = (App) getApplication();
                         String token = jsonObject.getString("token");
-                        Log.d(TAG, "onCompleted: "+token);
-                        Api.init(token,host);
-                        App.getInstance().setValue(App.CONFIG_HOST,host);
-                        App.getInstance().setValue(App.CONFIG_TOKEN,token);
-                        App.getInstance().setValue(App.CONFIG_UPDATE_TIME,System.currentTimeMillis());
+                        user.setToken(token);
+                        Api.init(token,user.getHost());
+                        App.getInstance().setValue(App.CONFIG_USER_DATABASE_ID,app.insertUser(user));
                         saveAndNext();
                     } catch (JSONException jsonException) {
                         jsonException.printStackTrace();
@@ -144,7 +151,7 @@ public class LoginAccountActivity extends BaseActivity {
             return;
         etUser.setText(userName);
         etPassword.setText(password);
-        etServer.setText(host);
+        etServer.setText(user.getHost());
     }
 
     private boolean signIn(){
@@ -159,22 +166,24 @@ public class LoginAccountActivity extends BaseActivity {
             return false;
         String userName = etUser.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
-        host = etServer.getText().toString().trim();
+        String host = etServer.getText().toString().trim();
         if(userName.isEmpty() || password.isEmpty() || host.isEmpty()){
             return false;
         }
         if(!host.startsWith("http")){
             return false;
         }
-        App.getInstance().setValue(App.CONFIG_USER_ACCOUNT,userName);
-        App.getInstance().setValue(App.CONFIG_USER_PASSWORD,password);
+        user.setName(userName);
+        user.setPassword(password);
+        user.setHost(host);
         Api.doGetToken(userName,password,host,signInCallback);
         return true;
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuItem menuItem3 =menu.add(0,2,2,"about");
+        MenuItem menuItem2 =menu.add(0,2,2,"about");
+        MenuItem menuItem3 =menu.add(0,3,3,"choose user");
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -182,35 +191,15 @@ public class LoginAccountActivity extends BaseActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(item.getItemId() == 2){
             startActivity(new Intent(this,AboutActivity.class));
+        }else if(item.getItemId() == 3){
+            startActivity(new Intent(this,UserSwitchActivity.class));
         }
+
         return super.onOptionsItemSelected(item);
     }
 
 
     private void saveAndNext(){
-        App app = (App) getApplication();
-        try {
-            JSONObject usersJSON = app.getUsersJSONObject();
-            JSONArray users;
-            if(usersJSON.has("users")){
-                users = app.getUsersJSONObject().getJSONArray("users");
-            }else {
-                users= new JSONArray();
-                usersJSON.put("users",users);
-            }
-
-            JSONObject user = new JSONObject();
-            user.put(JSONConst.User.NAME,app.getValue(App.CONFIG_USER_ACCOUNT,"guest"));
-            user.put(JSONConst.User.PASS,app.getValue(App.CONFIG_USER_PASSWORD,"guest"));
-            user.put(JSONConst.User.POSITION,System.currentTimeMillis());
-            user.put(JSONConst.User.TOKEN,Api.token);
-            user.put(JSONConst.User.HOST,Api.HOST);
-            users.put(user);
-            LocalFileCache.getInstance().saveUsers(this,usersJSON);
-        } catch (JSONException e) {
-            e.printStackTrace();
-            alertException(e);
-        }
         runOnUiThread(new Runnable() {
             @Override
             public void run() {

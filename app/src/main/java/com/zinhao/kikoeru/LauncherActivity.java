@@ -2,19 +2,19 @@ package com.zinhao.kikoeru;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 
 public class LauncherActivity extends BaseActivity{
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        String token = App.getInstance().getValue(App.CONFIG_TOKEN,"");
-        String host = App.getInstance().getValue(App.CONFIG_HOST,Api.REMOTE_HOST);
-        if(!token.isEmpty() && !host.isEmpty()){
-            Api.init(token,host);
-            startActivity(new Intent(LauncherActivity.this, WorksActivity.class));
+        User user = App.getInstance().currentUser();
+        if(user == null){
+            startActivity(new Intent(LauncherActivity.this, UserSwitchActivity.class));
         }else {
-            startActivity(new Intent(LauncherActivity.this, LoginAccountActivity.class));
+            Api.init(user.getToken(),user.getHost());
+            startActivity(new Intent(LauncherActivity.this, WorksActivity.class));
         }
         finish();
     }
