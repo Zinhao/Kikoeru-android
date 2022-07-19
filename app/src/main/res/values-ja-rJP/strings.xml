@@ -11,7 +11,7 @@
     <string name="cover_layout">カバーグリッド</string>
     <string name="detail_layout">詳細グリッド</string>
     <string name="tag">タグ</string>
-    <string name="local_works">本地缓存</string>
+    <string name="local_works">ローカルソース</string>
     <string name="sort">並び替え</string>
     <string name="release_date">リリース日</string>
     <string name="rj_number">RJ番号</string>
@@ -29,7 +29,7 @@
     <string name="postponed">延長</string>
     <string name="confirm">確定</string>
     <string name="view">表示</string>
-    <string name="mark_action">action</string>
+    <string name="mark_action">操作</string>
     <string name="downloading">ダウンロード中</string>
     <string name="cancel_download">キャンセル</string>
     <string name="check_mission">進捗を見る</string>
