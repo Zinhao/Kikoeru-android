@@ -14,6 +14,7 @@
         <!-- Customize your theme here. -->
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowIsTranslucent">true</item>
+        <item name="android:fontFamily">@font/mejiro_regular</item>
 
     </style>
 
