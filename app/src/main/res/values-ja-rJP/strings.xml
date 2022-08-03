@@ -26,7 +26,7 @@
     <string name="listening">視聴中</string>
     <string name="listened">視聴終了</string>
     <string name="replay">もう一度</string>
-    <string name="postponed">延長</string>
+    <string name="postponed">保留</string>
     <string name="confirm">確定</string>
     <string name="view">表示</string>
     <string name="mark_action">操作</string>
