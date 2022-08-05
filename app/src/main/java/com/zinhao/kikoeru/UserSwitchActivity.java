@@ -55,6 +55,18 @@ public class UserSwitchActivity extends BaseActivity {
         setContentView(binding.getRoot());
         App app = (App) getApplication();
         users = app.getAllUsers();
+        if(users.size() == 0){
+            binding.button5.setVisibility(View.VISIBLE);
+        }else {
+            binding.button5.setVisibility(View.GONE);
+        }
+        binding.button5.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(v.getContext(),LoginAccountActivity.class));
+                finish();
+            }
+        });
         adapter = new UserAdapter();
         binding.recyclerView.setAdapter(adapter);
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(UserSwitchActivity.this));
@@ -173,6 +185,8 @@ public class UserSwitchActivity extends BaseActivity {
                                 User firstUser = app.getAllUsers().get(0);
                                 app.setCurrentUserId(firstUser.getId());
                                 Api.init(firstUser.getToken(),firstUser.getHost());
+                            }else{
+                                binding.button5.setVisibility(View.VISIBLE);
                             }
                         }
                     }
