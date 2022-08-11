@@ -4,13 +4,20 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothProfile;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.media.MediaMetadataCompat;
@@ -19,6 +26,7 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
@@ -26,6 +34,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.media.AudioManagerCompat;
+import androidx.media.MediaSessionManager;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
@@ -103,8 +113,67 @@ public class AudioService extends Service{
             super.onStop();
             mediaPlayer.stop();
         }
+
+        @Override
+        public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
+            KeyEvent keyEvent = mediaButtonEvent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
+            if (keyEvent == null || keyEvent.getAction() != KeyEvent.ACTION_DOWN) {
+                return false;
+            }
+            int keyCode = keyEvent.getKeyCode();
+            Log.d(TAG, "onMediaButtonEvent: "+keyCode);
+            return super.onMediaButtonEvent(mediaButtonEvent);
+        }
+
+        @Override
+        public void onPrepare() {
+            Log.d(TAG, "onPrepare: ");
+            super.onPrepare();
+        }
     };
+
     private static final int NOTIFICATION_ID = 12;
+
+    private final HeadsetActionReceiver headsetActionReceiver = new HeadsetActionReceiver();
+
+    private class HeadsetActionReceiver extends BroadcastReceiver{
+        final IntentFilter intentFilter;
+        final BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        boolean isActionPause = false;
+        public HeadsetActionReceiver() {
+            intentFilter = new IntentFilter();
+            intentFilter.addAction(AudioManager.ACTION_HEADSET_PLUG);
+            intentFilter.addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+            intentFilter.addAction(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED);
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(intent == null)
+                return;
+            if(intent.hasExtra("state")){
+                final boolean isPlugIn = intent.getExtras().getInt("state") == 1;
+                Log.d(TAG, "onReceive: isPlugIn:"+ isPlugIn);
+                if(isPlugIn && isActionPause){
+                    mediaSession.getController().getTransportControls().play();
+                }else {
+                    mediaSession.getController().getTransportControls().pause();
+                    isActionPause = true;
+                }
+            }
+            String action = intent.getAction();
+            Log.d(TAG, "onReceive: "+action);
+            if(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED.equals(action)){
+                if(bluetoothAdapter != null && bluetoothAdapter.getProfileConnectionState(BluetoothProfile.HEADSET) == BluetoothProfile.STATE_DISCONNECTED){
+                    mediaSession.getController().getTransportControls().pause();
+                    isActionPause = true;
+                }
+            }else if(AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(action)){
+                mediaSession.getController().getTransportControls().pause();
+                isActionPause = true;
+            }
+        }
+    }
 
     @Nullable
     @Override
@@ -209,7 +278,7 @@ public class AudioService extends Service{
                 Log.d(TAG, "onMetadata: "+metadata.toString());
             }
         });
-
+        registerReceiver(headsetActionReceiver,headsetActionReceiver.intentFilter);
         ctrlBinder = new CtrlBinder();
     }
 
