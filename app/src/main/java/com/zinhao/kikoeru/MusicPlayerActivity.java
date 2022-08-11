@@ -6,12 +6,16 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -248,6 +252,38 @@ public class MusicPlayerActivity extends BaseActivity implements ServiceConnecti
         if(fromUser){
             ctrlBinder.getController().getTransportControls().seekTo(progress);
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        SubMenu subMenu = menu.addSubMenu(0,0,0, "stop after");
+        subMenu.add(1,1,1, "30 minutes");
+        subMenu.add(1,2,2, "60 minutes");
+        subMenu.add(1,3,3, "90 minutes");
+        subMenu.add(1,4,4, "120 minutes");
+        subMenu.add(1,5,5, "240 minutes");
+        subMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        try {
+            if(item.getItemId() == 1){
+                ctrlBinder.stopAfterMinutes(30);
+            }else if(item.getItemId() == 2){
+                ctrlBinder.stopAfterMinutes(60);
+            }else if(item.getItemId() == 3){
+                ctrlBinder.stopAfterMinutes(90);
+            }else if(item.getItemId() == 4){
+                ctrlBinder.stopAfterMinutes(120);
+            }else if(item.getItemId() == 5){
+                ctrlBinder.stopAfterMinutes(240);
+            }
+        }catch (Exception e){
+
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override

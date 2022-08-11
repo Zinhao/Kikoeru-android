@@ -86,7 +86,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         tvWorkTitle = bottomLayout.findViewById(R.id.textView2);
         ibStatus = bottomLayout.findViewById(R.id.button);
         dividerItemDecoration =  new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
-        startService(new Intent(this,AudioService.class));
+        startForegroundService(new Intent(this,AudioService.class));
         bindService(new Intent(this, AudioService.class), this,BIND_AUTO_CREATE);
         outAnim = AnimationUtils.loadAnimation(this,R.anim.move_bottom_out);
         inAnim = AnimationUtils.loadAnimation(this,R.anim.move_bottom_in);

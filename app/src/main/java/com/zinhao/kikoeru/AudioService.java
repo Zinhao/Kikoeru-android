@@ -364,7 +364,7 @@ public class AudioService extends Service{
             notificationBuilder.setCategory(NotificationCompat.CATEGORY_SERVICE);
             notificationBuilder.setShowWhen(true);
             notificationBuilder.setColorized(true);
-            notificationBuilder.setContentIntent(null);
+            notificationBuilder.setContentIntent(PendingIntent.getActivity(this,0,new Intent(this,MusicPlayerActivity.class),PendingIntent.FLAG_IMMUTABLE));
             Glide.with(this).asBitmap().load(Api.HOST+String.format("/api/cover/%d?type=sam",ctrlBinder.currentAlbumId)).into(new SimpleTarget<Bitmap>() {
                 @Override
                 public void onResourceReady(@NonNull Bitmap bitmap, @Nullable Transition<? super Bitmap> transition) {
@@ -429,10 +429,11 @@ public class AudioService extends Service{
         private int currentAlbumId;
         private Lrc mLrc = Lrc.NONE;
         private Timer mLrcUpdateTimer;
-
         private WindowManager windowManager;
         private boolean lrcWindowShow = false;
         private View lrcView;
+        private Runnable stopTask;
+        private Runnable updateLrcTask;
         private AsyncHttpClient.JSONObjectCallback lastPlayListCallback = new AsyncHttpClient.JSONObjectCallback() {
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
@@ -483,17 +484,7 @@ public class AudioService extends Service{
             mLrcUpdateTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            if(mediaPlayer!=null && mediaPlayer.isPlaying()){
-                                ctrlBinder.mLrc.update(mediaPlayer.getCurrentPosition());
-                                if(lrcView instanceof TextView){
-                                    ((TextView) lrcView).setText(mLrc.getCurrent().content);
-                                }
-                            }
-                        }
-                    });
+                    mHandler.post(updateLrcTask);
                     lrcRowChangeListeners.forEach(new Consumer<LrcRowChangeListener>() {
                         @Override
                         public void accept(LrcRowChangeListener listener) {
@@ -502,6 +493,35 @@ public class AudioService extends Service{
                     });
                 }
             },0,500);
+            updateLrcTask = new Runnable() {
+                @Override
+                public void run() {
+                    if(mediaPlayer!=null && mediaPlayer.isPlaying()){
+                        ctrlBinder.mLrc.update(mediaPlayer.getCurrentPosition());
+                        if(lrcView instanceof TextView){
+                            ((TextView) lrcView).setText(mLrc.getCurrent().content);
+                        }
+                    }
+                }
+            };
+            stopTask = new Runnable() {
+                @Override
+                public void run() {
+                    MediaControllerCompat controllerCompat = getController();
+                    if(controllerCompat == null)
+                        return;
+                    MediaControllerCompat.TransportControls transportControls = controllerCompat.getTransportControls();
+                    if(transportControls == null)
+                        return;
+                    Log.d(TAG, "run: is time to Stop!");
+                    transportControls.stop();
+                }
+            };
+        }
+
+        public void stopAfterMinutes(int minute){
+            mHandler.removeCallbacks(stopTask);
+            mHandler.postDelayed(stopTask,minute*60*1000L);
         }
 
         public boolean isLrcWindowShow() {
