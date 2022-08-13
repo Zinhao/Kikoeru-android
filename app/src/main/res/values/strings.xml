@@ -47,6 +47,12 @@
     <string name="savePath">save position</string>
     <string name="saveAtExternal">save at external storage</string>
     <string name="search">search</string>
+    <string name="opensource_license">Open Source License</string>
+    <string name="user_name">User Name</string>
+    <string name="user_password">Password</string>
+    <string name="user_guest">Guest</string>
+    <string name="user_sigin_in">Sign In</string>
+    <string name="user_sign_up">Sign Up</string>
 
 
 </resources>

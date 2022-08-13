@@ -26,7 +26,7 @@
     <string name="listening">視聴中</string>
     <string name="listened">視聴終了</string>
     <string name="replay">もう一度</string>
-    <string name="postponed">延長</string>
+    <string name="postponed">保留</string>
     <string name="confirm">確定</string>
     <string name="view">表示</string>
     <string name="mark_action">操作</string>
@@ -40,4 +40,10 @@
     <string name="savePath">保存場所</string>
     <string name="saveAtExternal">外部ストレージに保存</string>
     <string name="search">検索</string>
+    <string name="opensource_license">オープンソースライセンス</string>
+    <string name="user_name">ユーザー名</string>
+    <string name="user_password">パスワード</string>
+    <string name="user_guest">ゲスト</string>
+    <string name="user_sigin_in">サインイン</string>
+    <string name="user_sign_up">登録</string>
 </resources>

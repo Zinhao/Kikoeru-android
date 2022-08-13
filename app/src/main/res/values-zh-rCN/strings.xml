@@ -40,4 +40,10 @@
     <string name="savePath">存储位置</string>
     <string name="saveAtExternal">保存到外部文件夹</string>
     <string name="search">search</string>
+    <string name="opensource_license">开源代码许可</string>
+    <string name="user_name">帐号</string>
+    <string name="user_password">密码</string>
+    <string name="user_guest">来宾</string>
+    <string name="user_sigin_in">登录</string>
+    <string name="user_sign_up">注册</string>
 </resources>
