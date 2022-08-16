@@ -349,7 +349,6 @@ public class AudioService extends Service{
             nextIntent.setAction(ACTION_NEXT);
             PendingIntent nextPendingIntent = PendingIntent.getService(this, 4, nextIntent, PendingIntent.FLAG_IMMUTABLE);
 
-
             notificationBuilder.addAction(R.drawable.ic_baseline_text_fields_24,"show lrc",showLrcPendingIntent);
             if(mediaPlayer.isPlaying()){
                 notificationBuilder.addAction(R.drawable.ic_baseline_pause_24,"pause",pausePendingIntent);
@@ -365,7 +364,7 @@ public class AudioService extends Service{
             notificationBuilder.setShowWhen(true);
             notificationBuilder.setColorized(true);
             notificationBuilder.setContentIntent(PendingIntent.getActivity(this,0,new Intent(this,MusicPlayerActivity.class),PendingIntent.FLAG_IMMUTABLE));
-            Glide.with(this).asBitmap().load(Api.HOST+String.format("/api/cover/%d?type=sam",ctrlBinder.currentAlbumId)).into(new SimpleTarget<Bitmap>() {
+            Glide.with(this).asBitmap().load(Api.HOST+String.format("/api/cover/%d?type=sam&token=%s",ctrlBinder.currentAlbumId,Api.token)).into(new SimpleTarget<Bitmap>() {
                 @Override
                 public void onResourceReady(@NonNull Bitmap bitmap, @Nullable Transition<? super Bitmap> transition) {
                     notificationBuilder.setLargeIcon(bitmap);
@@ -414,6 +413,8 @@ public class AudioService extends Service{
     public void onDestroy() {
         super.onDestroy();
         try {
+            unregisterReceiver(headsetActionReceiver);
+            ctrlBinder.hideLrcFloatWindow();
             ctrlBinder.close();
             ctrlBinder = null;
         } catch (IOException e) {
@@ -577,11 +578,10 @@ public class AudioService extends Service{
                     return;
                 }
                 if(asyncHttpResponse.code() == 200){
-                    Log.d(TAG, "onCompleted: "+s);
                     mLrc = new Lrc(s);
                 }else {
                     mLrc = Lrc.NONE;
-                    Log.d(TAG, "onCompleted: "+asyncHttpResponse.code());
+                    Log.e(TAG, "onCompleted: "+asyncHttpResponse.code());
                 }
             }
         };
@@ -723,6 +723,12 @@ public class AudioService extends Service{
                 lrcWindowShow = false;
                 windowManager.removeView(lrcView);
             }
+        }
+
+        public void hideLrcFloatWindow(){
+            lrcWindowShow = false;
+            if(lrcView != null)
+                windowManager.removeView(lrcView);
         }
 
         public void setReapAll(){
