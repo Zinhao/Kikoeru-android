@@ -192,7 +192,7 @@ public class MusicPlayerActivity extends BaseActivity implements ServiceConnecti
 
     @Override
     public void onAlbumChange(int rjNumber) {
-        Glide.with(this).load(Api.HOST+String.format("/api/cover/%d",rjNumber)).apply(options).into(imageView);
+        Glide.with(this).load(Api.HOST+String.format("/api/cover/%d?token=%s",rjNumber,Api.token)).apply(options).into(imageView);
     }
 
     @Override
