@@ -3,6 +3,47 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/drawable/card_bg_current_play.xml" value="0.3635" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/drawable/card_bg_lrc.xml" value="0.3635" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/drawable/card_bg_tagview.xml" value="0.3635" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/drawable/card_bg_text.xml" value="0.3635" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/drawable/card_bg_user.xml" value="0.3635" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/drawable/card_bg_work.xml" value="0.3635" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/drawable/ic_baseline_close_24.xml" value="0.3635" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/drawable/ic_baseline_storage_24.xml" value="0.3635" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/drawable/ic_baseline_tag_24.xml" value="0.3635" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/drawable/ic_baseline_text_fields_24.xml" value="0.3635" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/drawable/ic_baseline_video_library_24.xml" value="0.3635" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/drawable/ic_baseline_view_column_24.xml" value="0.3635" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/drawable/ic_baseline_work_24.xml" value="0.3635" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/drawable/ic_launcher_foreground.xml" value="0.3635" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/activity_about.xml" value="0.14722222222222223" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/activity_down_load_mission.xml" value="0.14722222222222223" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/activity_image_browser.xml" value="0.14722222222222223" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/activity_license.xml" value="0.33016304347826086" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/activity_login_account.xml" value="0.33016304347826086" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/activity_lrc_show.xml" value="0.33016304347826086" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/activity_main.xml" value="0.33" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/activity_more.xml" value="0.33" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/activity_player.xml" value="0.14722222222222223" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/activity_search.xml" value="0.2418478260869565" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/activity_user_switch.xml" value="0.33016304347826086" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/activity_video_player.xml" value="0.33016304347826086" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/activity_work.xml" value="0.33016304347826086" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/item_image.xml" value="0.33016304347826086" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/item_image_indicator.xml" value="0.33016304347826086" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/item_lrc_row.xml" value="0.25" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/item_mission_progress.xml" value="0.33016304347826086" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/item_open_source_project.xml" value="0.33016304347826086" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/item_server_and_user.xml" value="0.33016304347826086" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/item_text_row.xml" value="0.2418478260869565" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/item_work_1.xml" value="0.2418478260869565" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/item_work_3.xml" value="0.2418478260869565" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/item_work_tree_1.xml" value="0.2418478260869565" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/layout_current_play.xml" value="0.2418478260869565" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/layout_tags.xml" value="0.2418478260869565" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/layout/lrc_layout.xml" value="0.14722222222222223" />
+        <entry key="..\:/Users/Katsuyuki/Documents/Kikoeru-android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.3635" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/card_bg_currnet_play.xml" value="0.4197916666666667" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/card_bg_lrc.xml" value="0.4203125" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/drawable/card_bg_tagview.xml" value="0.33" />

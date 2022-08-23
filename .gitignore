@@ -16,3 +16,4 @@ local.properties
 app/src/main/java/com/zinhao/kikoeru/db/DaoMaster.java
 app/src/main/java/com/zinhao/kikoeru/db/DaoSession.java
 app/src/main/java/com/zinhao/kikoeru/db/UserDao.java
+/app/src/main/java/com/zinhao/kikoeru/db/
