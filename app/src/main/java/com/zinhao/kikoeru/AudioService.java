@@ -290,6 +290,11 @@ public class AudioService extends Service {
         });
         registerReceiver(headsetActionReceiver,headsetActionReceiver.intentFilter);
         ctrlBinder = new CtrlBinder();
+        try {
+            updateNotificationState();
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static WindowManager.LayoutParams makeFloatWindowParams(float x, float y){
@@ -334,45 +339,43 @@ public class AudioService extends Service {
                 PlaybackStateCompat.ACTION_SET_RATING);
         mediaSession.setPlaybackState(builder.build());
 
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this,App.ID_PLAY_SERVICE);
+        androidx.media.app.NotificationCompat.MediaStyle mediaStyle = new androidx.media.app.NotificationCompat.MediaStyle();
+        mediaStyle.setShowActionsInCompactView(1);
+        mediaStyle.setMediaSession(mediaSession.getSessionToken());
+        notificationBuilder.setStyle(mediaStyle);
+
+        Intent previousIntent = new Intent(this,LrcFloatWindow.class);
+        previousIntent.setAction(ACTION_SHOW_LRC);
+        previousIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        PendingIntent showLrcPendingIntent = PendingIntent.getActivity(this, 1, previousIntent, PendingIntent.FLAG_IMMUTABLE);
+
+        Intent playIntent = new Intent(this,AudioService.class);
+        playIntent.setAction(ACTION_PLAY);
+        PendingIntent playPendingIntent = PendingIntent.getService(this, 2, playIntent, PendingIntent.FLAG_IMMUTABLE);
+
+        Intent pauseIntent = new Intent(this,AudioService.class);
+        pauseIntent.setAction(ACTION_PAUSE);
+        PendingIntent pausePendingIntent = PendingIntent.getService(this, 3, pauseIntent, PendingIntent.FLAG_IMMUTABLE);
+
+        Intent nextIntent = new Intent(this,AudioService.class);
+        nextIntent.setAction(ACTION_NEXT);
+        PendingIntent nextPendingIntent = PendingIntent.getService(this, 4, nextIntent, PendingIntent.FLAG_IMMUTABLE);
+
+        notificationBuilder.addAction(R.drawable.ic_baseline_text_fields_24,"show lrc",showLrcPendingIntent);
+        if(mediaPlayer.isPlaying()){
+            notificationBuilder.addAction(R.drawable.ic_baseline_pause_24,"pause",pausePendingIntent);
+        }else {
+            notificationBuilder.addAction(R.drawable.ic_baseline_play_arrow_24,"play",playPendingIntent);
+        }
+        notificationBuilder.addAction(R.drawable.ic_baseline_skip_next_24,"next",nextPendingIntent);
+        notificationBuilder.setCategory(NotificationCompat.CATEGORY_SERVICE);
+        notificationBuilder.setSmallIcon(R.drawable.ic_baseline_audiotrack_24);
+        notificationBuilder.setShowWhen(true);
+        notificationBuilder.setColorized(true);
         if(ctrlBinder.current !=null){
-            NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this,App.ID_PLAY_SERVICE);
-
-            androidx.media.app.NotificationCompat.MediaStyle mediaStyle = new androidx.media.app.NotificationCompat.MediaStyle();
-            mediaStyle.setShowActionsInCompactView(1);
-            mediaStyle.setMediaSession(mediaSession.getSessionToken());
-            notificationBuilder.setStyle(mediaStyle);
-
-            Intent previousIntent = new Intent(this,LrcFloatWindow.class);
-            previousIntent.setAction(ACTION_SHOW_LRC);
-            previousIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            PendingIntent showLrcPendingIntent = PendingIntent.getActivity(this, 1, previousIntent, PendingIntent.FLAG_IMMUTABLE);
-
-            Intent playIntent = new Intent(this,AudioService.class);
-            playIntent.setAction(ACTION_PLAY);
-            PendingIntent playPendingIntent = PendingIntent.getService(this, 2, playIntent, PendingIntent.FLAG_IMMUTABLE);
-
-            Intent pauseIntent = new Intent(this,AudioService.class);
-            pauseIntent.setAction(ACTION_PAUSE);
-            PendingIntent pausePendingIntent = PendingIntent.getService(this, 3, pauseIntent, PendingIntent.FLAG_IMMUTABLE);
-
-            Intent nextIntent = new Intent(this,AudioService.class);
-            nextIntent.setAction(ACTION_NEXT);
-            PendingIntent nextPendingIntent = PendingIntent.getService(this, 4, nextIntent, PendingIntent.FLAG_IMMUTABLE);
-
-            notificationBuilder.addAction(R.drawable.ic_baseline_text_fields_24,"show lrc",showLrcPendingIntent);
-            if(mediaPlayer.isPlaying()){
-                notificationBuilder.addAction(R.drawable.ic_baseline_pause_24,"pause",pausePendingIntent);
-            }else {
-                notificationBuilder.addAction(R.drawable.ic_baseline_play_arrow_24,"play",playPendingIntent);
-            }
-            notificationBuilder.addAction(R.drawable.ic_baseline_skip_next_24,"next",nextPendingIntent);
-
             notificationBuilder.setContentTitle(ctrlBinder.current.getString("title"));
             notificationBuilder.setContentText(ctrlBinder.current.getString("title"));
-            notificationBuilder.setSmallIcon(R.drawable.ic_baseline_audiotrack_24);
-            notificationBuilder.setCategory(NotificationCompat.CATEGORY_SERVICE);
-            notificationBuilder.setShowWhen(true);
-            notificationBuilder.setColorized(true);
             notificationBuilder.setContentIntent(PendingIntent.getActivity(this,0,new Intent(this,MusicPlayerActivity.class),PendingIntent.FLAG_IMMUTABLE));
             Glide.with(this).asBitmap().load(Api.HOST+String.format("/api/cover/%d?type=sam&token=%s",ctrlBinder.currentAlbumId,Api.token)).into(new SimpleTarget<Bitmap>() {
                 @Override
@@ -389,6 +392,10 @@ public class AudioService extends Service {
                 }
             });
             notificationBuilder.setColor(Color.WHITE);
+        }else{
+            notificationBuilder.setContentTitle("");
+            notificationBuilder.setContentText("");
+            startForeground(NOTIFICATION_ID, notificationBuilder.build());
         }
     }
 

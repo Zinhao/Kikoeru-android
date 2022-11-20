@@ -14,13 +14,14 @@ import android.view.SubMenu;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.TextView;
+import android.widget.*;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.ListPopupWindow;
+import androidx.appcompat.widget.MenuPopupWindow;
 import androidx.core.app.ActivityCompat;
+import androidx.core.widget.ListPopupWindowCompat;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -36,6 +37,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class WorksActivity extends BaseActivity implements MusicChangeListener,ServiceConnection,LrcRowChangeListener,TagsView.TagClickListener<JSONObject> {
@@ -75,6 +77,12 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
     private static final int TAG_SELECT_RESULT = 14;
     private static final int VA_SELECT_RESULT = 15;
 
+    private ImageButton bt1;
+    private ImageButton bt2;
+    private ImageButton bt3;
+
+    private ListPopupWindow progressMenu;
+    private ListPopupWindow moreMenu;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,6 +93,9 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         tvTitle = bottomLayout.findViewById(R.id.textView);
         tvWorkTitle = bottomLayout.findViewById(R.id.textView2);
         ibStatus = bottomLayout.findViewById(R.id.button);
+        bt1 = findViewById(R.id.bt1);
+        bt2 = findViewById(R.id.bt2);
+        bt3 = findViewById(R.id.bt3);
         dividerItemDecoration =  new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
         startForegroundService(new Intent(this,AudioService.class));
         bindService(new Intent(this, AudioService.class), this,BIND_AUTO_CREATE);
@@ -99,7 +110,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
                 }
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                     if (!recyclerView.canScrollVertically(1)) {
-                        getNextPage();
+                        reloadRecycleView();
                     }
                 }
             }
@@ -110,7 +121,87 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
             }
         };
         works = new ArrayList<>();
-        getNextPage();
+        reloadRecycleView();
+
+        bt1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                type = TYPE_ALL_WORK;
+                clearWork();
+                reloadRecycleView();
+            }
+        });
+        progressMenu = new ListPopupWindow(this);
+        progressMenu.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
+                Arrays.asList(getString(R.string.marked),
+                        getString(R.string.listening),
+                        getString(R.string.listened),
+                        getString(R.string.replay),
+                        getString(R.string.postponed))));
+        progressMenu.setModal(true);
+        progressMenu.setAnchorView(bt2);
+        progressMenu.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                switch (position){
+                    case 0:
+                        type = TYPE_SELF_MARKED;
+                        break;
+                    case 1:
+                        type = TYPE_SELF_LISTENING;
+                        break;
+                    case 2:
+                        type = TYPE_SELF_LISTENED;
+                        break;
+                    case 3:
+                        type = TYPE_SELF_REPLAY;
+                        break;
+                    case 4:
+                        type = TYPE_SELF_POSTPONED;
+                        break;
+                }
+                clearWork();
+                reloadRecycleView();
+            }
+        });
+        bt2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                progressMenu.show();
+            }
+        });
+
+        moreMenu = new ListPopupWindow(this);
+        moreMenu.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
+                Arrays.asList(getString(R.string.va_voicer),
+                        getString(R.string.tag),
+                        getString(R.string.local_works))));
+        moreMenu.setModal(true);
+        moreMenu.setAnchorView(bt3);
+        moreMenu.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                switch (position){
+                    case 0:
+                        startActivityForResult(new Intent(view.getContext(),VasActivity.class),VA_SELECT_RESULT);
+                        break;
+                    case 1:
+                        startActivityForResult(new Intent(view.getContext(),TagsActivity.class),TAG_SELECT_RESULT);
+                        break;
+                    case 2:
+                        type = TYPE_LOCAL_WORK;
+                        clearWork();
+                        reloadRecycleView();
+                        break;
+                }
+            }
+        });
+        bt3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                moreMenu.show();
+            }
+        });
     }
 
     private void toggleBottom(){
@@ -137,7 +228,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         }
     }
 
-    public void getNextPage() {
+    public void reloadRecycleView() {
         if(type == TYPE_ALL_WORK){
             setTitle(getString(R.string.app_name));
             Api.doGetWorks(page,apisCallback);
@@ -254,19 +345,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuItem signOutMenu = menu.add(0,0,0, "切换账号");
-        SubMenu menuProgress = menu.addSubMenu(0,1,1, R.string.my_progress);
-        menuProgress.setIcon(R.drawable.ic_baseline_favorite_24);
-        MenuItem menuItem4 =menu.add(1,3,3, R.string.all_works);
-        menuItem4.setIcon(R.drawable.ic_baseline_widgets_24);
-        menuItem4.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-        menuProgress.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-
-        menuProgress.add(1,4,4,R.string.marked);
-        menuProgress.add(1,5,5,R.string.listening);
-        menuProgress.add(1,6,6,R.string.listened);
-        menuProgress.add(1,7,7,R.string.replay);
-        menuProgress.add(1,8,8,R.string.postponed);
+        menu.add(0,0,0, "切换账号");
 
         SubMenu layoutMenu = menu.addSubMenu(0,9,9, R.string.works_layout);
         layoutMenu.setIcon(R.drawable.ic_baseline_view_column_24);
@@ -274,14 +353,6 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         layoutMenu.add(2,11,11, R.string.cover_layout);
         layoutMenu.add(2,12,12, R.string.detail_layout);
         layoutMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-
-        MenuItem tagMenu = menu.add(0,13,13, R.string.tag);
-        tagMenu.setIcon(R.drawable.ic_baseline_tag_24);
-        tagMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-
-        MenuItem localSaveMenu = menu.add(0,14,14, R.string.local_works);
-        localSaveMenu.setIcon(R.drawable.ic_baseline_storage_24);
-        localSaveMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
 
         menu.add(0,15,15,R.string.more);
 
@@ -291,7 +362,6 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         sortMenu.add(3,19,19, R.string.prize);
         sortMenu.add(3,20,20, R.string.last_in_lib);
 
-        menu.add(0,21,21, R.string.va_voicer);
         menu.add(0,22,22, R.string.download_mission);
         MenuItem searchMenu = menu.add(0,23,23, R.string.search);
         searchMenu.setIcon(R.drawable.ic_baseline_search_24);
@@ -301,46 +371,6 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if(item.getGroupId() == 1){
-            boolean needGetNextPage = false;
-            if(item.getItemId() == 4){
-                if(type != TYPE_SELF_MARKED){
-                    type = TYPE_SELF_MARKED;
-                    needGetNextPage =true;
-                }
-            }else if(item.getItemId() == 5){
-                if(type != TYPE_SELF_LISTENING){
-                    type = TYPE_SELF_LISTENING;
-                    needGetNextPage =true;
-                }
-            }else if(item.getItemId() == 6){
-                if(type != TYPE_SELF_LISTENED){
-                    type = TYPE_SELF_LISTENED;
-                    needGetNextPage =true;
-                }
-            }else if(item.getItemId() == 7){
-                if(type != TYPE_SELF_REPLAY){
-                    type = TYPE_SELF_REPLAY;
-                    needGetNextPage =true;
-                }
-            }else if(item.getItemId() == 8){
-                if(type != TYPE_SELF_POSTPONED){
-                    type = TYPE_SELF_POSTPONED;
-                    needGetNextPage =true;
-                }
-            }else if (item.getItemId() == 3){
-                if(type != TYPE_ALL_WORK){
-                    type = TYPE_ALL_WORK;
-                    needGetNextPage =true;
-                }
-            }
-            if(needGetNextPage){
-                clearWork();
-                getNextPage();
-            }
-            return super.onOptionsItemSelected(item);
-        }
-
         if(item.getGroupId() ==2){
             int layoutType = WorkAdapter.LAYOUT_SMALL_GRID;
             if(item.getItemId() == 10){
@@ -370,7 +400,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
             }
             if(update){
                 clearWork();
-                getNextPage();
+                reloadRecycleView();
             }
             return true;
         }
@@ -378,16 +408,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         if(item.getItemId() == 0){
             App.getInstance().setValue(App.CONFIG_UPDATE_TIME,0);
             startActivity(new Intent(this,UserSwitchActivity.class));
-//            finish();
         }else if(item.getItemId() == 1){
-        }else if(item.getItemId() == 13){
-            startActivityForResult(new Intent(this,TagsActivity.class),TAG_SELECT_RESULT);
-        }else if(item.getItemId() == 14){
-            if(type != TYPE_LOCAL_WORK){
-                type = TYPE_LOCAL_WORK;
-                clearWork();
-                getNextPage();
-            }
         }else if(item.getItemId() == 15){
             startActivity(new Intent(this, MoreActivity.class));
         }else if(item.getItemId() == 21){
@@ -426,7 +447,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
                         this.tagId = tagId;
                     }
                 }
-                getNextPage();
+                reloadRecycleView();
             }
         }
     }
@@ -511,7 +532,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
             type = TYPE_ALL_WORK;
             clearWork();
         }
-        getNextPage();
+        reloadRecycleView();
     }
 
     @Override
@@ -525,7 +546,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
                 this.tagId = tagId;
             }
             type = TYPE_TAG_WORK;
-            getNextPage();
+            reloadRecycleView();
         } catch (JSONException e) {
             e.printStackTrace();
             alertException(e);
@@ -543,7 +564,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
                     WorksActivity.this.vaId = vaId;
                 }
                 type = TYPE_VA_WORK;
-                getNextPage();
+                reloadRecycleView();
             } catch (JSONException e) {
                 e.printStackTrace();
                 alertException(e);
@@ -586,7 +607,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
                         ivCover.postDelayed(new Runnable() {
                             @Override
                             public void run() {
-                                getNextPage();
+                                reloadRecycleView();
                             }
                         },3000);
                     }
