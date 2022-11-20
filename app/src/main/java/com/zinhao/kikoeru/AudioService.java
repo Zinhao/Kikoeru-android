@@ -1,5 +1,6 @@
 package com.zinhao.kikoeru;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
@@ -10,6 +11,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
@@ -33,6 +35,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.media.AudioManagerCompat;
 import androidx.media.MediaSessionManager;
@@ -62,13 +65,13 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.Consumer;
 
-public class AudioService extends Service{
-    private static final String TAG= "AudioService";
+public class AudioService extends Service {
+    private static final String TAG = "AudioService";
     private static final String ACTION_PAUSE = "com.zinhao.kikoeru.ACTION_PAUSE";
     private static final String ACTION_PLAY = "com.zinhao.kikoeru.ACTION_PLAY";
     private static final String ACTION_PREVIOUS = "com.zinhao.kikoeru.ACTION_PREVIOUS";
-    private static final String ACTION_NEXT="com.zinhao.kikoeru.ACTION_NEXT";
-    private static final String ACTION_SHOW_LRC= "com.zinhao.kikoeru.ACTION_SHOW_LRC";
+    private static final String ACTION_NEXT = "com.zinhao.kikoeru.ACTION_NEXT";
+    private static final String ACTION_SHOW_LRC = "com.zinhao.kikoeru.ACTION_SHOW_LRC";
     private Handler mHandler;
     private ExoPlayer mediaPlayer;
     private MediaSessionCompat mediaSession;
@@ -121,7 +124,7 @@ public class AudioService extends Service{
                 return false;
             }
             int keyCode = keyEvent.getKeyCode();
-            Log.d(TAG, "onMediaButtonEvent: "+keyCode);
+            Log.d(TAG, "onMediaButtonEvent: " + keyCode);
             return super.onMediaButtonEvent(mediaButtonEvent);
         }
 
@@ -136,10 +139,11 @@ public class AudioService extends Service{
 
     private final HeadsetActionReceiver headsetActionReceiver = new HeadsetActionReceiver();
 
-    private class HeadsetActionReceiver extends BroadcastReceiver{
+    private class HeadsetActionReceiver extends BroadcastReceiver {
         final IntentFilter intentFilter;
         final BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         boolean isActionPause = false;
+
         public HeadsetActionReceiver() {
             intentFilter = new IntentFilter();
             intentFilter.addAction(AudioManager.ACTION_HEADSET_PLUG);
@@ -149,22 +153,27 @@ public class AudioService extends Service{
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            if(intent == null)
+            if (intent == null)
                 return;
-            if(intent.hasExtra("state")){
+            if (intent.hasExtra("state")) {
                 final boolean isPlugIn = intent.getExtras().getInt("state") == 1;
-                Log.d(TAG, "onReceive: isPlugIn:"+ isPlugIn);
-                if(isPlugIn && isActionPause){
+                Log.d(TAG, "onReceive: isPlugIn:" + isPlugIn);
+                if (isPlugIn && isActionPause) {
                     mediaSession.getController().getTransportControls().play();
-                }else {
+                } else {
                     mediaSession.getController().getTransportControls().pause();
                     isActionPause = true;
                 }
             }
             String action = intent.getAction();
-            Log.d(TAG, "onReceive: "+action);
-            if(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED.equals(action)){
-                if(bluetoothAdapter != null && bluetoothAdapter.getProfileConnectionState(BluetoothProfile.HEADSET) == BluetoothProfile.STATE_DISCONNECTED){
+            Log.d(TAG, "onReceive: " + action);
+            if (BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED.equals(action)) {
+                if (ActivityCompat.checkSelfPermission(AudioService.this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                    mediaSession.getController().getTransportControls().pause();
+                    isActionPause = true;
+                    return;
+                }
+                if (bluetoothAdapter != null && bluetoothAdapter.getProfileConnectionState(BluetoothProfile.HEADSET) == BluetoothProfile.STATE_DISCONNECTED) {
                     mediaSession.getController().getTransportControls().pause();
                     isActionPause = true;
                 }
@@ -259,6 +268,7 @@ public class AudioService extends Service{
                     String path = ctrlBinder.current.getString(JSONConst.WorkTree.MAP_FILE_PATH);
                     File audioFile = new File(path);
                     if(!LocalFileCache.getInstance().getLrcText(audioFile,ctrlBinder.lrcCallBack)){
+                        // Local lrc file not exist
                         Api.checkLrc(ctrlBinder.current.getString(JSONConst.WorkTree.HASH),ctrlBinder.checkLrcCallBack);
                     }
                 } catch (JSONException e) {
@@ -400,13 +410,7 @@ public class AudioService extends Service{
     }
 
     private void alertException(Exception e){
-        Activity activity = App.getInstance().getBackHelper().getLastActivity();
-        if(activity == null){
-            return;
-        }
-        if(activity instanceof BaseActivity){
-            ((BaseActivity) activity).alertException(e);
-        }
+        App.getInstance().alertException(e);
     }
 
     @Override
@@ -546,6 +550,7 @@ public class AudioService extends Service{
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject lrcResult) {
                 if(e!=null){
+                    mLrc = Lrc.NONE;
                     alertException(e);
                     return;
                 }
@@ -571,6 +576,7 @@ public class AudioService extends Service{
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, String s) {
                 if(e != null){
+                    mLrc = Lrc.NONE;
                     alertException(e);
                     return;
                 }

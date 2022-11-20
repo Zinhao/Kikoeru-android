@@ -2,6 +2,7 @@ package com.zinhao.kikoeru;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
@@ -9,26 +10,23 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
-
-import androidx.collection.SimpleArrayMap;
-
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
-import com.jil.swipeback.SwipeBackApplication;
-import com.koushikdutta.async.http.AsyncHttpClient;
-import com.koushikdutta.async.http.AsyncHttpResponse;
 import com.zinhao.kikoeru.db.DaoMaster;
 import com.zinhao.kikoeru.db.DaoSession;
 import com.zinhao.kikoeru.db.UserDao;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class App extends SwipeBackApplication {
+public class App extends Application implements Application.ActivityLifecycleCallbacks {
     private static App instance;
     public static final String ID_PLAY_SERVICE = "com.zinhao.kikoeru.play_control";
     public static final String CONFIG_FILE_NAME = "app.config";
@@ -54,6 +52,8 @@ public class App extends SwipeBackApplication {
 
     private RequestOptions defaultPic;
     private UserDao userDao;
+
+    private final List<Activity> activities = new ArrayList<>();
 
     public void setAppDebug(boolean appDebug) {
         this.appDebug = appDebug;
@@ -116,7 +116,9 @@ public class App extends SwipeBackApplication {
     }
 
     public void alertException(Exception e){
-        Activity activity = getBackHelper().getLastActivity();
+        if(activities.size() ==0)
+            return;
+        Activity activity = activities.get(activities.size()-1);
         if(activity == null){
             return;
         }
@@ -126,7 +128,9 @@ public class App extends SwipeBackApplication {
     }
 
     public void alertMessage(AppMessage e){
-        Activity activity = getBackHelper().getLastActivity();
+        if(activities.size() ==0)
+            return;
+        Activity activity = activities.get(activities.size()-1);
         if(activity == null){
             return;
         }
@@ -136,7 +140,9 @@ public class App extends SwipeBackApplication {
     }
 
     public void requestReadWriteExternalPermission(){
-        Activity activity = getBackHelper().getLastActivity();
+        if(activities.size() ==0)
+            return;
+        Activity activity = activities.get(activities.size()-1);
         if(activity == null){
             return;
         }
@@ -258,5 +264,40 @@ public class App extends SwipeBackApplication {
             }
         }
         return null;
+    }
+
+    @Override
+    public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
+        activities.add(activity);
+    }
+
+    @Override
+    public void onActivityStarted(@NonNull Activity activity) {
+
+    }
+
+    @Override
+    public void onActivityResumed(@NonNull Activity activity) {
+
+    }
+
+    @Override
+    public void onActivityPaused(@NonNull Activity activity) {
+
+    }
+
+    @Override
+    public void onActivityStopped(@NonNull Activity activity) {
+
+    }
+
+    @Override
+    public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState) {
+
+    }
+
+    @Override
+    public void onActivityDestroyed(@NonNull Activity activity) {
+        activities.remove(activity);
     }
 }

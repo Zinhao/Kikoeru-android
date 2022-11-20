@@ -56,8 +56,4 @@ public class ImageBrowserActivity extends BaseActivity {
         imageIndicator.bindViewPager(viewPager);
     }
 
-    @Override
-    protected boolean enableSlide() {
-        return false;
-    }
 }

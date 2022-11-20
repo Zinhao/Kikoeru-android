@@ -8,19 +8,16 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
-import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-
-import com.jil.swipeback.SlideOutActivity;
 
 import java.util.Arrays;
 import java.util.function.Consumer;
 
-public class BaseActivity extends SlideOutActivity {
+public class BaseActivity extends AppCompatActivity {
 
     private static final int REQUEST_WRITE_READ_CODE = 23;
 
@@ -98,11 +95,6 @@ public class BaseActivity extends SlideOutActivity {
         }
     }
 
-    @Override
-    protected boolean enableSlide() {
-        return false;
-    }
-
     protected void alertException(Exception e){
         if(!App.getInstance().isAppDebug() || isDestroyed()){
             return;
@@ -153,6 +145,5 @@ public class BaseActivity extends SlideOutActivity {
     @Override
     public void finish() {
         super.finish();
-        overridePendingTransition(R.anim.activity_in, R.anim.activity_out);
     }
 }

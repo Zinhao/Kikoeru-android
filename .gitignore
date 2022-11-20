@@ -1,4 +1,4 @@
-*.iml
+ *.iml
 .gradle
 /local.properties
 /.idea/caches
@@ -17,3 +17,4 @@ app/src/main/java/com/zinhao/kikoeru/db/DaoMaster.java
 app/src/main/java/com/zinhao/kikoeru/db/DaoSession.java
 app/src/main/java/com/zinhao/kikoeru/db/UserDao.java
 /app/src/main/java/com/zinhao/kikoeru/db/
+/signer.py

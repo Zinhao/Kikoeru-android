@@ -76,13 +76,6 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                 return;
             }
             jsonWorkTrees = jsonArray;
-            if(jsonWorkTrees != null){
-                try {
-                    LocalFileCache.getInstance().saveWork(work,jsonWorkTrees);
-                } catch (JSONException jsonException) {
-                    jsonException.printStackTrace();
-                }
-            }
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -473,6 +466,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                 builder.setNegativeButton(R.string.download, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+
                         boolean havePermission;
                         final DownloadUtils.Mission downLoadMission = new DownloadUtils.Mission(item);
                         downLoadMission.setSuccessCallback(new Runnable() {
@@ -502,14 +496,27 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                                             return;
                                         }
                                     }
+                                    if(jsonWorkTrees != null){
+                                        try {
+                                            LocalFileCache.getInstance().saveWork(work,jsonWorkTrees);
+                                        } catch (JSONException jsonException) {
+                                            jsonException.printStackTrace();
+                                        }
+                                    }
                                     downLoadMission.start();
                                 }
                             });
                         }else {
-
                             havePermission = true;
                         }
                         if(havePermission){
+                            if(jsonWorkTrees != null){
+                                try {
+                                    LocalFileCache.getInstance().saveWork(work,jsonWorkTrees);
+                                } catch (JSONException jsonException) {
+                                    jsonException.printStackTrace();
+                                }
+                            }
                             downLoadMission.start();
                         }
                         dialog.dismiss();
