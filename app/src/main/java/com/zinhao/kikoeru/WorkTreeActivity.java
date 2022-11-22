@@ -76,6 +76,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                 return;
             }
             jsonWorkTrees = jsonArray;
+            // TODO 来自不同服务器的同一个作品（RJ号码相同），当用户执行下载操作时，目录树不一致。
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -466,7 +467,21 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                 builder.setNegativeButton(R.string.download, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-
+                        if(work.has(JSONConst.Work.IS_LOCAL_WORK)){
+                            // 从本地目录树开始下载
+                            if(!work.has(JSONConst.Work.HOST)){
+                                return;
+                            }
+                            try {
+                                String workHost = work.getString(JSONConst.Work.HOST);
+                                if(!Api.HOST.equals(workHost)){
+                                    Toast.makeText(WorkTreeActivity.this,"switch host user then start download!",Toast.LENGTH_SHORT).show();
+                                    return;
+                                }
+                            } catch (JSONException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
                         boolean havePermission;
                         final DownloadUtils.Mission downLoadMission = new DownloadUtils.Mission(item);
                         downLoadMission.setSuccessCallback(new Runnable() {
@@ -496,13 +511,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                                             return;
                                         }
                                     }
-                                    if(jsonWorkTrees != null){
-                                        try {
-                                            LocalFileCache.getInstance().saveWork(work,jsonWorkTrees);
-                                        } catch (JSONException jsonException) {
-                                            jsonException.printStackTrace();
-                                        }
-                                    }
+                                    saveWorkWithTree();
                                     downLoadMission.start();
                                 }
                             });
@@ -510,13 +519,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                             havePermission = true;
                         }
                         if(havePermission){
-                            if(jsonWorkTrees != null){
-                                try {
-                                    LocalFileCache.getInstance().saveWork(work,jsonWorkTrees);
-                                } catch (JSONException jsonException) {
-                                    jsonException.printStackTrace();
-                                }
-                            }
+                            saveWorkWithTree();
                             downLoadMission.start();
                         }
                         dialog.dismiss();
@@ -549,6 +552,17 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
             alertException(e);
         }
         return true;
+    }
+
+    private void saveWorkWithTree(){
+        if(jsonWorkTrees != null){
+            try {
+                work.put(JSONConst.Work.HOST,Api.HOST);
+                LocalFileCache.getInstance().saveWork(work,jsonWorkTrees);
+            } catch (JSONException jsonException) {
+                jsonException.printStackTrace();
+            }
+        }
     }
 
     @Override

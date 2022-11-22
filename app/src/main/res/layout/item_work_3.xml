@@ -53,4 +53,16 @@
         app:layout_constraintBottom_toBottomOf="@+id/ivCover"
         app:layout_constraintEnd_toEndOf="@+id/ivCover" />
 
+    <TextView
+            android:text="https://api.asmr.net"
+            android:layout_width="wrap_content"
+            android:background="@drawable/card_bg_text"
+            android:layout_margin="5dp"
+            android:textColor="@color/white"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:layout_height="wrap_content" android:id="@+id/tvHost"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="@+id/ivCover"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

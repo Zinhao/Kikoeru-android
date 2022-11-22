@@ -50,6 +50,11 @@ public class BaseActivity extends AppCompatActivity {
 
     private Runnable activityResultCallBack;
 
+    /**
+     * 请求读写权限
+     * @param callback 对话框被关闭时回调 或者 获取权限成功回调
+     * @return
+     */
     protected boolean requestReadWriteExternalPermission(Runnable callback){
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if(!Environment.isExternalStorageManager()){

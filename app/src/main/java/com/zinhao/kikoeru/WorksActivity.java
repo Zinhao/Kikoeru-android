@@ -35,9 +35,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class WorksActivity extends BaseActivity implements MusicChangeListener,ServiceConnection,LrcRowChangeListener,TagsView.TagClickListener<JSONObject> {
@@ -143,6 +145,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         progressMenu.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                progressMenu.dismiss();
                 switch (position){
                     case 0:
                         type = TYPE_SELF_MARKED;
@@ -181,6 +184,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         moreMenu.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                moreMenu.dismiss();
                 switch (position){
                     case 0:
                         startActivityForResult(new Intent(view.getContext(),VasActivity.class),VA_SELECT_RESULT);
@@ -477,6 +481,36 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
                 ActivityCompat.startActivity(WorksActivity.this, intent,null);
             }
         });
+        workAdapter.setItemLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                ListPopupWindow listPopupWindow = new ListPopupWindow(v.getContext());
+                listPopupWindow.setModal(true);
+                listPopupWindow.setAnchorView(v);
+                listPopupWindow.setAdapter(new ArrayAdapter<String>(v.getContext(), android.R.layout.simple_list_item_1, Collections.singletonList("delete")));
+                listPopupWindow.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        JSONObject item = (JSONObject) v.getTag();
+                        try {
+                            LocalFileCache.getInstance().removeWork(item.getInt("id"));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                            alertException(e);
+                        }
+
+                        int index = works.indexOf(item);
+                        if(index!=-1){
+                            works.remove(index);
+                            workAdapter.notifyItemRemoved(index);
+                        }
+                        listPopupWindow.dismiss();
+                    }
+                });
+                listPopupWindow.show();
+                return true;
+            }
+        });
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setAdapter(workAdapter);
     }
@@ -626,9 +660,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
                     @SuppressLint("DefaultLocale")
                     @Override
                     public void run() {
-                        if(type == TYPE_ALL_WORK){
-                            setTitle(String.format("%s(%d)",getString(R.string.app_name),totalCount));
-                        }
+                        setTitle(String.format("%s (%d)",getTitle(),totalCount));
                         for (int i = 0; i < jsonArray.length(); i++) {
                             try {
                                 works.add(jsonArray.getJSONObject(i));

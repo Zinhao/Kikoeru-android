@@ -9,16 +9,16 @@
     android:elevation="8dp">
 
     <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/ivCover"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:adjustViewBounds="true"
-        android:scaleType="fitStart"
-        android:src="@drawable/ic_no_cover"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+            android:id="@+id/ivCover"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:scaleType="fitStart"
+            android:src="@drawable/ic_no_cover"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
 
     <TextView
         android:id="@+id/tvTitle"
@@ -115,5 +115,16 @@
         android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="@+id/tvPrice"
         app:layout_constraintStart_toEndOf="@+id/tvPrice" />
+    <TextView
+            android:text="https://api.asmr.net"
+            android:layout_width="wrap_content"
+            android:background="@drawable/card_bg_text"
+            android:layout_margin="5dp"
+            android:textColor="@color/white"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:layout_height="wrap_content" android:id="@+id/tvHost"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="@+id/ivCover"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

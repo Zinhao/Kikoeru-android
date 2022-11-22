@@ -19,6 +19,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -125,6 +127,68 @@ public class LocalFileCache implements Runnable, Closeable {
             return true;
         }
         return false;
+    }
+
+    public void removeWork(int id){
+        File cacheDir = null;
+        try {
+            cacheDir = getExternalAppRootDir();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            App.getInstance().alertException(e);
+            return;
+        }
+        final File workJsonDir = new File(cacheDir,"json_work");
+        final File workTreeDir = new File(cacheDir,"json_work_tree");
+
+        File workJsonFile = new File(workJsonDir,String.format(Locale.US,"%d.json",id));
+        File workJsonTreeFile = new File(workTreeDir,String.format(Locale.US,"%d.json",id));
+
+        final File libWork = new File(cacheDir,"libs_work");
+        final File libWorkDir = new File(libWork,String.valueOf(id));
+        mission.add(new Runnable() {
+            @Override
+            public void run() {
+               try {
+                   Files.deleteIfExists(Paths.get(workJsonTreeFile.toURI()));
+                   Files.deleteIfExists(Paths.get(workJsonFile.toURI()));
+                   Files.walkFileTree(Paths.get(libWorkDir.toURI()), new FileVisitor<Path>() {
+                       @Override
+                       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                           if(dir!=null)
+                               Log.d(TAG, "preVisitDirectory: "+dir.toString());
+                           return FileVisitResult.CONTINUE;
+                       }
+
+                       @Override
+                       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                           if(file!=null && file.toFile().delete()){
+                               Log.d(TAG, "visitFile:delete: "+file.toString());
+                           }
+                           return FileVisitResult.CONTINUE;
+                       }
+
+                       @Override
+                       public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                           if(file!=null)
+                               Log.d(TAG, "visitFileFailed: "+file.toString());
+                           return FileVisitResult.CONTINUE;
+                       }
+
+                       @Override
+                       public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                           if(dir!=null && dir.toFile().delete()){
+                               Log.d(TAG, "postVisitDirectory:delete: "+dir.toString());
+                           }
+                           return FileVisitResult.CONTINUE;
+                       }
+                   });
+               }catch (Exception e){
+                   e.printStackTrace();
+                   App.getInstance().alertException(e);
+               }
+            }
+        });
     }
 
     public void saveWork(JSONObject work, JSONArray rootTree) throws JSONException {

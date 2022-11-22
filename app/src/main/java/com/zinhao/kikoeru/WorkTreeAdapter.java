@@ -203,6 +203,12 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 girdHolder.tvDate.setText(headerInfo.getString("release"));
                 girdHolder.tvPrice.setText(String.format("%d 日元",headerInfo.getInt("price")));
                 girdHolder.tvSaleCount.setText(String.format("售出：%d",headerInfo.getInt("dl_count")));
+                if(headerInfo.has(JSONConst.Work.HOST)){
+                    girdHolder.tvHost.setVisibility(View.VISIBLE);
+                    girdHolder.tvHost.setText(headerInfo.getString(JSONConst.Work.HOST));
+                }else {
+                    girdHolder.tvHost.setVisibility(View.INVISIBLE);
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
                 App.getInstance().alertException(e);
@@ -267,6 +273,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         private TextView tvDate;
         private TextView tvPrice;
         private TextView tvSaleCount;
+        private final TextView tvHost;
 
         public DetailViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -279,6 +286,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             tvDate = itemView.findViewById(R.id.tvDate);
             tvPrice = itemView.findViewById(R.id.tvPrice);
             tvSaleCount = itemView.findViewById(R.id.tvSaleCount);
+            tvHost = itemView.findViewById(R.id.tvHost);
         }
     }
 

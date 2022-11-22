@@ -26,6 +26,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private TagsView.TagClickListener tagClickListener;
     private TagsView.TagClickListener vaClickListener;
     private View.OnClickListener itemClickListener;
+    private View.OnLongClickListener itemLongClickListener;
     public static final int LAYOUT_LIST = 846;
     public static final int LAYOUT_SMALL_GRID = 847;
     public static final int LAYOUT_BIG_GRID = 848;
@@ -36,6 +37,10 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     public void setItemClickListener(View.OnClickListener itemClickListener) {
         this.itemClickListener = itemClickListener;
+    }
+
+    public void setItemLongClickListener(View.OnLongClickListener itemLongClickListener) {
+        this.itemLongClickListener = itemLongClickListener;
     }
 
     public void setVaClickListener(TagsView.TagClickListener<?> vaClickListener) {
@@ -84,6 +89,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         JSONObject item = datas.get(position);
         holder.itemView.setTag(item);
         holder.itemView.setOnClickListener(itemClickListener);
+        holder.itemView.setOnLongClickListener(itemLongClickListener);
         if(holder instanceof SimpleViewHolder){
             try {
                 ((SimpleViewHolder) holder).tvTitle.setText(item.getString("title"));
@@ -113,6 +119,12 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 girdHolder.tvDate.setText(item.getString("release"));
                 girdHolder.tvPrice.setText(String.format("%d 日元",item.getInt("price")));
                 girdHolder.tvSaleCount.setText(String.format("售出：%d",item.getInt("dl_count")));
+                if(item.has(JSONConst.Work.HOST)){
+                    girdHolder.tvHost.setVisibility(View.VISIBLE);
+                    girdHolder.tvHost.setText(item.getString(JSONConst.Work.HOST));
+                }else {
+                    girdHolder.tvHost.setVisibility(View.INVISIBLE);
+                }
 
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -127,6 +139,12 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                         .apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
                 girdHolder.tvRjNumber.setText(String.format("RJ%d",item.getInt("id")));
                 girdHolder.tvDate.setText(item.getString("release"));
+                if(item.has(JSONConst.Work.HOST)){
+                    girdHolder.tvHost.setVisibility(View.VISIBLE);
+                    girdHolder.tvHost.setText(item.getString(JSONConst.Work.HOST));
+                }else {
+                    girdHolder.tvHost.setVisibility(View.INVISIBLE);
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
                 App.getInstance().alertException(e);
@@ -166,6 +184,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         private final TextView tvDate;
         private final TextView tvPrice;
         private final TextView tvSaleCount;
+        private final TextView tvHost;
 
         public GirdViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -178,6 +197,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             tvDate = itemView.findViewById(R.id.tvDate);
             tvPrice = itemView.findViewById(R.id.tvPrice);
             tvSaleCount = itemView.findViewById(R.id.tvSaleCount);
+            tvHost = itemView.findViewById(R.id.tvHost);
         }
     }
 
@@ -185,12 +205,14 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         private ImageView ivCover;
         private TextView tvRjNumber;
         private TextView tvDate;
+        private final TextView tvHost;
 
         public SmallGirdViewHolder(@NonNull View itemView) {
             super(itemView);
             ivCover = itemView.findViewById(R.id.ivCover);
             tvRjNumber = itemView.findViewById(R.id.tvRjNumber);
             tvDate = itemView.findViewById(R.id.tvDate);
+            tvHost = itemView.findViewById(R.id.tvHost);
         }
     }
 }

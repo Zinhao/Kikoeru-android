@@ -739,9 +739,11 @@ public class AudioService extends Service {
         }
 
         public void hideLrcFloatWindow(){
+            if(!lrcWindowShow){
+                if(lrcView != null)
+                    windowManager.removeView(lrcView);
+            }
             lrcWindowShow = false;
-            if(lrcView != null)
-                windowManager.removeView(lrcView);
         }
 
         public void setReapAll(){

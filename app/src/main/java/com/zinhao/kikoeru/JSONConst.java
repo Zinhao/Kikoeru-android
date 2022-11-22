@@ -3,6 +3,7 @@ package com.zinhao.kikoeru;
 public class JSONConst {
     static class Work{
         public static final String IS_LOCAL_WORK = "is_local_work";
+        public static final String HOST = "host";
     }
     static class WorkTree{
         public static final String MAP_FILE_PATH = "local_file_path";

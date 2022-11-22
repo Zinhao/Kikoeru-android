@@ -42,7 +42,7 @@ public class LoginAccountActivity extends BaseActivity {
         btSignUp = findViewById(R.id.button3);
 
         user = new User();
-        user.setHost(Api.REMOTE_HOST);
+        user.setHost(Api.LOCAL_HOST);
         user.setName("guest");
         user.setPassword("guest");
         User currentUser = App.getInstance().currentUser();
