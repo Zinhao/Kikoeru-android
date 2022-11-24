@@ -1,15 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#714AC7</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
+    <color name="main_color">#2E93FF</color>
     <color name="black">#FF000000</color>
     <color name="black_tran">#8A000000</color>
     <color name="black_tran_dark">#B3000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="white_tran">#40FFFFFF</color>
-    <color name="pine_200">#E5917C</color>
-    <color name="pine_700">#974D3A</color>
+    <color name="play_control_icon_color">#FFFFFFFF</color>
+    <color name="pine_700">#2E93FF</color>
 </resources>

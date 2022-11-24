@@ -58,7 +58,7 @@
             android:launchMode="singleTask"
             android:theme="@style/Theme.Kikoeru.NoActionBar" />
         <activity
-            android:name=".MusicPlayerActivity"
+            android:name=".AudioPlayerActivity"
             android:launchMode="singleTask" />
         <activity
             android:name=".LrcFloatWindow"

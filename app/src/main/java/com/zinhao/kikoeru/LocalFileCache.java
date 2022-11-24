@@ -1,6 +1,7 @@
 package com.zinhao.kikoeru;
 
 import android.content.Context;
+import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 
@@ -10,22 +11,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class LocalFileCache implements Runnable, Closeable {
@@ -390,7 +380,8 @@ public class LocalFileCache implements Runnable, Closeable {
         if(!save.exists()){
             throw new FileNotFoundException(String.format("%s not exists!",save.getAbsoluteFile()));
         }
-        BufferedReader bufferedReader = new BufferedReader(new FileReader(save));
+        InputStreamReader isr = new InputStreamReader(Files.newInputStream(save.toPath()), StandardCharsets.UTF_8);
+        BufferedReader bufferedReader = new BufferedReader(isr);
         String text = null;
         StringBuilder stringBuilder = new StringBuilder();
         while ((text = bufferedReader.readLine())!= null){

@@ -2,7 +2,7 @@ package com.zinhao.kikoeru;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
@@ -19,7 +19,6 @@ import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Binder;
-import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.media.MediaMetadataCompat;
@@ -32,14 +31,10 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
-import androidx.media.AudioManagerCompat;
-import androidx.media.MediaSessionManager;
-
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
@@ -50,7 +45,6 @@ import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.metadata.Metadata;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -58,11 +52,8 @@ import org.json.JSONObject;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class AudioService extends Service {
@@ -77,7 +68,8 @@ public class AudioService extends Service {
     private MediaSessionCompat mediaSession;
 
     private WindowManager.LayoutParams lrcWindowParams;
-
+    @SuppressLint("SimpleDateFormat")
+    private static final SimpleDateFormat SSDF = new SimpleDateFormat("MM-dd HH:mm:ss");
     private final MediaSessionCompat.Callback callback = new MediaSessionCompat.Callback() {
         @Override
         public void onSeekTo(long pos) {
@@ -136,6 +128,7 @@ public class AudioService extends Service {
     };
 
     private static final int NOTIFICATION_ID = 12;
+    private static final int NOTIFICATION_ID_CLOSE_DELAY = 13;
 
     private final HeadsetActionReceiver headsetActionReceiver = new HeadsetActionReceiver();
 
@@ -312,7 +305,7 @@ public class AudioService extends Service {
         return params;
     }
 
-    PlaybackStateCompat.Builder builder = new PlaybackStateCompat.Builder();
+    private final PlaybackStateCompat.Builder builder = new PlaybackStateCompat.Builder();
 
     @SuppressLint("DefaultLocale")
     private void updateNotificationState() throws JSONException {
@@ -376,7 +369,7 @@ public class AudioService extends Service {
         if(ctrlBinder.current !=null){
             notificationBuilder.setContentTitle(ctrlBinder.current.getString("title"));
             notificationBuilder.setContentText(ctrlBinder.current.getString("title"));
-            notificationBuilder.setContentIntent(PendingIntent.getActivity(this,0,new Intent(this,MusicPlayerActivity.class),PendingIntent.FLAG_IMMUTABLE));
+            notificationBuilder.setContentIntent(PendingIntent.getActivity(this,0,new Intent(this, AudioPlayerActivity.class),PendingIntent.FLAG_IMMUTABLE));
             Glide.with(this).asBitmap().load(Api.HOST+String.format("/api/cover/%d?type=sam&token=%s",ctrlBinder.currentAlbumId,Api.token)).into(new SimpleTarget<Bitmap>() {
                 @Override
                 public void onResourceReady(@NonNull Bitmap bitmap, @Nullable Transition<? super Bitmap> transition) {
@@ -534,6 +527,16 @@ public class AudioService extends Service {
         public void stopAfterMinutes(int minute){
             mHandler.removeCallbacks(stopTask);
             mHandler.postDelayed(stopTask,minute*60*1000L);
+            NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(AudioService.this,App.ID_PLAY_SERVICE);
+            notificationBuilder.setCategory(NotificationCompat.CATEGORY_STATUS);
+            notificationBuilder.setSmallIcon(R.drawable.ic_baseline_audiotrack_24);
+            notificationBuilder.setContentTitle("delay stop");
+            notificationBuilder.setAutoCancel(true);
+            Calendar calendar = Calendar.getInstance();
+            calendar.add(Calendar.MINUTE,minute);
+            notificationBuilder.setContentText(SSDF.format(new Date(calendar.getTimeInMillis())));
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.notify(NOTIFICATION_ID_CLOSE_DELAY,notificationBuilder.build());
         }
 
         public boolean isLrcWindowShow() {

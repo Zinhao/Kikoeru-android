@@ -19,9 +19,7 @@ import android.widget.*;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.ListPopupWindow;
-import androidx.appcompat.widget.MenuPopupWindow;
 import androidx.core.app.ActivityCompat;
-import androidx.core.widget.ListPopupWindowCompat;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -35,7 +33,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -321,7 +318,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
                     if(ctrlBinder.getCurrentTitle().endsWith("mp4")){
                         startActivity(new Intent(WorksActivity.this,VideoPlayerActivity.class));
                     }else {
-                        startActivity(new Intent(WorksActivity.this,MusicPlayerActivity.class));
+                        startActivity(new Intent(WorksActivity.this, AudioPlayerActivity.class));
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();

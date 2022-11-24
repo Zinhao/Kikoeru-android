@@ -308,7 +308,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         if(itemTitle.toLowerCase(Locale.ROOT).endsWith(".mp4")){
             startActivity(new Intent(WorkTreeActivity.this,VideoPlayerActivity.class));
         }else {
-            startActivity(new Intent(WorkTreeActivity.this, MusicPlayerActivity.class));
+            startActivity(new Intent(WorkTreeActivity.this, AudioPlayerActivity.class));
         }
     }
 

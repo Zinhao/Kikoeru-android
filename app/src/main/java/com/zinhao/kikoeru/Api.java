@@ -1,34 +1,22 @@
 package com.zinhao.kikoeru;
 
 import android.net.Uri;
-import android.util.Log;
-
-import androidx.annotation.IntDef;
-import androidx.annotation.Nullable;
 import androidx.annotation.StringDef;
-
-import com.google.android.exoplayer2.source.dash.DashMediaSource;
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpRequest;
-import com.koushikdutta.async.http.AsyncHttpResponse;
 import com.koushikdutta.async.http.body.JSONObjectBody;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Locale;
 
 public class Api {
-    public static String HOST = "http://192.168.1.230:8888";
+    public static String HOST = "localhost:8888";
     private static final String TAG = "Api";
-    public static final String REMOTE_HOST = "http://192.168.1.230:8888";
-    public static final String LOCAL_HOST = "http://192.168.1.230:8888";
+    public static final String REMOTE_HOST = "localhost:8888";
+    public static final String LOCAL_HOST = "localhost:8888";
     public static String authorization = "";
     public static String token = "";
     private static int subtitle = 1;
@@ -38,7 +26,11 @@ public class Api {
     public static void init(String tokenStr,String host){
         token = tokenStr;
         authorization = String.format("Bearer %s",tokenStr);
-        HOST = host;
+        if(host.startsWith("http")){
+            HOST = host;
+        }else{
+            HOST = String.format(Locale.US,"http://%s",host);
+        }
         subtitle = (int) App.getInstance().getValue(App.CONFIG_ONLY_DISPLAY_LRC,1);
         order = App.getInstance().getValue(App.CONFIG_ORDER,"id");
         sort = (int) App.getInstance().getValue(App.CONFIG_SORT,0);

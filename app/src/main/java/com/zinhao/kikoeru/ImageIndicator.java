@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Color;
 import android.util.AttributeSet;
 import android.view.View;
-import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -31,7 +30,7 @@ public class ImageIndicator extends RecyclerView implements ViewPager.OnPageChan
 
     public ImageIndicator(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        imageSelectedColor = ContextCompat.getColor(context,R.color.pine_200);
+        imageSelectedColor = ContextCompat.getColor(context,R.color.play_control_icon_color);
     }
 
     public ImageIndicator bindViewPager(ViewPager viewPager){
