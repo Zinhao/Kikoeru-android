@@ -3,9 +3,7 @@ package com.zinhao.kikoeru;
 import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
-
 import androidx.collection.SimpleArrayMap;
-
 import com.koushikdutta.async.AsyncServer;
 import com.koushikdutta.async.ByteBufferList;
 import com.koushikdutta.async.DataEmitter;
@@ -15,18 +13,11 @@ import com.koushikdutta.async.http.AsyncHttpRequest;
 import com.koushikdutta.async.http.AsyncHttpResponse;
 import com.koushikdutta.async.http.callback.HttpConnectCallback;
 import com.koushikdutta.async.stream.OutputStreamDataCallback;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedOutputStream;
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -38,9 +29,9 @@ public class DownloadUtils implements Closeable {
     private static File missionConfigFile;
 
     public List<Mission> missionList = new ArrayList<>();
-    public SimpleArrayMap<String,Mission> hashMissionMap = new SimpleArrayMap<>();
+    public SimpleArrayMap<String, Mission> hashMissionMap = new SimpleArrayMap<>();
 
-    public static class Mission extends AsyncHttpClient.FileCallback{
+    public static class Mission extends AsyncHttpClient.FileCallback {
         private AsyncHttpClient downLoadClient;
         private JSONObject jsonObject;
         private File mapFile;
@@ -55,7 +46,7 @@ public class DownloadUtils implements Closeable {
         private boolean completed = false;
         private AsyncHttpRequest request;
         private String hash;
-        private static final int BLOCK_SIZE = 1024*1024;
+        private static final int BLOCK_SIZE = 1024 * 1024;
         private Runnable successCallback;
 
         public void setSuccessCallback(Runnable successCallback) {
@@ -70,32 +61,32 @@ public class DownloadUtils implements Closeable {
             this.title = "";
             this.update = false;
             try {
-                if(jsonObject.has("downloaded")){
+                if (jsonObject.has("downloaded")) {
                     this.downloaded = jsonObject.getLong("downloaded");
                 }
-                if(jsonObject.has("total")){
+                if (jsonObject.has("total")) {
                     this.total = jsonObject.getLong("total");
                 }
-                if(jsonObject.has(JSONConst.WorkTree.MAP_FILE_PATH)){
+                if (jsonObject.has(JSONConst.WorkTree.MAP_FILE_PATH)) {
                     String mapPath = jsonObject.getString(JSONConst.WorkTree.MAP_FILE_PATH);
                     mapFile = new File(mapPath);
                 }
-                if(jsonObject.has(JSONConst.WorkTree.WORK_ID)){
+                if (jsonObject.has(JSONConst.WorkTree.WORK_ID)) {
                     workId = jsonObject.getInt(JSONConst.WorkTree.WORK_ID);
                 }
-                if(jsonObject.has("eTag")){
+                if (jsonObject.has("eTag")) {
                     this.eTag = jsonObject.getString("eTag");
                 }
-                if(jsonObject.has("title")){
+                if (jsonObject.has("title")) {
                     this.title = jsonObject.getString("title");
                 }
-                if(jsonObject.has("type")){
+                if (jsonObject.has("type")) {
                     this.type = jsonObject.getString("type");
                 }
-                if(jsonObject.has(JSONConst.WorkTree.HASH)){
+                if (jsonObject.has(JSONConst.WorkTree.HASH)) {
                     this.hash = jsonObject.getString(JSONConst.WorkTree.HASH);
                 }
-                getInstance().hashMissionMap.put(jsonObject.getString(JSONConst.WorkTree.HASH),this);
+                getInstance().hashMissionMap.put(jsonObject.getString(JSONConst.WorkTree.HASH), this);
                 getInstance().missionList.add(this);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -116,17 +107,17 @@ public class DownloadUtils implements Closeable {
             return hash;
         }
 
-        public String getFormatProgressText(){
-            if(total == 0){
+        public String getFormatProgressText() {
+            if (total == 0) {
                 return "-- / --";
             }
-            float m = 1024*1024;
-            float downLoadedM = downloaded/m;
-            float totalM = total/m;
-            if(isCompleted()){
-                return String.format(Locale.US,"已完成(共%.2fMb)",downLoadedM);
+            float m = 1024 * 1024;
+            float downLoadedM = downloaded / m;
+            float totalM = total / m;
+            if (isCompleted()) {
+                return String.format(Locale.US, "已完成(共%.2fMb)", downLoadedM);
             }
-            return String.format(Locale.US,"%.2fMb / %.2fMb",downLoadedM,totalM);
+            return String.format(Locale.US, "%.2fMb / %.2fMb", downLoadedM, totalM);
         }
 
         public String getTitle() {
@@ -141,26 +132,26 @@ public class DownloadUtils implements Closeable {
             return workId;
         }
 
-        public int getProgress(){
-            if(isCompleted()){
+        public int getProgress() {
+            if (isCompleted()) {
                 return 100;
             }
             int progress = 0;
-            if(total != 0 && total >= downloaded){
-                progress =  Math.round(downloaded*100f/total);
+            if (total != 0 && total >= downloaded) {
+                progress = Math.round(downloaded * 100f / total);
             }
             return progress;
         }
 
-        public int getTypeCover(){
-            if(type.equals("image")){
+        public int getTypeCover() {
+            if (type.equals("image")) {
                 return R.drawable.ic_baseline_image_24;
-            }else if(type.equals("audio")){
-                if(title.endsWith(".mp4")){
+            } else if (type.equals("audio")) {
+                if (title.endsWith(".mp4")) {
                     return R.drawable.ic_baseline_video_library_24;
                 }
                 return R.drawable.ic_baseline_audiotrack_24;
-            }else if(type.equals("text")){
+            } else if (type.equals("text")) {
                 return R.drawable.ic_baseline_text_snippet_24;
             }
             return R.drawable.ic_baseline_text_snippet_24;
@@ -176,23 +167,23 @@ public class DownloadUtils implements Closeable {
 
         private String getDownLoadUrl() throws JSONException {
             String url = jsonObject.getString("mediaDownloadUrl");
-            if(!url.startsWith("http")){
-                url = Api.HOST+String.format("%s?token=%s",url,Api.token);
-            }else {
-                url = String.format("%s?token=%s",url,Api.token);
+            if (!url.startsWith("http")) {
+                url = Api.HOST + String.format("%s?token=%s", url, Api.token);
+            } else {
+                url = String.format("%s?token=%s", url, Api.token);
             }
             return url;
         }
 
-        public void start(){
-            if(isCompleted()){
+        public void start() {
+            if (isCompleted()) {
                 return;
             }
-            if(isDownloading())
+            if (isDownloading())
                 return;
             request = null;
             try {
-                request = new AsyncHttpRequest(Uri.parse(getDownLoadUrl()),"GET");
+                request = new AsyncHttpRequest(Uri.parse(getDownLoadUrl()), "GET");
             } catch (JSONException e) {
                 e.printStackTrace();
                 App.getInstance().alertException(e);
@@ -200,20 +191,20 @@ public class DownloadUtils implements Closeable {
             }
             request.setTimeout(5000);
             this.downLoadClient = new AsyncHttpClient(new AsyncServer());
-            if(downloaded != 0 && mapFile.exists()){
+            if (downloaded != 0 && mapFile.exists()) {
                 continueDownLoad();
-            }else {
-                downLoadClient.executeFile(request,mapFile.getAbsolutePath(),this);
+            } else {
+                downLoadClient.executeFile(request, mapFile.getAbsolutePath(), this);
             }
             setDownloading(true);
         }
 
-        private void continueDownLoad(){
-            request.addHeader("range",String.format(Locale.US,"bytes=%d-",downloaded));
-            request.addHeader("if-range",eTag);
+        private void continueDownLoad() {
+            request.addHeader("range", String.format(Locale.US, "bytes=%d-", downloaded));
+            request.addHeader("if-range", eTag);
             final BufferedOutputStream fout;
             try {
-                fout = new BufferedOutputStream(new FileOutputStream(mapFile,true), 8192);
+                fout = new BufferedOutputStream(new FileOutputStream(mapFile, true), 8192);
             } catch (FileNotFoundException var8) {
                 return;
             }
@@ -221,7 +212,10 @@ public class DownloadUtils implements Closeable {
                 @Override
                 public void onConnectCompleted(Exception e, AsyncHttpResponse response) {
                     if (e != null) {
-                        try { fout.close(); } catch (IOException ignored) { }
+                        try {
+                            fout.close();
+                        } catch (IOException ignored) {
+                        }
                     } else {
                         response.setDataCallback(new OutputStreamDataCallback(fout) {
                             public void onDataAvailable(DataEmitter emitter, ByteBufferList bb) {
@@ -238,9 +232,9 @@ public class DownloadUtils implements Closeable {
                                     Log.d(TAG, "onCompleted: close failed!");
                                 }
                                 if (ex != null) {
-                                    Mission.this.onCompleted(ex,response,mapFile);
+                                    Mission.this.onCompleted(ex, response, mapFile);
                                 } else {
-                                    Mission.this.onCompleted(null,response,mapFile);
+                                    Mission.this.onCompleted(null, response, mapFile);
                                 }
                             }
                         });
@@ -249,8 +243,8 @@ public class DownloadUtils implements Closeable {
             });
         }
 
-        public void stop(){
-            if(downLoadClient!=null){
+        public void stop() {
+            if (downLoadClient != null) {
                 downLoadClient.getServer().stop();
             }
             setDownloading(false);
@@ -261,11 +255,11 @@ public class DownloadUtils implements Closeable {
             update = true;
             setDownloading(false);
             completed = true;
-            if(e != null){
+            if (e != null) {
                 App.getInstance().alertException(e);
                 return;
             }
-            if(successCallback!= null)
+            if (successCallback != null)
                 successCallback.run();
         }
 
@@ -278,12 +272,12 @@ public class DownloadUtils implements Closeable {
         }
 
         public boolean isCompleted() {
-            if(total == -1){
-                if(mapFile.exists() && mapFile.length() == downloaded){
+            if (total == -1) {
+                if (mapFile.exists() && mapFile.length() == downloaded) {
                     return true;
                 }
-            }else {
-                if(total !=0 && downloaded!=0){
+            } else {
+                if (total != 0 && downloaded != 0) {
                     completed = total == downloaded;
                 }
                 return completed;
@@ -302,11 +296,11 @@ public class DownloadUtils implements Closeable {
             this.update = true;
         }
 
-        private JSONObject getJsonObject(){
+        private JSONObject getJsonObject() {
             try {
-                jsonObject.put("downloaded",downloaded);
-                jsonObject.put("total",total);
-                jsonObject.put("eTag",eTag);
+                jsonObject.put("downloaded", downloaded);
+                jsonObject.put("total", total);
+                jsonObject.put("eTag", eTag);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -314,21 +308,22 @@ public class DownloadUtils implements Closeable {
         }
     }
 
-    public DownloadUtils() { }
+    public DownloadUtils() {
+    }
 
     public static DownloadUtils getInstance() {
-        if(instance == null){
+        if (instance == null) {
             instance = new DownloadUtils();
         }
         return instance;
     }
 
-    public int removeMission(Mission mission){
-        if(hashMissionMap.containsKey(mission.getHash())){
+    public int removeMission(Mission mission) {
+        if (hashMissionMap.containsKey(mission.getHash())) {
             hashMissionMap.remove(mission.getHash());
         }
         for (int i = 0; i < missionList.size(); i++) {
-            if(missionList.get(i).equals(mission.getJsonObject())){
+            if (missionList.get(i).equals(mission.getJsonObject())) {
                 missionList.remove(i);
                 return i;
             }
@@ -336,22 +331,22 @@ public class DownloadUtils implements Closeable {
         return -1;
     }
 
-    public void init(Context context){
-        missionConfigFile = new File(context.getCacheDir(),"downloadMission.json");
+    public void init(Context context) {
+        missionConfigFile = new File(context.getCacheDir(), "downloadMission.json");
         missionList.clear();
         hashMissionMap.clear();
-        if(missionConfigFile.exists()){
+        if (missionConfigFile.exists()) {
             LocalFileCache.getInstance().readText(missionConfigFile, new AsyncHttpClient.StringCallback() {
                 @Override
                 public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, String s) {
-                    if(e!=null){
+                    if (e != null) {
                         App.getInstance().alertException(e);
                         return;
                     }
                     try {
                         JSONArray missions = new JSONArray(s);
                         for (int i = 0; i < missions.length(); i++) {
-                            JSONObject mission =missions.getJSONObject(i);
+                            JSONObject mission = missions.getJSONObject(i);
                             new Mission(mission);
                         }
                     } catch (JSONException jsonException) {
@@ -363,10 +358,10 @@ public class DownloadUtils implements Closeable {
         }
     }
 
-    public static Mission mapMission(JSONObject item){
+    public static Mission mapMission(JSONObject item) {
         for (int i = 0; i < getInstance().missionList.size(); i++) {
             DownloadUtils.Mission mission = DownloadUtils.getInstance().missionList.get(i);
-            if(mission.equals(item) && !mission.isCompleted()){
+            if (mission.equals(item) && !mission.isCompleted()) {
                 return mission;
             }
         }
@@ -375,7 +370,7 @@ public class DownloadUtils implements Closeable {
 
     @Override
     public void close() throws IOException {
-        if(missionList == null){
+        if (missionList == null) {
             return;
         }
         JSONArray jsonArray = new JSONArray();
@@ -383,7 +378,7 @@ public class DownloadUtils implements Closeable {
             @Override
             public void accept(Mission downLoadMission) {
                 downLoadMission.stop();
-                if(!downLoadMission.isCompleted()){
+                if (!downLoadMission.isCompleted()) {
                     jsonArray.put(downLoadMission.getJsonObject());
                 }
             }

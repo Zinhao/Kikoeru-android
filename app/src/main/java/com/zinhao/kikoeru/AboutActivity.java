@@ -1,10 +1,8 @@
 package com.zinhao.kikoeru;
 
 import android.os.Bundle;
-import android.text.Html;
-import android.widget.TextView;
 
-public class AboutActivity extends BaseActivity{
+public class AboutActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

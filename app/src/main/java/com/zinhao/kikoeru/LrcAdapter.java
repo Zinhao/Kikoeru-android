@@ -8,7 +8,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -29,29 +28,29 @@ public class LrcAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        if(unCacheItemBackgroundColor == -1 || cachedItemBackgroundColor == -1){
+        if (unCacheItemBackgroundColor == -1 || cachedItemBackgroundColor == -1) {
             Context context = parent.getContext();
             TypedValue typedValue = new TypedValue();
             context.getTheme().resolveAttribute(android.R.attr.textAppearanceLarge, typedValue, true);
-            int[] attribute = new int[] { R.attr.colorOnPrimary,R.attr.colorOnSecondary};
+            int[] attribute = new int[]{R.attr.colorOnPrimary, R.attr.colorOnSecondary};
             TypedArray array = context.obtainStyledAttributes(typedValue.resourceId, attribute);
-            unCacheItemBackgroundColor = array.getColor(0 , Color.WHITE);
-            cachedItemBackgroundColor = array.getColor(1 , Color.WHITE);
+            unCacheItemBackgroundColor = array.getColor(0, Color.WHITE);
+            cachedItemBackgroundColor = array.getColor(1, Color.WHITE);
             array.recycle();
         }
-        return new LrcRowHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_lrc_row,parent,false));
+        return new LrcRowHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_lrc_row, parent, false));
     }
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         Lrc.LrcRow lrcRow = lrc.getLrcRows().get(position);
-        if(holder instanceof LrcRowHolder){
-            ((LrcRowHolder) holder).textView.setText(String.format("[%s] %s",lrcRow.strTime, lrcRow.content));
+        if (holder instanceof LrcRowHolder) {
+            ((LrcRowHolder) holder).textView.setText(String.format("[%s] %s", lrcRow.strTime, lrcRow.content));
             holder.itemView.setTag(lrcRow);
             holder.itemView.setOnClickListener(onClickListener);
-            if(lrc.getCurrentIndex() == position){
+            if (lrc.getCurrentIndex() == position) {
                 holder.itemView.setBackgroundColor(cachedItemBackgroundColor);
-            }else {
+            } else {
                 holder.itemView.setBackgroundColor(unCacheItemBackgroundColor);
             }
         }
@@ -62,7 +61,7 @@ public class LrcAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return lrc.getLrcRows().size();
     }
 
-    static class LrcRowHolder extends RecyclerView.ViewHolder{
+    static class LrcRowHolder extends RecyclerView.ViewHolder {
         private TextView textView;
 
         public LrcRowHolder(@NonNull View itemView) {

@@ -5,10 +5,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 
@@ -43,7 +41,7 @@ public abstract class SuperRecyclerAdapter<T> extends RecyclerView.Adapter<Super
 
     @Override
     public void onBindViewHolder(@NonNull SuperVHolder holder, int position) {
-        bindData(holder,position);
+        bindData(holder, position);
     }
 
     @Override
@@ -56,18 +54,18 @@ public abstract class SuperRecyclerAdapter<T> extends RecyclerView.Adapter<Super
             super(itemView);
         }
 
-        public View getView(int id){
+        public View getView(int id) {
             return itemView.findViewById(id);
         }
 
-        public void setText(String str,int id){
+        public void setText(String str, int id) {
             TextView textView = (TextView) getView(id);
             textView.setText(str);
         }
 
-        public void setImage(String str,int id){
+        public void setImage(String str, int id) {
             ImageView imageView = (ImageView) getView(id);
-            Glide.with(imageView.getContext()).load(str).apply(new RequestOptions().override(imageView.getWidth(),imageView.getHeight()))
+            Glide.with(imageView.getContext()).load(str).apply(new RequestOptions().override(imageView.getWidth(), imageView.getHeight()))
                     .into(imageView);
         }
     }

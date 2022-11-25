@@ -8,7 +8,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-
 import androidx.appcompat.app.AlertDialog;
 
 import java.util.ArrayList;
@@ -18,6 +17,7 @@ public class LicenseActivity extends BaseActivity {
     private ListView listView;
     private List<OpenSourceProject> projectList;
     private AlertDialog alertDialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -25,10 +25,10 @@ public class LicenseActivity extends BaseActivity {
         listView = findViewById(R.id.listview);
 
         projectList = new ArrayList<>();
-        projectList.add(new OpenSourceProject("Glide",getString(R.string.project_glide_license)));
-        projectList.add(new OpenSourceProject("ExoPlayer",getString(R.string.project_exo_player_license)));
-        projectList.add(new OpenSourceProject("AndroidAsync",getString(R.string.project_android_async_license)));
-        projectList.add(new OpenSourceProject("SubsamplingScaleImageView",getString(R.string.project_subsampling_scale_image_view_license)));
+        projectList.add(new OpenSourceProject("Glide", getString(R.string.project_glide_license)));
+        projectList.add(new OpenSourceProject("ExoPlayer", getString(R.string.project_exo_player_license)));
+        projectList.add(new OpenSourceProject("AndroidAsync", getString(R.string.project_android_async_license)));
+        projectList.add(new OpenSourceProject("SubsamplingScaleImageView", getString(R.string.project_subsampling_scale_image_view_license)));
 
         listView.setAdapter(new ArrayAdapter<>(this, R.layout.item_open_source_project, projectList));
         alertDialog = new AlertDialog.Builder(this).create();
@@ -47,7 +47,7 @@ public class LicenseActivity extends BaseActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         Uri uri = Uri.parse(projectList.get(position).getLicenseUrl());
-                        Intent intent = new Intent(Intent.ACTION_VIEW,uri);
+                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
                         startActivity(intent);
                     }
                 });
@@ -56,7 +56,7 @@ public class LicenseActivity extends BaseActivity {
         });
     }
 
-    static class OpenSourceProject{
+    static class OpenSourceProject {
         String name;
         String licenseUrl;
 

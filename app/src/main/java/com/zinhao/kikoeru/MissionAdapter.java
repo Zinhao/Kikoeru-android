@@ -9,28 +9,25 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
-
 import org.json.JSONObject;
 
-public class MissionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements View.OnLongClickListener{
+public class MissionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements View.OnLongClickListener {
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new SimpleViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_mission_progress,parent,false));
+        return new SimpleViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_mission_progress, parent, false));
     }
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         DownloadUtils.Mission item = DownloadUtils.getInstance().missionList.get(position);
-        if(holder instanceof SimpleViewHolder){
+        if (holder instanceof SimpleViewHolder) {
             SimpleViewHolder simpleViewHolder = (SimpleViewHolder) holder;
             simpleViewHolder.tvTitle.setText(item.getTitle());
             simpleViewHolder.ivCover.setImageResource(item.getTypeCover());
@@ -38,26 +35,26 @@ public class MissionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             simpleViewHolder.pbProgress.setProgress(item.getProgress());
             simpleViewHolder.tvProgress.setText(item.getFormatProgressText());
             simpleViewHolder.itemView.setTag(item);
-            if(item.isCompleted()){
+            if (item.isCompleted()) {
                 simpleViewHolder.itemView.setOnLongClickListener(this);
                 simpleViewHolder.ibPause.setVisibility(View.INVISIBLE);
                 simpleViewHolder.ibPause.setOnClickListener(null);
-            }else {
+            } else {
                 simpleViewHolder.itemView.setOnLongClickListener(null);
                 simpleViewHolder.ibPause.setVisibility(View.VISIBLE);
                 simpleViewHolder.ibPause.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        if(item.isDownloading()){
+                        if (item.isDownloading()) {
                             item.stop();
-                        }else if(!item.isCompleted()){
+                        } else if (!item.isCompleted()) {
                             item.start();
                         }
                         notifyItemChanged(holder.getAdapterPosition());
                     }
                 });
             }
-            simpleViewHolder.ibPause.setImageResource(item.isDownloading()?R.drawable.ic_baseline_pause_24:R.drawable.ic_baseline_play_arrow_24);
+            simpleViewHolder.ibPause.setImageResource(item.isDownloading() ? R.drawable.ic_baseline_pause_24 : R.drawable.ic_baseline_play_arrow_24);
         }
     }
 
@@ -80,7 +77,7 @@ public class MissionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
                         Intent intent = new Intent(v.getContext(), WorkTreeActivity.class);
                         intent.putExtra("work_json_str", jsonObject.toString());
-                        ActivityCompat.startActivity(v.getContext(), intent,null);
+                        ActivityCompat.startActivity(v.getContext(), intent, null);
                         dialog.dismiss();
                     }
                 });
@@ -90,9 +87,9 @@ public class MissionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 int index = DownloadUtils.getInstance().removeMission(item);
-                if(index != -1){
+                if (index != -1) {
                     notifyItemRemoved(index);
-                    notifyItemRangeChanged(index,getItemCount() - index);
+                    notifyItemRangeChanged(index, getItemCount() - index);
                 }
                 dialog.dismiss();
             }
@@ -101,7 +98,7 @@ public class MissionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         return true;
     }
 
-    class SimpleViewHolder extends RecyclerView.ViewHolder{
+    class SimpleViewHolder extends RecyclerView.ViewHolder {
         private TextView tvTitle;
         private ImageView ivCover;
         private ProgressBar pbProgress;

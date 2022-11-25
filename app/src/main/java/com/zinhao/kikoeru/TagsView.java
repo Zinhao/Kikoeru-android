@@ -13,10 +13,8 @@ import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
-
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class TagsView<T> extends View{
+public class TagsView<T> extends View {
     private static final String TAG = "TagsView";
     private T tags;
     private List<RectF> tagsRectFs;
@@ -51,7 +49,7 @@ public class TagsView<T> extends View{
     }
 
     public void setTagBackgroundResource(int resid) {
-        tagBg = ContextCompat.getDrawable(getContext(),resid);
+        tagBg = ContextCompat.getDrawable(getContext(), resid);
         invalidate();
     }
 
@@ -60,7 +58,7 @@ public class TagsView<T> extends View{
         return gestureDetector.onTouchEvent(event);
     }
 
-    public static class JsonTextGet implements TextGet<JSONObject>{
+    public static class JsonTextGet implements TextGet<JSONObject> {
         private String key;
 
         public JsonTextGet(String key) {
@@ -87,7 +85,8 @@ public class TagsView<T> extends View{
             return key;
         }
     }
-    public static final JsonTextGet JSON_TEXT_GET =new JsonTextGet("name");
+
+    public static final JsonTextGet JSON_TEXT_GET = new JsonTextGet("name");
     public static final TextGet<String> STRING_TEXT_GET = new TextGet<String>() {
         @Override
         public String onGetText(String t) {
@@ -96,31 +95,31 @@ public class TagsView<T> extends View{
     };
 
     public TagsView(Context context) {
-        this(context,null);
+        this(context, null);
     }
 
     public TagsView(Context context, @Nullable AttributeSet attrs) {
-        this(context, attrs,0);
+        this(context, attrs, 0);
     }
 
     public TagsView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         MIN_WIDTH = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 300, context.getResources().getDisplayMetrics());
         MIN_HEIGHT = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 300, context.getResources().getDisplayMetrics());
-        textPaint =new Paint(Paint.ANTI_ALIAS_FLAG);
+        textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         textPaint.setTextAlign(Paint.Align.CENTER);
         setTextSize(12);
         textPaint.setColor(Color.WHITE);
-        Paint.FontMetrics fontMetrics =textPaint.getFontMetrics();
-        textDistance = (fontMetrics.bottom -fontMetrics.top)/2 -fontMetrics.bottom;
-        rectFH =  fontMetrics.bottom -fontMetrics.top;
-        setPadding(10,7,0,7);
-        TypedArray array = context.obtainStyledAttributes(attrs,R.styleable.TagsView);
+        Paint.FontMetrics fontMetrics = textPaint.getFontMetrics();
+        textDistance = (fontMetrics.bottom - fontMetrics.top) / 2 - fontMetrics.bottom;
+        rectFH = fontMetrics.bottom - fontMetrics.top;
+        setPadding(10, 7, 0, 7);
+        TypedArray array = context.obtainStyledAttributes(attrs, R.styleable.TagsView);
         tagBg = array.getDrawable(R.styleable.TagsView_tagBackground);
         String tagStr = array.getString(R.styleable.TagsView_tags);
-        if(tagStr!=null && !tagStr.isEmpty()){
+        if (tagStr != null && !tagStr.isEmpty()) {
             String[] tagStrs = tagStr.split(" ");
-            if(tagStrs.length!=0){
+            if (tagStrs.length != 0) {
                 List<String> tags = Arrays.asList(tagStrs);
                 this.tags = (T) tags;
                 textGet = STRING_TEXT_GET;
@@ -131,14 +130,14 @@ public class TagsView<T> extends View{
         for (int i = 0; i < getTagsLen(); i++) {
             tagsRectFs.add(new RectF());
         }
-        simpleOnGestureListener = new GestureDetector.SimpleOnGestureListener(){
+        simpleOnGestureListener = new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onContextClick(MotionEvent e) {
                 Log.d(TAG, "onContextClick: ");
-                if(tagClickListener == null)
+                if (tagClickListener == null)
                     return false;
                 for (int i = 0; i < tagsRectFs.size(); i++) {
-                    if(tagsRectFs.get(i).contains(e.getX(),e.getY())){
+                    if (tagsRectFs.get(i).contains(e.getX(), e.getY())) {
                         return true;
                     }
                 }
@@ -148,10 +147,10 @@ public class TagsView<T> extends View{
             @Override
             public boolean onSingleTapUp(MotionEvent e) {
                 Log.d(TAG, "onSingleTapUp: ");
-                if(tagClickListener == null)
+                if (tagClickListener == null)
                     return false;
                 for (int i = 0; i < tagsRectFs.size(); i++) {
-                    if(tagsRectFs.get(i).contains(e.getX(),e.getY())){
+                    if (tagsRectFs.get(i).contains(e.getX(), e.getY())) {
                         return true;
                     }
                 }
@@ -166,10 +165,10 @@ public class TagsView<T> extends View{
             @Override
             public boolean onDown(MotionEvent e) {
                 Log.d(TAG, "onDown: ");
-                if(tagClickListener == null)
+                if (tagClickListener == null)
                     return false;
                 for (int i = 0; i < tagsRectFs.size(); i++) {
-                    if(tagsRectFs.get(i).contains(e.getX(),e.getY())){
+                    if (tagsRectFs.get(i).contains(e.getX(), e.getY())) {
                         return true;
                     }
                 }
@@ -179,10 +178,10 @@ public class TagsView<T> extends View{
             @Override
             public boolean onSingleTapConfirmed(MotionEvent e) {
                 Log.d(TAG, "onSingleTapConfirmed: ");
-                if(tagClickListener == null)
+                if (tagClickListener == null)
                     return false;
                 for (int i = 0; i < tagsRectFs.size(); i++) {
-                    if(tagsRectFs.get(i).contains(e.getX(),e.getY())){
+                    if (tagsRectFs.get(i).contains(e.getX(), e.getY())) {
                         tagClickListener.onTagClick(getTagByIndex(i));
                         return true;
                     }
@@ -190,45 +189,45 @@ public class TagsView<T> extends View{
                 return false;
             }
         };
-        gestureDetector = new GestureDetector(getContext(),simpleOnGestureListener);
+        gestureDetector = new GestureDetector(getContext(), simpleOnGestureListener);
     }
 
-    public int getTagsLen(){
-        if(tags instanceof List){
+    public int getTagsLen() {
+        if (tags instanceof List) {
             return ((List<?>) tags).size();
-        }else if(tags instanceof JSONArray){
+        } else if (tags instanceof JSONArray) {
             return ((JSONArray) tags).length();
         }
         return 0;
     }
 
-    public String getTagText(int index){
+    public String getTagText(int index) {
         Object o = null;
-        if(tags instanceof List){
+        if (tags instanceof List) {
             List<String> strings = (List<String>) tags;
             o = strings.get(index);
-        }else if(tags instanceof JSONArray){
+        } else if (tags instanceof JSONArray) {
             try {
-                o= ((JSONArray) tags).get(index);
+                o = ((JSONArray) tags).get(index);
             } catch (JSONException e) {
                 e.printStackTrace();
                 App.getInstance().alertException(e);
             }
         }
-        if(o!=null && textGet != null){
+        if (o != null && textGet != null) {
             return textGet.onGetText(o);
         }
         return "";
     }
 
-    public Object getTagByIndex(int index){
+    public Object getTagByIndex(int index) {
         Object o = null;
-        if(tags instanceof List){
+        if (tags instanceof List) {
             List<String> strings = (List<String>) tags;
             o = strings.get(index);
-        }else if(tags instanceof JSONArray){
+        } else if (tags instanceof JSONArray) {
             try {
-                o= ((JSONArray) tags).getJSONObject(index);
+                o = ((JSONArray) tags).getJSONObject(index);
             } catch (JSONException e) {
                 e.printStackTrace();
                 App.getInstance().alertException(e);
@@ -237,37 +236,37 @@ public class TagsView<T> extends View{
         return o;
     }
 
-    public interface TextGet<T>{
+    public interface TextGet<T> {
         String onGetText(T t);
     }
 
-    public interface TagClickListener<T>{
+    public interface TagClickListener<T> {
         void onTagClick(T t);
     }
 
-    public void setTags(T tags,TextGet<?> textGet) {
+    public void setTags(T tags, TextGet<?> textGet) {
         this.tags = tags;
         this.textGet = textGet;
         tagsRectFs.clear();
-        setMeasuredDimension(getWidth(),makeTagsRectF(getWidth()));
-        if(!isInLayout()){
+        setMeasuredDimension(getWidth(), makeTagsRectF(getWidth()));
+        if (!isInLayout()) {
             requestLayout();
-        }else {
+        } else {
             postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    if(!isInLayout()){
+                    if (!isInLayout()) {
                         requestLayout();
                     }
                 }
-            },500);
+            }, 500);
         }
     }
 
     /**
      * @param size sp
      */
-    public void setTextSize(int size){
+    public void setTextSize(int size) {
         textPaint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, size, getContext().getResources().getDisplayMetrics()));
     }
 
@@ -292,31 +291,31 @@ public class TagsView<T> extends View{
         } else if (heightSpecMode == MeasureSpec.AT_MOST) {
             h = MIN_HEIGHT;
         }
-        setMeasuredDimension(w,makeTagsRectF(w));
+        setMeasuredDimension(w, makeTagsRectF(w));
     }
 
-    private int makeTagsRectF(int w){
+    private int makeTagsRectF(int w) {
         for (int i = 0; i < getTagsLen(); i++) {
             tagsRectFs.add(new RectF());
         }
         int h = 0;
-        float x = 0,y=getPaddingTop();
+        float x = 0, y = getPaddingTop();
         for (int i = 0; i < getTagsLen(); i++) {
             float textW = 0;
             String text = getTagText(i);
             textW = textPaint.measureText(text);
-            float rectW = textW + textPadding *2;
+            float rectW = textW + textPadding * 2;
             float rectH = rectFH + textPadding;
 
-            if(x+rectW > w){
-                y+=rectH + getPaddingTop()+getPaddingBottom();
-                x=0;
+            if (x + rectW > w) {
+                y += rectH + getPaddingTop() + getPaddingBottom();
+                x = 0;
             }
-            tagsRectFs.get(i).set(x,y,x+rectW,y+rectH);
-            x += rectW +getPaddingRight()+getPaddingLeft();
-            h = (int) (y+rectH) + getPaddingBottom();
+            tagsRectFs.get(i).set(x, y, x + rectW, y + rectH);
+            x += rectW + getPaddingRight() + getPaddingLeft();
+            h = (int) (y + rectH) + getPaddingBottom();
         }
-        if(getTagsLen() == 0)
+        if (getTagsLen() == 0)
             h = 0;
         return h;
     }
@@ -331,13 +330,13 @@ public class TagsView<T> extends View{
         super.onDraw(canvas);
         for (int i = 0; i < getTagsLen(); i++) {
             RectF tagRectF = tagsRectFs.get(i);
-            if(tagBg!=null){
-                tagBg.setBounds((int)tagRectF.left,(int)tagRectF.top,(int)tagRectF.right,(int)tagRectF.bottom);
+            if (tagBg != null) {
+                tagBg.setBounds((int) tagRectF.left, (int) tagRectF.top, (int) tagRectF.right, (int) tagRectF.bottom);
                 tagBg.draw(canvas);
             }
             textPaint.setColor(Color.WHITE);
             textPaint.setStyle(Paint.Style.FILL);
-            canvas.drawText(getTagText(i),tagsRectFs.get(i).centerX(),tagsRectFs.get(i).centerY()+textDistance,textPaint);
+            canvas.drawText(getTagText(i), tagsRectFs.get(i).centerX(), tagsRectFs.get(i).centerY() + textDistance, textPaint);
         }
     }
 }

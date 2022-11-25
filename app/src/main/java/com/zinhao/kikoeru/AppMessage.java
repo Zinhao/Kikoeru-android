@@ -1,6 +1,6 @@
 package com.zinhao.kikoeru;
 
-public class AppMessage extends Exception{
+public class AppMessage extends Exception {
     String title;
     Runnable action;
     String actionName;
@@ -13,7 +13,7 @@ public class AppMessage extends Exception{
     }
 
     public String getTitle() {
-        if(title == null)
+        if (title == null)
             return "";
         return title;
     }
@@ -25,14 +25,14 @@ public class AppMessage extends Exception{
     };
 
     public Runnable getAction() {
-        if(action == null){
+        if (action == null) {
             return NONE;
         }
         return action;
     }
 
     public String getActionName() {
-        if(title == null)
+        if (title == null)
             return "no name";
         return actionName;
     }

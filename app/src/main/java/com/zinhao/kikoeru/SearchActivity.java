@@ -1,11 +1,5 @@
 package com.zinhao.kikoeru;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
@@ -16,10 +10,12 @@ import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-
+import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -39,29 +35,29 @@ public class SearchActivity extends BaseActivity implements TagsView.TagClickLis
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
-        imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         recyclerView = findViewById(R.id.recyclerView);
         etInput = findViewById(R.id.editTextNumber);
         etInput.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                Log.d(TAG, "beforeTextChanged: "+s);
+                Log.d(TAG, "beforeTextChanged: " + s);
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                Log.d(TAG, "onTextChanged: "+s);
+                Log.d(TAG, "onTextChanged: " + s);
             }
 
             @Override
             public void afterTextChanged(Editable s) {
-                if(workAdapter!= null){
-                    workAdapter.notifyItemRangeRemoved(0,works.size());
-                    workAdapter.notifyItemRangeChanged(0,works.size());
+                if (workAdapter != null) {
+                    workAdapter.notifyItemRangeRemoved(0, works.size());
+                    workAdapter.notifyItemRangeChanged(0, works.size());
                 }
                 works.clear();
-                if(s.toString().length()==6){
-                    Api.doGetWork(s.toString(),1,searchWorkCallback);
+                if (s.toString().length() == 6) {
+                    Api.doGetWork(s.toString(), 1, searchWorkCallback);
                 }
             }
         });
@@ -85,7 +81,7 @@ public class SearchActivity extends BaseActivity implements TagsView.TagClickLis
                 JSONObject item = (JSONObject) v.getTag();
                 Intent intent = new Intent(v.getContext(), WorkTreeActivity.class);
                 intent.putExtra("work_json_str", item.toString());
-                ActivityCompat.startActivity(SearchActivity.this, intent,null);
+                ActivityCompat.startActivity(SearchActivity.this, intent, null);
             }
         });
         recyclerView.setLayoutManager(layoutManager);
@@ -98,7 +94,7 @@ public class SearchActivity extends BaseActivity implements TagsView.TagClickLis
         etInput.setFocusable(true);
         etInput.setFocusableInTouchMode(true);
         etInput.requestFocus();
-        imm.showSoftInput(etInput,0);
+        imm.showSoftInput(etInput, 0);
     }
 
     private final TagsView.TagClickListener<JSONObject> vaClickListener = new TagsView.TagClickListener<JSONObject>() {
@@ -106,13 +102,13 @@ public class SearchActivity extends BaseActivity implements TagsView.TagClickLis
         public void onTagClick(JSONObject jsonObject) {
             try {
                 String vaId = jsonObject.getString("id");
-                Log.d(TAG, "onTagClick: "+ vaId);
+                Log.d(TAG, "onTagClick: " + vaId);
                 String vaName = jsonObject.getString("name");
                 setTitle(vaName);
-                Intent intent = new Intent(SearchActivity.this,WorksActivity.class);
-                intent.putExtra("resultType","va");
-                intent.putExtra("id",vaId);
-                intent.putExtra("name",vaName);
+                Intent intent = new Intent(SearchActivity.this, WorksActivity.class);
+                intent.putExtra("resultType", "va");
+                intent.putExtra("id", vaId);
+                intent.putExtra("name", vaName);
                 startActivity(intent);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -124,12 +120,12 @@ public class SearchActivity extends BaseActivity implements TagsView.TagClickLis
     private AsyncHttpClient.JSONObjectCallback searchWorkCallback = new AsyncHttpClient.JSONObjectCallback() {
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
-            if(e!=null){
+            if (e != null) {
                 e.printStackTrace();
                 alertException(e);
                 return;
             }
-            if(asyncHttpResponse == null || asyncHttpResponse.code() !=200){
+            if (asyncHttpResponse == null || asyncHttpResponse.code() != 200) {
                 return;
             }
             try {
@@ -139,7 +135,7 @@ public class SearchActivity extends BaseActivity implements TagsView.TagClickLis
                     @SuppressLint("DefaultLocale")
                     @Override
                     public void run() {
-                        setTitle(String.format("%s(%d)",getString(R.string.app_name),totalCount));
+                        setTitle(String.format("%s(%d)", getString(R.string.app_name), totalCount));
                         for (int i = 0; i < jsonArray.length(); i++) {
                             try {
                                 works.add(jsonArray.getJSONObject(i));
@@ -148,7 +144,7 @@ public class SearchActivity extends BaseActivity implements TagsView.TagClickLis
                                 alertException(jsonException);
                             }
                         }
-                        initLayout((int) App.getInstance().getValue(App.CONFIG_LAYOUT_TYPE,WorkAdapter.LAYOUT_SMALL_GRID));
+                        initLayout((int) App.getInstance().getValue(App.CONFIG_LAYOUT_TYPE, WorkAdapter.LAYOUT_SMALL_GRID));
                     }
                 });
             } catch (JSONException jsonException) {
@@ -164,10 +160,10 @@ public class SearchActivity extends BaseActivity implements TagsView.TagClickLis
             int tagId = jsonObject.getInt("id");
             String tagName = jsonObject.getString("name");
             setTitle(tagName);
-            Intent intent = new Intent(SearchActivity.this,WorksActivity.class);
-            intent.putExtra("resultType","tag");
-            intent.putExtra("id",tagId);
-            intent.putExtra("name",tagName);
+            Intent intent = new Intent(SearchActivity.this, WorksActivity.class);
+            intent.putExtra("resultType", "tag");
+            intent.putExtra("id", tagId);
+            intent.putExtra("name", tagName);
             startActivity(intent);
         } catch (JSONException e) {
             e.printStackTrace();

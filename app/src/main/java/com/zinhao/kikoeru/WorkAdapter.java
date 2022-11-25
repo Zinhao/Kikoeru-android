@@ -6,12 +6,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.bumptech.glide.Glide;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -48,7 +45,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     public WorkAdapter(List<JSONObject> datas) {
-        this(datas,LAYOUT_SMALL_GRID);
+        this(datas, LAYOUT_SMALL_GRID);
     }
 
     public WorkAdapter(List<JSONObject> datas, int layoutType) {
@@ -70,14 +67,14 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        if(layoutType == LAYOUT_LIST){
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_1,parent,false);
+        if (layoutType == LAYOUT_LIST) {
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_1, parent, false);
             return new SimpleViewHolder(v);
-        }else if(layoutType == LAYOUT_BIG_GRID){
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_2,parent,false);
+        } else if (layoutType == LAYOUT_BIG_GRID) {
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_2, parent, false);
             return new GirdViewHolder(v);
-        }else{
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_3,parent,false);
+        } else {
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_3, parent, false);
             return new SmallGirdViewHolder(v);
         }
 
@@ -90,39 +87,39 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         holder.itemView.setTag(item);
         holder.itemView.setOnClickListener(itemClickListener);
         holder.itemView.setOnLongClickListener(itemLongClickListener);
-        if(holder instanceof SimpleViewHolder){
+        if (holder instanceof SimpleViewHolder) {
             try {
                 ((SimpleViewHolder) holder).tvTitle.setText(item.getString("title"));
-                ((SimpleViewHolder) holder).tvComArt.setTags(App.getVasList(item),TagsView.JSON_TEXT_GET.setKey("name"));
+                ((SimpleViewHolder) holder).tvComArt.setTags(App.getVasList(item), TagsView.JSON_TEXT_GET.setKey("name"));
                 ((SimpleViewHolder) holder).tvComArt.setTagClickListener(vaClickListener);
-                ((SimpleViewHolder) holder).tvTags.setTags(App.getTagsList(item),textGet);
+                ((SimpleViewHolder) holder).tvTags.setTags(App.getTagsList(item), textGet);
                 ((SimpleViewHolder) holder).tvTags.setTagClickListener(tagClickListener);
-                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d?type=sam&token=%s",item.getInt("id"),Api.token))
+                Glide.with(holder.itemView.getContext()).load(Api.HOST + String.format("/api/cover/%d?type=sam&token=%s", item.getInt("id"), Api.token))
                         .apply(App.getInstance().getDefaultPic()).into(((SimpleViewHolder) holder).ivCover);
             } catch (JSONException e) {
                 e.printStackTrace();
                 App.getInstance().alertException(e);
             }
         }
-        if(holder instanceof GirdViewHolder){
+        if (holder instanceof GirdViewHolder) {
             GirdViewHolder girdHolder = (GirdViewHolder) holder;
             try {
-                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d?token=%s",item.getInt("id"),Api.token))
+                Glide.with(holder.itemView.getContext()).load(Api.HOST + String.format("/api/cover/%d?token=%s", item.getInt("id"), Api.token))
                         .apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
                 girdHolder.tvTitle.setText(item.getString("title"));
-                girdHolder.tvArt.setTags(App.getVasList(item),TagsView.JSON_TEXT_GET.setKey("name"));
+                girdHolder.tvArt.setTags(App.getVasList(item), TagsView.JSON_TEXT_GET.setKey("name"));
                 girdHolder.tvArt.setTagClickListener(vaClickListener);
                 girdHolder.tvCom.setText(item.getString("name"));
-                girdHolder.tvTags.setTags(App.getTagsList(item),textGet);
+                girdHolder.tvTags.setTags(App.getTagsList(item), textGet);
                 girdHolder.tvTags.setTagClickListener(tagClickListener);
-                girdHolder.tvRjNumber.setText(String.format("RJ%d",item.getInt("id")));
+                girdHolder.tvRjNumber.setText(String.format("RJ%d", item.getInt("id")));
                 girdHolder.tvDate.setText(item.getString("release"));
-                girdHolder.tvPrice.setText(String.format("%d 日元",item.getInt("price")));
-                girdHolder.tvSaleCount.setText(String.format("售出：%d",item.getInt("dl_count")));
-                if(item.has(JSONConst.Work.HOST)){
+                girdHolder.tvPrice.setText(String.format("%d 日元", item.getInt("price")));
+                girdHolder.tvSaleCount.setText(String.format("售出：%d", item.getInt("dl_count")));
+                if (item.has(JSONConst.Work.HOST)) {
                     girdHolder.tvHost.setVisibility(View.VISIBLE);
                     girdHolder.tvHost.setText(item.getString(JSONConst.Work.HOST));
-                }else {
+                } else {
                     girdHolder.tvHost.setVisibility(View.INVISIBLE);
                 }
 
@@ -132,17 +129,17 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             }
         }
 
-        if(holder instanceof SmallGirdViewHolder){
+        if (holder instanceof SmallGirdViewHolder) {
             SmallGirdViewHolder girdHolder = (SmallGirdViewHolder) holder;
             try {
-                Glide.with(holder.itemView.getContext()).load(Api.HOST+String.format("/api/cover/%d?token=%s",item.getInt("id"),Api.token))
+                Glide.with(holder.itemView.getContext()).load(Api.HOST + String.format("/api/cover/%d?token=%s", item.getInt("id"), Api.token))
                         .apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
-                girdHolder.tvRjNumber.setText(String.format("RJ%d",item.getInt("id")));
+                girdHolder.tvRjNumber.setText(String.format("RJ%d", item.getInt("id")));
                 girdHolder.tvDate.setText(item.getString("release"));
-                if(item.has(JSONConst.Work.HOST)){
+                if (item.has(JSONConst.Work.HOST)) {
                     girdHolder.tvHost.setVisibility(View.VISIBLE);
                     girdHolder.tvHost.setText(item.getString(JSONConst.Work.HOST));
-                }else {
+                } else {
                     girdHolder.tvHost.setVisibility(View.INVISIBLE);
                 }
             } catch (JSONException e) {
@@ -158,7 +155,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return datas.size();
     }
 
-    public static class SimpleViewHolder extends RecyclerView.ViewHolder{
+    public static class SimpleViewHolder extends RecyclerView.ViewHolder {
         private final ImageView ivCover;
         private final TextView tvTitle;
         private final TagsView<JSONArray> tvComArt;
@@ -174,7 +171,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
-    public static class GirdViewHolder extends RecyclerView.ViewHolder{
+    public static class GirdViewHolder extends RecyclerView.ViewHolder {
         private final ImageView ivCover;
         private final TextView tvTitle;
         private final TextView tvCom;
@@ -201,7 +198,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
-    public static class SmallGirdViewHolder extends RecyclerView.ViewHolder{
+    public static class SmallGirdViewHolder extends RecyclerView.ViewHolder {
         private ImageView ivCover;
         private TextView tvRjNumber;
         private TextView tvDate;

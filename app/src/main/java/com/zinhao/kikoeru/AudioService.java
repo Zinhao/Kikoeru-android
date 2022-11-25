@@ -170,7 +170,7 @@ public class AudioService extends Service {
                     mediaSession.getController().getTransportControls().pause();
                     isActionPause = true;
                 }
-            }else if(AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(action)){
+            } else if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(action)) {
                 mediaSession.getController().getTransportControls().pause();
                 isActionPause = true;
             }
@@ -186,20 +186,20 @@ public class AudioService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        mediaSession = new MediaSessionCompat(this,getClass().getSimpleName());
+        mediaSession = new MediaSessionCompat(this, getClass().getSimpleName());
         mediaSession.setCallback(callback);
         float[] position = App.getInstance().getPosition();
-        lrcWindowParams = makeFloatWindowParams(position[0],position[1]);
+        lrcWindowParams = makeFloatWindowParams(position[0], position[1]);
         mHandler = new Handler(getMainLooper());
         mediaPlayer = new ExoPlayer.Builder(this).build();
         mediaPlayer.addListener(new Player.Listener() {
             @Override
             public void onIsPlayingChanged(boolean isPlaying) {
-                Log.d(TAG, "onIsPlayingChanged: "+isPlaying);
+                Log.d(TAG, "onIsPlayingChanged: " + isPlaying);
                 ctrlBinder.musicChangeListeners.forEach(new Consumer<MusicChangeListener>() {
                     @Override
                     public void accept(MusicChangeListener listener) {
-                        listener.onStatusChange(mediaPlayer.isPlaying()?1:0);
+                        listener.onStatusChange(mediaPlayer.isPlaying() ? 1 : 0);
                     }
                 });
                 try {
@@ -211,24 +211,24 @@ public class AudioService extends Service {
 
             @Override
             public void onPlaybackStateChanged(int playbackState) {
-                Log.d(TAG, String.format("onPlaybackStateChanged:playbackState: %d ,index: %d",playbackState,mediaPlayer.getCurrentMediaItemIndex()));
-                if(ctrlBinder == null){
+                Log.d(TAG, String.format("onPlaybackStateChanged:playbackState: %d ,index: %d", playbackState, mediaPlayer.getCurrentMediaItemIndex()));
+                if (ctrlBinder == null) {
                     return;
                 }
                 ctrlBinder.musicChangeListeners.forEach(new Consumer<MusicChangeListener>() {
                     @Override
                     public void accept(MusicChangeListener listener) {
-                        listener.onStatusChange(mediaPlayer.isPlaying()?1:0);
+                        listener.onStatusChange(mediaPlayer.isPlaying() ? 1 : 0);
                     }
                 });
                 try {
-                    if(playbackState == Player.STATE_READY){
+                    if (playbackState == Player.STATE_READY) {
                         MediaMetadataCompat metadata = new MediaMetadataCompat.Builder()
                                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, (String) mediaPlayer.getMediaMetadata().title)
                                 .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, null)
                                 .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, (String) mediaPlayer.getMediaMetadata().artist)
                                 .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, null)
-                                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION,mediaPlayer.getDuration())
+                                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, mediaPlayer.getDuration())
                                 .build();
                         mediaSession.setMetadata(metadata);
                     }
@@ -240,7 +240,7 @@ public class AudioService extends Service {
 
             @Override
             public void onMediaMetadataChanged(@NonNull MediaMetadata mediaMetadata) {
-                Log.d(TAG, "onMediaMetadataChanged: "+mediaMetadata.title);
+                Log.d(TAG, "onMediaMetadataChanged: " + mediaMetadata.title);
                 ctrlBinder.current = ctrlBinder.playList.get(mediaPlayer.getCurrentMediaItemIndex());
 
                 MediaMetadataCompat metadata = new MediaMetadataCompat.Builder()
@@ -248,7 +248,7 @@ public class AudioService extends Service {
                         .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, null)
                         .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, null)
                         .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, null)
-                        .putLong(MediaMetadataCompat.METADATA_KEY_DURATION,mediaPlayer.getDuration())
+                        .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, mediaPlayer.getDuration())
                         .build();
                 mediaSession.setMetadata(metadata);
                 try {
@@ -260,9 +260,9 @@ public class AudioService extends Service {
                 try {
                     String path = ctrlBinder.current.getString(JSONConst.WorkTree.MAP_FILE_PATH);
                     File audioFile = new File(path);
-                    if(!LocalFileCache.getInstance().getLrcText(audioFile,ctrlBinder.lrcCallBack)){
+                    if (!LocalFileCache.getInstance().getLrcText(audioFile, ctrlBinder.lrcCallBack)) {
                         // Local lrc file not exist
-                        Api.checkLrc(ctrlBinder.current.getString(JSONConst.WorkTree.HASH),ctrlBinder.checkLrcCallBack);
+                        Api.checkLrc(ctrlBinder.current.getString(JSONConst.WorkTree.HASH), ctrlBinder.checkLrcCallBack);
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -278,10 +278,10 @@ public class AudioService extends Service {
 
             @Override
             public void onMetadata(@NonNull Metadata metadata) {
-                Log.d(TAG, "onMetadata: "+metadata.toString());
+                Log.d(TAG, "onMetadata: " + metadata.toString());
             }
         });
-        registerReceiver(headsetActionReceiver,headsetActionReceiver.intentFilter);
+        registerReceiver(headsetActionReceiver, headsetActionReceiver.intentFilter);
         ctrlBinder = new CtrlBinder();
         try {
             updateNotificationState();
@@ -290,7 +290,7 @@ public class AudioService extends Service {
         }
     }
 
-    private static WindowManager.LayoutParams makeFloatWindowParams(float x, float y){
+    private static WindowManager.LayoutParams makeFloatWindowParams(float x, float y) {
         WindowManager.LayoutParams params = new WindowManager.LayoutParams();
         params.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
         params.gravity = Gravity.START | Gravity.TOP;
@@ -309,68 +309,68 @@ public class AudioService extends Service {
 
     @SuppressLint("DefaultLocale")
     private void updateNotificationState() throws JSONException {
-        if(mediaPlayer.getPlaybackState() == Player.STATE_BUFFERING){
+        if (mediaPlayer.getPlaybackState() == Player.STATE_BUFFERING) {
             mediaSession.setActive(false);
             builder.setState(PlaybackStateCompat.STATE_PAUSED, mediaPlayer.getCurrentPosition(), 1);
-        }else if(mediaPlayer.isPlaying()){
+        } else if (mediaPlayer.isPlaying()) {
             mediaSession.setActive(true);
             builder.setState(PlaybackStateCompat.STATE_PLAYING, mediaPlayer.getCurrentPosition(), 1);
-        }else if(mediaPlayer.getPlaybackState() == Player.STATE_READY){
+        } else if (mediaPlayer.getPlaybackState() == Player.STATE_READY) {
             mediaSession.setActive(false);
             builder.setState(PlaybackStateCompat.STATE_PAUSED, mediaPlayer.getCurrentPosition(), 1);
-        }else {
+        } else {
             mediaSession.setActive(false);
             builder.setState(PlaybackStateCompat.STATE_STOPPED, mediaPlayer.getCurrentPosition(), 1);
         }
         builder.setActions(PlaybackStateCompat.ACTION_PLAY |
                 PlaybackStateCompat.ACTION_PLAY_PAUSE |
                 PlaybackStateCompat.ACTION_SKIP_TO_NEXT |
-                PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS|
-                PlaybackStateCompat.ACTION_STOP|
-                PlaybackStateCompat.ACTION_PAUSE|
+                PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
+                PlaybackStateCompat.ACTION_STOP |
+                PlaybackStateCompat.ACTION_PAUSE |
                 PlaybackStateCompat.ACTION_SEEK_TO |
                 PlaybackStateCompat.ACTION_SET_RATING);
         mediaSession.setPlaybackState(builder.build());
 
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this,App.ID_PLAY_SERVICE);
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, App.ID_PLAY_SERVICE);
         androidx.media.app.NotificationCompat.MediaStyle mediaStyle = new androidx.media.app.NotificationCompat.MediaStyle();
         mediaStyle.setShowActionsInCompactView(1);
         mediaStyle.setMediaSession(mediaSession.getSessionToken());
         notificationBuilder.setStyle(mediaStyle);
 
-        Intent previousIntent = new Intent(this,LrcFloatWindow.class);
+        Intent previousIntent = new Intent(this, LrcFloatWindow.class);
         previousIntent.setAction(ACTION_SHOW_LRC);
         previousIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         PendingIntent showLrcPendingIntent = PendingIntent.getActivity(this, 1, previousIntent, PendingIntent.FLAG_IMMUTABLE);
 
-        Intent playIntent = new Intent(this,AudioService.class);
+        Intent playIntent = new Intent(this, AudioService.class);
         playIntent.setAction(ACTION_PLAY);
         PendingIntent playPendingIntent = PendingIntent.getService(this, 2, playIntent, PendingIntent.FLAG_IMMUTABLE);
 
-        Intent pauseIntent = new Intent(this,AudioService.class);
+        Intent pauseIntent = new Intent(this, AudioService.class);
         pauseIntent.setAction(ACTION_PAUSE);
         PendingIntent pausePendingIntent = PendingIntent.getService(this, 3, pauseIntent, PendingIntent.FLAG_IMMUTABLE);
 
-        Intent nextIntent = new Intent(this,AudioService.class);
+        Intent nextIntent = new Intent(this, AudioService.class);
         nextIntent.setAction(ACTION_NEXT);
         PendingIntent nextPendingIntent = PendingIntent.getService(this, 4, nextIntent, PendingIntent.FLAG_IMMUTABLE);
 
-        notificationBuilder.addAction(R.drawable.ic_baseline_text_fields_24,"show lrc",showLrcPendingIntent);
-        if(mediaPlayer.isPlaying()){
-            notificationBuilder.addAction(R.drawable.ic_baseline_pause_24,"pause",pausePendingIntent);
-        }else {
-            notificationBuilder.addAction(R.drawable.ic_baseline_play_arrow_24,"play",playPendingIntent);
+        notificationBuilder.addAction(R.drawable.ic_baseline_text_fields_24, "show lrc", showLrcPendingIntent);
+        if (mediaPlayer.isPlaying()) {
+            notificationBuilder.addAction(R.drawable.ic_baseline_pause_24, "pause", pausePendingIntent);
+        } else {
+            notificationBuilder.addAction(R.drawable.ic_baseline_play_arrow_24, "play", playPendingIntent);
         }
-        notificationBuilder.addAction(R.drawable.ic_baseline_skip_next_24,"next",nextPendingIntent);
+        notificationBuilder.addAction(R.drawable.ic_baseline_skip_next_24, "next", nextPendingIntent);
         notificationBuilder.setCategory(NotificationCompat.CATEGORY_SERVICE);
         notificationBuilder.setSmallIcon(R.drawable.ic_baseline_audiotrack_24);
         notificationBuilder.setShowWhen(true);
         notificationBuilder.setColorized(true);
-        if(ctrlBinder.current !=null){
+        if (ctrlBinder.current != null) {
             notificationBuilder.setContentTitle(ctrlBinder.current.getString("title"));
             notificationBuilder.setContentText(ctrlBinder.current.getString("title"));
-            notificationBuilder.setContentIntent(PendingIntent.getActivity(this,0,new Intent(this, AudioPlayerActivity.class),PendingIntent.FLAG_IMMUTABLE));
-            Glide.with(this).asBitmap().load(Api.HOST+String.format("/api/cover/%d?type=sam&token=%s",ctrlBinder.currentAlbumId,Api.token)).into(new SimpleTarget<Bitmap>() {
+            notificationBuilder.setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, AudioPlayerActivity.class), PendingIntent.FLAG_IMMUTABLE));
+            Glide.with(this).asBitmap().load(Api.HOST + String.format("/api/cover/%d?type=sam&token=%s", ctrlBinder.currentAlbumId, Api.token)).into(new SimpleTarget<Bitmap>() {
                 @Override
                 public void onResourceReady(@NonNull Bitmap bitmap, @Nullable Transition<? super Bitmap> transition) {
                     notificationBuilder.setLargeIcon(bitmap);
@@ -385,7 +385,7 @@ public class AudioService extends Service {
                 }
             });
             notificationBuilder.setColor(Color.WHITE);
-        }else{
+        } else {
             notificationBuilder.setContentTitle("");
             notificationBuilder.setContentText("");
             startForeground(NOTIFICATION_ID, notificationBuilder.build());
@@ -394,22 +394,22 @@ public class AudioService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if(intent == null || intent.getAction() == null)
+        if (intent == null || intent.getAction() == null)
             return super.onStartCommand(intent, flags, startId);
-        Log.d(TAG, String.format("onStartCommand : flag: %d, startId: %d action:%s",flags,startId,intent.getAction()));
-        if(ACTION_NEXT.equals(intent.getAction())){
+        Log.d(TAG, String.format("onStartCommand : flag: %d, startId: %d action:%s", flags, startId, intent.getAction()));
+        if (ACTION_NEXT.equals(intent.getAction())) {
             mediaSession.getController().getTransportControls().skipToNext();
-        }else if(ACTION_PAUSE.equals(intent.getAction())){
+        } else if (ACTION_PAUSE.equals(intent.getAction())) {
             mediaSession.getController().getTransportControls().pause();
-        }else if(ACTION_PREVIOUS.equals(intent.getAction())){
+        } else if (ACTION_PREVIOUS.equals(intent.getAction())) {
             mediaSession.getController().getTransportControls().skipToPrevious();
-        }else if(ACTION_PLAY.equals(intent.getAction())){
+        } else if (ACTION_PLAY.equals(intent.getAction())) {
             mediaSession.getController().getTransportControls().play();
         }
         return super.onStartCommand(intent, flags, startId);
     }
 
-    private void alertException(Exception e){
+    private void alertException(Exception e) {
         App.getInstance().alertException(e);
     }
 
@@ -427,6 +427,7 @@ public class AudioService extends Service {
     }
 
     private CtrlBinder ctrlBinder;
+
     public class CtrlBinder extends Binder implements Closeable {
         private final List<JSONObject> playList = new ArrayList<>();
         private JSONObject current;
@@ -442,11 +443,11 @@ public class AudioService extends Service {
         private AsyncHttpClient.JSONObjectCallback lastPlayListCallback = new AsyncHttpClient.JSONObjectCallback() {
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
-                if(e!= null){
+                if (e != null) {
                     alertException(e);
                     return;
                 }
-                if(asyncHttpResponse.code() == 200){
+                if (asyncHttpResponse.code() == 200) {
                     JSONArray jsonArray = null;
                     List<JSONObject> lastPlayList = new ArrayList<>();
                     try {
@@ -454,7 +455,7 @@ public class AudioService extends Service {
                         for (int i = 0; i < jsonArray.length(); i++) {
                             lastPlayList.add(jsonArray.getJSONObject(i));
                         }
-                        if(lastPlayList.size()!=0){
+                        if (lastPlayList.size() != 0) {
                             mHandler.post(new Runnable() {
                                 @Override
                                 public void run() {
@@ -462,8 +463,8 @@ public class AudioService extends Service {
                                     try {
                                         int index = jsonObject.getInt(JSONConst.LastPlayList.INDEX);
                                         long seek = jsonObject.getLong(JSONConst.LastPlayList.SEEK);
-                                        play(lastPlayList,index);
-                                        if(seek!= 0){
+                                        play(lastPlayList, index);
+                                        if (seek != 0) {
                                             getController().getTransportControls().seekTo(seek);
                                         }
                                         getController().getTransportControls().pause();
@@ -485,7 +486,7 @@ public class AudioService extends Service {
 
         public CtrlBinder() {
             mLrcUpdateTimer = new Timer();
-            LocalFileCache.getInstance().readLastPlayList(AudioService.this,lastPlayListCallback);
+            LocalFileCache.getInstance().readLastPlayList(AudioService.this, lastPlayListCallback);
             mLrcUpdateTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
@@ -497,13 +498,13 @@ public class AudioService extends Service {
                         }
                     });
                 }
-            },0,500);
+            }, 0, 500);
             updateLrcTask = new Runnable() {
                 @Override
                 public void run() {
-                    if(mediaPlayer!=null && mediaPlayer.isPlaying()){
+                    if (mediaPlayer != null && mediaPlayer.isPlaying()) {
                         ctrlBinder.mLrc.update(mediaPlayer.getCurrentPosition());
-                        if(lrcView instanceof TextView){
+                        if (lrcView instanceof TextView) {
                             ((TextView) lrcView).setText(mLrc.getCurrent().content);
                         }
                     }
@@ -513,10 +514,10 @@ public class AudioService extends Service {
                 @Override
                 public void run() {
                     MediaControllerCompat controllerCompat = getController();
-                    if(controllerCompat == null)
+                    if (controllerCompat == null)
                         return;
                     MediaControllerCompat.TransportControls transportControls = controllerCompat.getTransportControls();
-                    if(transportControls == null)
+                    if (transportControls == null)
                         return;
                     Log.d(TAG, "run: is time to Stop!");
                     transportControls.stop();
@@ -524,19 +525,19 @@ public class AudioService extends Service {
             };
         }
 
-        public void stopAfterMinutes(int minute){
+        public void stopAfterMinutes(int minute) {
             mHandler.removeCallbacks(stopTask);
-            mHandler.postDelayed(stopTask,minute*60*1000L);
-            NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(AudioService.this,App.ID_PLAY_SERVICE);
+            mHandler.postDelayed(stopTask, minute * 60 * 1000L);
+            NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(AudioService.this, App.ID_PLAY_SERVICE);
             notificationBuilder.setCategory(NotificationCompat.CATEGORY_STATUS);
             notificationBuilder.setSmallIcon(R.drawable.ic_baseline_audiotrack_24);
             notificationBuilder.setContentTitle("delay stop");
             notificationBuilder.setAutoCancel(true);
             Calendar calendar = Calendar.getInstance();
-            calendar.add(Calendar.MINUTE,minute);
+            calendar.add(Calendar.MINUTE, minute);
             notificationBuilder.setContentText(SSDF.format(new Date(calendar.getTimeInMillis())));
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
-            notificationManager.notify(NOTIFICATION_ID_CLOSE_DELAY,notificationBuilder.build());
+            notificationManager.notify(NOTIFICATION_ID_CLOSE_DELAY, notificationBuilder.build());
         }
 
         public boolean isLrcWindowShow() {
@@ -559,20 +560,20 @@ public class AudioService extends Service {
 
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject lrcResult) {
-                if(e!=null){
+                if (e != null) {
                     mLrc = Lrc.NONE;
                     alertException(e);
                     return;
                 }
-                if(lrcResult == null){
+                if (lrcResult == null) {
                     mLrc = Lrc.NONE;
                     return;
                 }
                 try {
                     boolean exist = lrcResult.getBoolean("result");
-                    if(exist){
-                        Api.doGetMediaString(lrcResult.getString(JSONConst.WorkTree.HASH),lrcCallBack);
-                    }else{
+                    if (exist) {
+                        Api.doGetMediaString(lrcResult.getString(JSONConst.WorkTree.HASH), lrcCallBack);
+                    } else {
                         mLrc = Lrc.NONE;
                     }
                 } catch (JSONException jsonException) {
@@ -585,59 +586,59 @@ public class AudioService extends Service {
         private AsyncHttpClient.StringCallback lrcCallBack = new AsyncHttpClient.StringCallback() {
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, String s) {
-                if(e != null){
+                if (e != null) {
                     mLrc = Lrc.NONE;
                     alertException(e);
                     return;
                 }
-                if(asyncHttpResponse == null){
+                if (asyncHttpResponse == null) {
                     return;
                 }
-                if(asyncHttpResponse.code() == 200){
+                if (asyncHttpResponse.code() == 200) {
                     mLrc = new Lrc(s);
-                }else {
+                } else {
                     mLrc = Lrc.NONE;
-                    Log.e(TAG, "onCompleted: "+asyncHttpResponse.code());
+                    Log.e(TAG, "onCompleted: " + asyncHttpResponse.code());
                 }
             }
         };
 
-        public ExoPlayer getExoPlayer(){
+        public ExoPlayer getExoPlayer() {
             return mediaPlayer;
         }
 
         private final List<MusicChangeListener> musicChangeListeners = new ArrayList<>();
         private final List<LrcRowChangeListener> lrcRowChangeListeners = new ArrayList<>();
 
-        public MediaControllerCompat getController(){
+        public MediaControllerCompat getController() {
             return mediaSession.getController();
         }
 
-        public void addMusicChangeListener(MusicChangeListener listener){
+        public void addMusicChangeListener(MusicChangeListener listener) {
             musicChangeListeners.add(listener);
-            if(current != null)
+            if (current != null)
                 updateLastBottomView(listener);
         }
 
-        public boolean equalsCurrentPlay(String lrcTitle,int workId){
-            if(workId != currentAlbumId){
+        public boolean equalsCurrentPlay(String lrcTitle, int workId) {
+            if (workId != currentAlbumId) {
                 return false;
             }
-            if(lrcTitle == null)
+            if (lrcTitle == null)
                 return false;
-            if(!lrcTitle.toLowerCase(Locale.ROOT).endsWith(".lrc"))
+            if (!lrcTitle.toLowerCase(Locale.ROOT).endsWith(".lrc"))
                 return false;
-            if(current == null)
+            if (current == null)
                 return false;
             try {
                 String musicTitle = current.getString("title");
-                if(musicTitle.isEmpty())
+                if (musicTitle.isEmpty())
                     return false;
-                if(!musicTitle.contains("."))
+                if (!musicTitle.contains("."))
                     return false;
-                String beforeLrcTitle = lrcTitle.substring(0,lrcTitle.lastIndexOf('.'));
-                String beforeMusicTitle =  musicTitle.substring(0,musicTitle.lastIndexOf('.'));
-                return  beforeLrcTitle.equals(beforeMusicTitle);
+                String beforeLrcTitle = lrcTitle.substring(0, lrcTitle.lastIndexOf('.'));
+                String beforeMusicTitle = musicTitle.substring(0, musicTitle.lastIndexOf('.'));
+                return beforeLrcTitle.equals(beforeMusicTitle);
             } catch (JSONException e) {
                 e.printStackTrace();
                 alertException(e);
@@ -645,15 +646,15 @@ public class AudioService extends Service {
             return false;
         }
 
-        public void removeMusicChangeListener(MusicChangeListener listener){
+        public void removeMusicChangeListener(MusicChangeListener listener) {
             musicChangeListeners.remove(listener);
         }
 
-        public void addLrcRowChangeListener(LrcRowChangeListener listener){
+        public void addLrcRowChangeListener(LrcRowChangeListener listener) {
             lrcRowChangeListeners.add(listener);
         }
 
-        public void removeLrcRowChangeListener(LrcRowChangeListener listener){
+        public void removeLrcRowChangeListener(LrcRowChangeListener listener) {
             lrcRowChangeListeners.remove(listener);
         }
 
@@ -668,7 +669,7 @@ public class AudioService extends Service {
         }
 
         public void play(List<JSONObject> playList, int index) throws JSONException {
-            if(playList.size() ==0)
+            if (playList.size() == 0)
                 return;
             this.playList.clear();
             this.playList.addAll(playList);
@@ -683,13 +684,13 @@ public class AudioService extends Service {
                 JSONObject music = playList.get(i);
                 String path = music.getString(JSONConst.WorkTree.MAP_FILE_PATH);
                 File audioFile = new File(path);
-                if(audioFile.exists()){
+                if (audioFile.exists()) {
                     builder.setUri(Uri.fromFile(audioFile));
-                }else {
-                    path =music.getString(JSONConst.WorkTree.MEDIA_STREAM_URL);
-                    if(path.startsWith("http")){
+                } else {
+                    path = music.getString(JSONConst.WorkTree.MEDIA_STREAM_URL);
+                    if (path.startsWith("http")) {
                         path = path + "?token=" + Api.token;
-                    }else {
+                    } else {
                         path = Api.HOST + path + "?token=" + Api.token;
                     }
                     builder.setUri(path);
@@ -702,7 +703,7 @@ public class AudioService extends Service {
 
                 mediaItemList.add(mediaItem);
             }
-            mediaPlayer.setMediaItems(mediaItemList,index,0);
+            mediaPlayer.setMediaItems(mediaItemList, index, 0);
             mediaPlayer.prepare();
             mediaPlayer.play();
         }
@@ -715,15 +716,15 @@ public class AudioService extends Service {
             return currentAlbumId;
         }
 
-        public Lrc getLrc(){
+        public Lrc getLrc() {
             return mLrc;
         }
 
-        public WindowManager.LayoutParams getLrcWindowParams(){
+        public WindowManager.LayoutParams getLrcWindowParams() {
             return lrcWindowParams;
         }
 
-        public View getLrcFloatView(){
+        public View getLrcFloatView() {
             return lrcView;
         }
 
@@ -731,55 +732,55 @@ public class AudioService extends Service {
             this.lrcView = lrcView;
         }
 
-        public void showOrHideLrcFloatWindow(){
-            if(!lrcWindowShow){
+        public void showOrHideLrcFloatWindow() {
+            if (!lrcWindowShow) {
                 lrcWindowShow = true;
                 windowManager.addView(lrcView, lrcWindowParams);
-            }else {
+            } else {
                 lrcWindowShow = false;
                 windowManager.removeView(lrcView);
             }
         }
 
-        public void hideLrcFloatWindow(){
-            if(!lrcWindowShow){
-                if(lrcView != null)
+        public void hideLrcFloatWindow() {
+            if (!lrcWindowShow) {
+                if (lrcView != null)
                     windowManager.removeView(lrcView);
             }
             lrcWindowShow = false;
         }
 
-        public void setReapAll(){
+        public void setReapAll() {
             mediaPlayer.setRepeatMode(Player.REPEAT_MODE_ALL);
         }
 
-        public void setReapOne(){
+        public void setReapOne() {
             mediaPlayer.setRepeatMode(Player.REPEAT_MODE_ONE);
         }
 
-        public void setReapOff(){
+        public void setReapOff() {
             mediaPlayer.setRepeatMode(Player.REPEAT_MODE_OFF);
         }
 
-        public int getReapMode(){
+        public int getReapMode() {
             return mediaPlayer.getRepeatMode();
         }
 
         public String getCurrentTitle() throws JSONException {
-            if(current == null)
+            if (current == null)
                 return "";
             return current.getString("title");
         }
 
         public String getCurrentWorkTitle() throws JSONException {
-            if(current == null)
+            if (current == null)
                 return "";
             return current.getString("workTitle");
         }
 
-        private void updateLastBottomView(MusicChangeListener listener){
+        private void updateLastBottomView(MusicChangeListener listener) {
             listener.onAlbumChange(currentAlbumId);
-            listener.onStatusChange(mediaPlayer.isPlaying()?1:0);
+            listener.onStatusChange(mediaPlayer.isPlaying() ? 1 : 0);
             listener.onAudioChange(current);
         }
 
@@ -789,12 +790,12 @@ public class AudioService extends Service {
             mLrcUpdateTimer.cancel();
             long seek = 0;
             PlaybackStateCompat playbackStateCompat = getController().getPlaybackState();
-            if(playbackStateCompat != null){
-                if(playbackStateCompat.getState() != PlaybackStateCompat.STATE_STOPPED){
+            if (playbackStateCompat != null) {
+                if (playbackStateCompat.getState() != PlaybackStateCompat.STATE_STOPPED) {
                     seek = getExoPlayer().getCurrentPosition();
                     getController().getTransportControls().stop();
                 }
-                LocalFileCache.getInstance().savePlayList(AudioService.this,playList,currentIndex,seek);
+                LocalFileCache.getInstance().savePlayList(AudioService.this, playList, currentIndex, seek);
             }
 
         }

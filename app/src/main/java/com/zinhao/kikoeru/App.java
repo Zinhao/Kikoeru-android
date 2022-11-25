@@ -39,6 +39,7 @@ public class App extends Application implements Application.ActivityLifecycleCal
     public static App getInstance() {
         return instance;
     }
+
     private boolean saveExternal = false;
     private boolean appDebug = false;
 
@@ -54,7 +55,7 @@ public class App extends Application implements Application.ActivityLifecycleCal
 
     public void setAppDebug(boolean appDebug) {
         this.appDebug = appDebug;
-        setValue(CONFIG_DEBUG,appDebug?1:0);
+        setValue(CONFIG_DEBUG, appDebug ? 1 : 0);
     }
 
     public boolean isAppDebug() {
@@ -67,7 +68,7 @@ public class App extends Application implements Application.ActivityLifecycleCal
 
     public void setSaveExternal(boolean saveExternal) {
         this.saveExternal = saveExternal;
-        setValue(CONFIG_SAVE_EXTERNAL,saveExternal?1:0);
+        setValue(CONFIG_SAVE_EXTERNAL, saveExternal ? 1 : 0);
     }
 
     public long getCurrentUserId() {
@@ -86,15 +87,16 @@ public class App extends Application implements Application.ActivityLifecycleCal
     public void onCreate() {
         super.onCreate();
         instance = this;
-        helper = new DaoMaster.OpenHelper(App.instance, "app.db") {};
+        helper = new DaoMaster.OpenHelper(App.instance, "app.db") {
+        };
         SQLiteDatabase database = helper.getWritableDatabase();
         DaoMaster daoMaster = new DaoMaster(database);
         DaoSession daoSession = daoMaster.newSession();
         userDao = daoSession.getUserDao();
 
-        currentUserId = getValue(App.CONFIG_USER_DATABASE_ID,-1);
-        appDebug = getValue(App.CONFIG_DEBUG,0) == 1;
-        saveExternal = getValue(App.CONFIG_SAVE_EXTERNAL,0) == 1;
+        currentUserId = getValue(App.CONFIG_USER_DATABASE_ID, -1);
+        appDebug = getValue(App.CONFIG_DEBUG, 0) == 1;
+        saveExternal = getValue(App.CONFIG_SAVE_EXTERNAL, 0) == 1;
         getAllUsers();
         defaultPic = new RequestOptions().placeholder(R.drawable.ic_no_cover).apply(RequestOptions.bitmapTransform(new RoundedCorners(10)));
 
@@ -111,88 +113,88 @@ public class App extends Application implements Application.ActivityLifecycleCal
         notificationManager.createNotificationChannel(channelMusicService);
     }
 
-    public void alertException(Exception e){
-        if(activities.size() ==0)
+    public void alertException(Exception e) {
+        if (activities.size() == 0)
             return;
-        Activity activity = activities.get(activities.size()-1);
-        if(activity == null){
+        Activity activity = activities.get(activities.size() - 1);
+        if (activity == null) {
             return;
         }
-        if(activity instanceof BaseActivity){
+        if (activity instanceof BaseActivity) {
             ((BaseActivity) activity).alertException(e);
         }
     }
 
     public static JSONArray getTagsList(JSONObject jsonObject) throws JSONException {
-        return  jsonObject.getJSONArray("tags");
+        return jsonObject.getJSONArray("tags");
     }
 
     public static JSONArray getVasList(JSONObject jsonObject) throws JSONException {
-        return  jsonObject.getJSONArray("vas");
+        return jsonObject.getJSONArray("vas");
     }
 
-    public void setValue(String key, String value){
-        SharedPreferences sharedPreferences = getSharedPreferences(CONFIG_FILE_NAME,MODE_PRIVATE);
+    public void setValue(String key, String value) {
+        SharedPreferences sharedPreferences = getSharedPreferences(CONFIG_FILE_NAME, MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString(key,value);
+        editor.putString(key, value);
         editor.apply();
     }
 
-    public void setValue(String key, long value){
-        SharedPreferences sharedPreferences = getSharedPreferences(CONFIG_FILE_NAME,MODE_PRIVATE);
+    public void setValue(String key, long value) {
+        SharedPreferences sharedPreferences = getSharedPreferences(CONFIG_FILE_NAME, MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putLong(key,value);
+        editor.putLong(key, value);
         editor.apply();
     }
 
-    public String getValue(String key,String def){
-        SharedPreferences sharedPreferences = getSharedPreferences(CONFIG_FILE_NAME,MODE_PRIVATE);
-        return sharedPreferences.getString(key,def);
+    public String getValue(String key, String def) {
+        SharedPreferences sharedPreferences = getSharedPreferences(CONFIG_FILE_NAME, MODE_PRIVATE);
+        return sharedPreferences.getString(key, def);
     }
 
-    public long getValue(String key,long def){
-        SharedPreferences sharedPreferences = getSharedPreferences(CONFIG_FILE_NAME,MODE_PRIVATE);
-        return sharedPreferences.getLong(key,def);
+    public long getValue(String key, long def) {
+        SharedPreferences sharedPreferences = getSharedPreferences(CONFIG_FILE_NAME, MODE_PRIVATE);
+        return sharedPreferences.getLong(key, def);
     }
 
-    public void savePosition(float x,float y){
-        SharedPreferences sharedPreferences = getSharedPreferences(CONFIG_FILE_NAME,MODE_PRIVATE);
+    public void savePosition(float x, float y) {
+        SharedPreferences sharedPreferences = getSharedPreferences(CONFIG_FILE_NAME, MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putFloat("WINDOW_X",x);
-        editor.putFloat("WINDOW_Y",y);
+        editor.putFloat("WINDOW_X", x);
+        editor.putFloat("WINDOW_Y", y);
         editor.apply();
     }
 
-    public float[] getPosition(){
+    public float[] getPosition() {
         float[] position = new float[2];
-        SharedPreferences sharedPreferences = getSharedPreferences(CONFIG_FILE_NAME,MODE_PRIVATE);
-        position[0] = sharedPreferences.getFloat("WINDOW_X",145);
-        position[1] = sharedPreferences.getFloat("WINDOW_Y",160);
+        SharedPreferences sharedPreferences = getSharedPreferences(CONFIG_FILE_NAME, MODE_PRIVATE);
+        position[0] = sharedPreferences.getFloat("WINDOW_X", 145);
+        position[1] = sharedPreferences.getFloat("WINDOW_Y", 160);
         return position;
     }
 
-    public long insertUser(User user){
+    public long insertUser(User user) {
         allUsers.add(user);
         currentUserId = userDao.insert(user);
         return currentUserId;
     }
 
-    public void deleteUser(User user){
+    public void deleteUser(User user) {
         allUsers.remove(user);
         userDao.delete(user);
     }
 
-    public void updateUser(User user){
+    public void updateUser(User user) {
         userDao.update(user);
     }
 
     public List<User> getAllUsers() {
-        if(allUsers == null)
+        if (allUsers == null)
             allUsers = userDao.loadAll();
         return allUsers;
     }
 
-    public User currentUser(){
+    public User currentUser() {
         for (User user : allUsers) {
             if (user.getId().equals(currentUserId)) {
                 return user;
@@ -234,7 +236,7 @@ public class App extends Application implements Application.ActivityLifecycleCal
     @Override
     public void onActivityDestroyed(@NonNull Activity activity) {
         activities.remove(activity);
-        if(activities.isEmpty()){
+        if (activities.isEmpty()) {
             helper.close();
         }
     }

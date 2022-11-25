@@ -29,8 +29,8 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == REQUEST_WRITE_READ_CODE){
-            if(activityResultCallBack!=null){
+        if (requestCode == REQUEST_WRITE_READ_CODE) {
+            if (activityResultCallBack != null) {
                 activityResultCallBack.run();
                 activityResultCallBack = null;
             }
@@ -40,8 +40,8 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if(requestCode == REQUEST_WRITE_READ_CODE){
-            if(activityResultCallBack!=null){
+        if (requestCode == REQUEST_WRITE_READ_CODE) {
+            if (activityResultCallBack != null) {
                 activityResultCallBack.run();
                 activityResultCallBack = null;
             }
@@ -52,12 +52,13 @@ public class BaseActivity extends AppCompatActivity {
 
     /**
      * 请求读写权限
+     *
      * @param callback 对话框被关闭时回调 或者 获取权限成功回调
      * @return
      */
-    protected boolean requestReadWriteExternalPermission(Runnable callback){
+    protected boolean requestReadWriteExternalPermission(Runnable callback) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if(!Environment.isExternalStorageManager()){
+            if (!Environment.isExternalStorageManager()) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle("Tip");
                 builder.setMessage("存储到自定义外部目录，即使应用被删除，你缓存的内容也不会被删除，检测到权限未打开，需要权限。");
@@ -65,7 +66,7 @@ public class BaseActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         Intent intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
-                        startActivityForResult(intent,REQUEST_WRITE_READ_CODE);
+                        startActivityForResult(intent, REQUEST_WRITE_READ_CODE);
                         dialog.dismiss();
                         activityResultCallBack = callback;
                     }
@@ -79,29 +80,29 @@ public class BaseActivity extends AppCompatActivity {
                 builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
                     public void onDismiss(DialogInterface dialog) {
-                        if(callback!= null)
+                        if (callback != null)
                             callback.run();
                     }
                 });
                 builder.create().show();
                 return false;
-            }else {
+            } else {
                 return true;
             }
-        }else {
-            if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED){
-                ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},REQUEST_WRITE_READ_CODE);
+        } else {
+            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_WRITE_READ_CODE);
                 activityResultCallBack = callback;
                 return false;
-            }else {
+            } else {
                 return true;
             }
 
         }
     }
 
-    protected void alertException(Exception e){
-        if(!App.getInstance().isAppDebug() || isDestroyed()){
+    protected void alertException(Exception e) {
+        if (!App.getInstance().isAppDebug() || isDestroyed()) {
             return;
         }
         runOnUiThread(new Runnable() {
@@ -110,7 +111,7 @@ public class BaseActivity extends AppCompatActivity {
                 AlertDialog.Builder builder = new AlertDialog.Builder(BaseActivity.this);
                 builder.setTitle(e.getClass().getSimpleName());
                 StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append(String.format("%s: %s",e.getClass().getSimpleName(),e.getMessage())).append('\n');
+                stringBuilder.append(String.format("%s: %s", e.getClass().getSimpleName(), e.getMessage())).append('\n');
                 Arrays.stream(e.getStackTrace()).forEach(new Consumer<StackTraceElement>() {
                     @Override
                     public void accept(StackTraceElement stackTraceElement) {
@@ -125,8 +126,8 @@ public class BaseActivity extends AppCompatActivity {
         });
     }
 
-    protected void alertMessage(AppMessage e){
-        if(!App.getInstance().isAppDebug() || isDestroyed()){
+    protected void alertMessage(AppMessage e) {
+        if (!App.getInstance().isAppDebug() || isDestroyed()) {
             return;
         }
         runOnUiThread(new Runnable() {

@@ -6,12 +6,11 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.Settings;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 
-public class MoreActivity extends BaseActivity implements CompoundButton.OnCheckedChangeListener{
+public class MoreActivity extends BaseActivity implements CompoundButton.OnCheckedChangeListener {
     private View itemOnlyLoadLrc;
     private CheckBox cbOnlyLrcWork;
 
@@ -24,6 +23,7 @@ public class MoreActivity extends BaseActivity implements CompoundButton.OnCheck
 
     private View itemDebug;
     private CheckBox cbDebug;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,7 +37,7 @@ public class MoreActivity extends BaseActivity implements CompoundButton.OnCheck
             }
         });
         cbOnlyLrcWork = findViewById(R.id.checkBox);
-        long onlyLrcFlag = App.getInstance().getValue(App.CONFIG_ONLY_DISPLAY_LRC,1);
+        long onlyLrcFlag = App.getInstance().getValue(App.CONFIG_ONLY_DISPLAY_LRC, 1);
         cbOnlyLrcWork.setChecked(onlyLrcFlag == 1);
         cbOnlyLrcWork.setOnCheckedChangeListener(this);
 
@@ -52,11 +52,11 @@ public class MoreActivity extends BaseActivity implements CompoundButton.OnCheck
         cbSaveExternal.setChecked(App.getInstance().isSaveExternal());
         cbSaveExternal.setOnCheckedChangeListener(this);
 
-        vLicense= findViewById(R.id.license);
+        vLicense = findViewById(R.id.license);
         vLicense.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(MoreActivity.this,LicenseActivity.class));
+                startActivity(new Intent(MoreActivity.this, LicenseActivity.class));
             }
         });
 
@@ -64,7 +64,7 @@ public class MoreActivity extends BaseActivity implements CompoundButton.OnCheck
         vAbout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(MoreActivity.this,AboutActivity.class));
+                startActivity(new Intent(MoreActivity.this, AboutActivity.class));
             }
         });
 
@@ -83,46 +83,46 @@ public class MoreActivity extends BaseActivity implements CompoundButton.OnCheck
 
     @Override
     public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-        if(compoundButton == cbOnlyLrcWork){
-            long value = b ? 1:0;
-            App.getInstance().setValue(App.CONFIG_ONLY_DISPLAY_LRC,value);
+        if (compoundButton == cbOnlyLrcWork) {
+            long value = b ? 1 : 0;
+            App.getInstance().setValue(App.CONFIG_ONLY_DISPLAY_LRC, value);
             Api.setSubtitle((int) value);
         }
 
-        if(compoundButton == cbDebug){
+        if (compoundButton == cbDebug) {
             App.getInstance().setAppDebug(b);
         }
 
-        if(cbSaveExternal == compoundButton){
-            if(b){
+        if (cbSaveExternal == compoundButton) {
+            if (b) {
                 boolean result = requestReadWriteExternalPermission(new Runnable() {
                     @Override
                     public void run() {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            if(!Environment.isExternalStorageManager()){
-                                if(cbSaveExternal.isChecked()){
+                            if (!Environment.isExternalStorageManager()) {
+                                if (cbSaveExternal.isChecked()) {
                                     cbSaveExternal.toggle();
                                 }
                                 return;
                             }
-                        }else {
-                            if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED){
-                                if(cbSaveExternal.isChecked()){
+                        } else {
+                            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
+                                if (cbSaveExternal.isChecked()) {
                                     cbSaveExternal.toggle();
                                 }
                                 return;
                             }
                         }
                         App.getInstance().setSaveExternal(true);
-                        if(!cbSaveExternal.isChecked()){
+                        if (!cbSaveExternal.isChecked()) {
                             cbSaveExternal.toggle();
                         }
                     }
                 });
-                if(result){
+                if (result) {
                     App.getInstance().setSaveExternal(true);
                 }
-            }else {
+            } else {
                 App.getInstance().setSaveExternal(false);
             }
         }

@@ -19,7 +19,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.ListPopupWindow;
 import androidx.core.app.ActivityCompat;
-import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -36,7 +35,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class WorksActivity extends BaseActivity implements MusicChangeListener,ServiceConnection,TagsView.TagClickListener<JSONObject> {
+public class WorksActivity extends BaseActivity implements MusicChangeListener, ServiceConnection, TagsView.TagClickListener<JSONObject> {
     private static final String TAG = "MainActivity";
     private RecyclerView recyclerView;
     private WorkAdapter workAdapter;
@@ -55,8 +54,8 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
     private ImageButton ibStatus;
     private int tagId = -1;
     private String tagStr = "";
-    private String vaId  = "";
-    private String vaName= "";
+    private String vaId = "";
+    private String vaName = "";
 
     private static final int TYPE_ALL_WORK = 491;
     private static final int TYPE_SELF_LISTENING = 492;
@@ -75,6 +74,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
 
     private ListPopupWindow progressMenu;
     private ListPopupWindow moreMenu;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,16 +88,15 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         ImageButton bt1 = findViewById(R.id.bt1);
         ImageButton bt2 = findViewById(R.id.bt2);
         ImageButton bt3 = findViewById(R.id.bt3);
-        dividerItemDecoration =  new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
-        startForegroundService(new Intent(this,AudioService.class));
-        bindService(new Intent(this, AudioService.class), this,BIND_AUTO_CREATE);
-        outAnim = AnimationUtils.loadAnimation(this,R.anim.move_bottom_out);
-        inAnim = AnimationUtils.loadAnimation(this,R.anim.move_bottom_in);
+        startForegroundService(new Intent(this, AudioService.class));
+        bindService(new Intent(this, AudioService.class), this, BIND_AUTO_CREATE);
+        outAnim = AnimationUtils.loadAnimation(this, R.anim.move_bottom_out);
+        inAnim = AnimationUtils.loadAnimation(this, R.anim.move_bottom_in);
         scrollListener = new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-                if(works.size()>=totalCount){
+                if (works.size() >= totalCount) {
                     return;
                 }
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
@@ -131,7 +130,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         progressMenu.setAnchorView(bt2);
         progressMenu.setOnItemClickListener((parent, view, position, id) -> {
             progressMenu.dismiss();
-            switch (position){
+            switch (position) {
                 case 0:
                     type = TYPE_SELF_MARKED;
                     break;
@@ -162,12 +161,12 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         moreMenu.setAnchorView(bt3);
         moreMenu.setOnItemClickListener((parent, view, position, id) -> {
             moreMenu.dismiss();
-            switch (position){
+            switch (position) {
                 case 0:
-                    startActivityForResult(new Intent(view.getContext(),VasActivity.class),VA_SELECT_RESULT);
+                    startActivityForResult(new Intent(view.getContext(), VasActivity.class), VA_SELECT_RESULT);
                     break;
                 case 1:
-                    startActivityForResult(new Intent(view.getContext(),TagsActivity.class),TAG_SELECT_RESULT);
+                    startActivityForResult(new Intent(view.getContext(), TagsActivity.class), TAG_SELECT_RESULT);
                     break;
                 case 2:
                     type = TYPE_LOCAL_WORK;
@@ -179,8 +178,8 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         bt3.setOnClickListener(v -> moreMenu.show());
     }
 
-    private void toggleBottom(){
-        if (shouldShowAnim && bottomLayout.getVisibility() == View.VISIBLE){
+    private void toggleBottom() {
+        if (shouldShowAnim && bottomLayout.getVisibility() == View.VISIBLE) {
             shouldShowAnim = false;
             bottomLayout.startAnimation(outAnim);
             bottomLayout.postDelayed(new Runnable() {
@@ -189,8 +188,8 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
                     bottomLayout.setVisibility(View.GONE);
                     shouldShowAnim = true;
                 }
-            },outAnim.getDuration());
-        }else if(shouldShowAnim && bottomLayout.getVisibility() == View.GONE){
+            }, outAnim.getDuration());
+        } else if (shouldShowAnim && bottomLayout.getVisibility() == View.GONE) {
             shouldShowAnim = false;
             bottomLayout.setVisibility(View.VISIBLE);
             bottomLayout.startAnimation(inAnim);
@@ -199,39 +198,39 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
                 public void run() {
                     shouldShowAnim = true;
                 }
-            },inAnim.getDuration());
+            }, inAnim.getDuration());
         }
     }
 
     public void reloadRecycleView() {
-        if(type == TYPE_ALL_WORK){
+        if (type == TYPE_ALL_WORK) {
             setTitle(getString(R.string.app_name));
-            Api.doGetWorks(page,apisCallback);
-        }else if(type == TYPE_SELF_LISTENING){
+            Api.doGetWorks(page, apisCallback);
+        } else if (type == TYPE_SELF_LISTENING) {
             setTitle(R.string.listening);
-            Api.doGetReview(Api.FILTER_LISTENING,page,apisCallback);
-        }else if(type == TYPE_SELF_LISTENED){
+            Api.doGetReview(Api.FILTER_LISTENING, page, apisCallback);
+        } else if (type == TYPE_SELF_LISTENED) {
             setTitle(R.string.listened);
-            Api.doGetReview(Api.FILTER_LISTENED,page,apisCallback);
-        }else if(type == TYPE_SELF_MARKED){
+            Api.doGetReview(Api.FILTER_LISTENED, page, apisCallback);
+        } else if (type == TYPE_SELF_MARKED) {
             setTitle(R.string.marked);
-            Api.doGetReview(Api.FILTER_MARKED,page,apisCallback);
-        }else if(type == TYPE_SELF_REPLAY){
+            Api.doGetReview(Api.FILTER_MARKED, page, apisCallback);
+        } else if (type == TYPE_SELF_REPLAY) {
             setTitle(R.string.replay);
-            Api.doGetReview(Api.FILTER_REPLAY,page,apisCallback);
-        }else if(type == TYPE_SELF_POSTPONED){
+            Api.doGetReview(Api.FILTER_REPLAY, page, apisCallback);
+        } else if (type == TYPE_SELF_POSTPONED) {
             setTitle(R.string.postponed);
-            Api.doGetReview(Api.FILTER_POSTPONED,page,apisCallback);
-        }else if(type == TYPE_TAG_WORK){
+            Api.doGetReview(Api.FILTER_POSTPONED, page, apisCallback);
+        } else if (type == TYPE_TAG_WORK) {
             setTitle(tagStr);
-            Api.doGetWorksByTag(page,tagId,apisCallback);
-        }else if(type == TYPE_VA_WORK){
+            Api.doGetWorksByTag(page, tagId, apisCallback);
+        } else if (type == TYPE_VA_WORK) {
             setTitle(vaName);
-            Api.doGetWorkByVa(page,vaId,apisCallback);
-        }else if(type == TYPE_LOCAL_WORK){
-            setTitle(String.format("%s",App.getInstance().isSaveExternal()?"外部公共目录":"内部私有目录"));
+            Api.doGetWorkByVa(page, vaId, apisCallback);
+        } else if (type == TYPE_LOCAL_WORK) {
+            setTitle(String.format("%s", App.getInstance().isSaveExternal() ? "外部公共目录" : "内部私有目录"));
             try {
-                LocalFileCache.getInstance().readLocalWorks(this,apisCallback);
+                LocalFileCache.getInstance().readLocalWorks(this, apisCallback);
             } catch (JSONException e) {
                 e.printStackTrace();
                 alertException(e);
@@ -242,10 +241,10 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
     @SuppressLint("DefaultLocale")
     @Override
     public void onAlbumChange(int rjNumber) {
-        if(rjNumber!=0 && bottomLayout.getVisibility() == View.GONE){
+        if (rjNumber != 0 && bottomLayout.getVisibility() == View.GONE) {
             toggleBottom();
         }
-        Glide.with(this).load(Api.HOST+String.format("/api/cover/%d?type=sam",rjNumber)).into(ivCover);
+        Glide.with(this).load(Api.HOST + String.format("/api/cover/%d?type=sam", rjNumber)).into(ivCover);
     }
 
     @Override
@@ -261,26 +260,26 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
 
     @Override
     public void onStatusChange(int status) {
-        if(status == 0){
+        if (status == 0) {
             ibStatus.setImageResource(R.drawable.ic_baseline_play_arrow_white_24);
-        }else {
+        } else {
             ibStatus.setImageResource(R.drawable.ic_baseline_pause_white_24);
         }
     }
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
-        ctrlBinder = (AudioService.CtrlBinder)service;
+        ctrlBinder = (AudioService.CtrlBinder) service;
         ibStatus.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(ctrlBinder.getController().getPlaybackState() == null){
+                if (ctrlBinder.getController().getPlaybackState() == null) {
                     ctrlBinder.getController().getTransportControls().play();
                     return;
                 }
-                if(ctrlBinder.getController().getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING){
+                if (ctrlBinder.getController().getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING) {
                     ctrlBinder.getController().getTransportControls().pause();
-                }else {
+                } else {
                     ctrlBinder.getController().getTransportControls().play();
                 }
             }
@@ -289,9 +288,9 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
             @Override
             public void onClick(View v) {
                 try {
-                    if(ctrlBinder.getCurrentTitle().endsWith("mp4")){
-                        startActivity(new Intent(WorksActivity.this,VideoPlayerActivity.class));
-                    }else {
+                    if (ctrlBinder.getCurrentTitle().endsWith("mp4")) {
+                        startActivity(new Intent(WorksActivity.this, VideoPlayerActivity.class));
+                    } else {
                         startActivity(new Intent(WorksActivity.this, AudioPlayerActivity.class));
                     }
                 } catch (JSONException e) {
@@ -304,82 +303,83 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
     }
 
     @Override
-    public void onServiceDisconnected(ComponentName name) {}
+    public void onServiceDisconnected(ComponentName name) {
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(0,0,0, "切换账号");
+        menu.add(0, 0, 0, "切换账号");
 
-        SubMenu layoutMenu = menu.addSubMenu(0,9,9, R.string.works_layout);
+        SubMenu layoutMenu = menu.addSubMenu(0, 9, 9, R.string.works_layout);
         layoutMenu.setIcon(R.drawable.ic_baseline_view_column_24);
-        layoutMenu.add(2,10,10, R.string.list_layout);
-        layoutMenu.add(2,11,11, R.string.cover_layout);
-        layoutMenu.add(2,12,12, R.string.detail_layout);
+        layoutMenu.add(2, 10, 10, R.string.list_layout);
+        layoutMenu.add(2, 11, 11, R.string.cover_layout);
+        layoutMenu.add(2, 12, 12, R.string.detail_layout);
         layoutMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
 
-        menu.add(0,15,15,R.string.more);
+        menu.add(0, 15, 15, R.string.more);
 
-        SubMenu sortMenu = menu.addSubMenu(0,16,16, R.string.sort);
-        sortMenu.add(3,17,17, R.string.release_date);
-        sortMenu.add(3,18,18, R.string.rj_number);
-        sortMenu.add(3,19,19, R.string.prize);
-        sortMenu.add(3,20,20, R.string.last_in_lib);
+        SubMenu sortMenu = menu.addSubMenu(0, 16, 16, R.string.sort);
+        sortMenu.add(3, 17, 17, R.string.release_date);
+        sortMenu.add(3, 18, 18, R.string.rj_number);
+        sortMenu.add(3, 19, 19, R.string.prize);
+        sortMenu.add(3, 20, 20, R.string.last_in_lib);
 
-        menu.add(0,22,22, R.string.download_mission);
-        MenuItem searchMenu = menu.add(0,23,23, R.string.search);
+        menu.add(0, 22, 22, R.string.download_mission);
+        MenuItem searchMenu = menu.add(0, 23, 23, R.string.search);
         searchMenu.setIcon(R.drawable.ic_baseline_search_24);
         searchMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-     return super.onCreateOptionsMenu(menu);
+        return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if(item.getGroupId() ==2){
+        if (item.getGroupId() == 2) {
             int layoutType = WorkAdapter.LAYOUT_SMALL_GRID;
-            if(item.getItemId() == 10){
+            if (item.getItemId() == 10) {
                 layoutType = WorkAdapter.LAYOUT_LIST;
-            }else if(item.getItemId() == 12){
+            } else if (item.getItemId() == 12) {
                 layoutType = WorkAdapter.LAYOUT_BIG_GRID;
             }
-            App.getInstance().setValue(App.CONFIG_LAYOUT_TYPE,layoutType);
+            App.getInstance().setValue(App.CONFIG_LAYOUT_TYPE, layoutType);
             initLayout(layoutType);
             return super.onOptionsItemSelected(item);
         }
 
-        if(item.getGroupId() == 3){
+        if (item.getGroupId() == 3) {
             boolean update = false;
-            if(item.getItemId() == 17){
+            if (item.getItemId() == 17) {
                 Api.setOrder("release");
                 update = true;
-            }else if(item.getItemId() == 18){
+            } else if (item.getItemId() == 18) {
                 Api.setOrder("id");
                 update = true;
-            }else if(item.getItemId() == 19){
+            } else if (item.getItemId() == 19) {
                 Api.setOrder("price");
                 update = true;
-            }else if(item.getItemId() == 20){
+            } else if (item.getItemId() == 20) {
                 Api.setOrder("create_date");
                 update = true;
             }
-            if(update){
+            if (update) {
                 clearWork();
                 reloadRecycleView();
             }
             return true;
         }
 
-        if(item.getItemId() == 0){
-            App.getInstance().setValue(App.CONFIG_UPDATE_TIME,0);
-            startActivity(new Intent(this,UserSwitchActivity.class));
-        }else if(item.getItemId() == 1){
-        }else if(item.getItemId() == 15){
+        if (item.getItemId() == 0) {
+            App.getInstance().setValue(App.CONFIG_UPDATE_TIME, 0);
+            startActivity(new Intent(this, UserSwitchActivity.class));
+        } else if (item.getItemId() == 1) {
+        } else if (item.getItemId() == 15) {
             startActivity(new Intent(this, MoreActivity.class));
-        }else if(item.getItemId() == 21){
-            startActivityForResult(new Intent(this,VasActivity.class),VA_SELECT_RESULT);
-        }else if(item.getItemId() == 22){
-            startActivity(new Intent(this,DownLoadMissionActivity.class));
-        }else if(item.getItemId() == 23){
-            startActivity(new Intent(this,SearchActivity.class));
+        } else if (item.getItemId() == 21) {
+            startActivityForResult(new Intent(this, VasActivity.class), VA_SELECT_RESULT);
+        } else if (item.getItemId() == 22) {
+            startActivity(new Intent(this, DownLoadMissionActivity.class));
+        } else if (item.getItemId() == 23) {
+            startActivity(new Intent(this, SearchActivity.class));
         }
         return super.onOptionsItemSelected(item);
     }
@@ -387,24 +387,24 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == TAG_SELECT_RESULT || requestCode == VA_SELECT_RESULT){
-            if(resultCode == RESULT_OK && data!=null){
+        if (requestCode == TAG_SELECT_RESULT || requestCode == VA_SELECT_RESULT) {
+            if (resultCode == RESULT_OK && data != null) {
                 String resultType = data.getStringExtra("resultType");
-                if(resultType == null){
+                if (resultType == null) {
                     return;
                 }
-                if(resultType.equals("va")){
+                if (resultType.equals("va")) {
                     String vaId = data.getStringExtra("id");
                     type = TYPE_VA_WORK;
-                    if(!vaId.equals(this.vaId)){
+                    if (!vaId.equals(this.vaId)) {
                         vaName = data.getStringExtra("name");
                         clearWork();
                         this.vaId = vaId;
                     }
-                }else if(resultType.equals("tag")){
-                    int tagId = data.getIntExtra("id",-1);
+                } else if (resultType.equals("tag")) {
+                    int tagId = data.getIntExtra("id", -1);
                     type = TYPE_TAG_WORK;
-                    if(tagId != this.tagId){
+                    if (tagId != this.tagId) {
                         tagStr = data.getStringExtra("name");
                         clearWork();
                         this.tagId = tagId;
@@ -415,7 +415,6 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         }
     }
 
-    private DividerItemDecoration dividerItemDecoration;
     private void initLayout(int layoutType) {
         RecyclerView.LayoutManager layoutManager = null;
         if (layoutType == WorkAdapter.LAYOUT_LIST) {
@@ -434,7 +433,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
                 JSONObject item = (JSONObject) v.getTag();
                 Intent intent = new Intent(v.getContext(), WorkTreeActivity.class);
                 intent.putExtra("work_json_str", item.toString());
-                ActivityCompat.startActivity(WorksActivity.this, intent,null);
+                ActivityCompat.startActivity(WorksActivity.this, intent, null);
             }
         });
         workAdapter.setItemLongClickListener(new View.OnLongClickListener() {
@@ -456,7 +455,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
                         }
 
                         int index = works.indexOf(item);
-                        if(index!=-1){
+                        if (index != -1) {
                             works.remove(index);
                             workAdapter.notifyItemRemoved(index);
                         }
@@ -471,12 +470,12 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         recyclerView.setAdapter(workAdapter);
     }
 
-    private void clearWork(){
+    private void clearWork() {
         page = 1;
-        if(workAdapter == null)
+        if (workAdapter == null)
             return;
-        workAdapter.notifyItemRangeRemoved(0,works.size());
-        workAdapter.notifyItemRangeChanged(0,works.size());
+        workAdapter.notifyItemRangeRemoved(0, works.size());
+        workAdapter.notifyItemRangeChanged(0, works.size());
         works.clear();
     }
 
@@ -485,12 +484,12 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         ctrlBinder.removeMusicChangeListener(this);
 
         PlaybackStateCompat playbackStateCompat = ctrlBinder.getController().getPlaybackState();
-        if(playbackStateCompat == null){
-            stopService(new Intent(this,AudioService.class));
-        }else {
+        if (playbackStateCompat == null) {
+            stopService(new Intent(this, AudioService.class));
+        } else {
             int state = ctrlBinder.getController().getPlaybackState().getState();
-            if(state == PlaybackStateCompat.STATE_STOPPED || state == PlaybackStateCompat.STATE_PAUSED){
-                stopService(new Intent(this,AudioService.class));
+            if (state == PlaybackStateCompat.STATE_STOPPED || state == PlaybackStateCompat.STATE_PAUSED) {
+                stopService(new Intent(this, AudioService.class));
             }
         }
         unbindService(this);
@@ -501,23 +500,23 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         String resultType = intent.getStringExtra("resultType");
-        if("va".equals(resultType)){
+        if ("va".equals(resultType)) {
             String vaId = intent.getStringExtra("id");
-            if(!vaId.equals(this.vaId)|| type != TYPE_VA_WORK){
+            if (!vaId.equals(this.vaId) || type != TYPE_VA_WORK) {
                 vaName = intent.getStringExtra("name");
                 clearWork();
                 this.vaId = vaId;
             }
             type = TYPE_VA_WORK;
-        }else if("tag".equals(resultType)){
-            int tagId = intent.getIntExtra("id",-1);
-            if(tagId != this.tagId || type != TYPE_TAG_WORK){
+        } else if ("tag".equals(resultType)) {
+            int tagId = intent.getIntExtra("id", -1);
+            if (tagId != this.tagId || type != TYPE_TAG_WORK) {
                 tagStr = intent.getStringExtra("name");
                 clearWork();
                 this.tagId = tagId;
             }
             type = TYPE_TAG_WORK;
-        }else {
+        } else {
             type = TYPE_ALL_WORK;
             clearWork();
         }
@@ -528,8 +527,8 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
     public void onTagClick(JSONObject jsonObject) {
         try {
             int tagId = jsonObject.getInt("id");
-            Log.d(TAG, "onTagClick: "+ tagId);
-            if(tagId != this.tagId || type != TYPE_TAG_WORK){
+            Log.d(TAG, "onTagClick: " + tagId);
+            if (tagId != this.tagId || type != TYPE_TAG_WORK) {
                 tagStr = jsonObject.getString("name");
                 clearWork();
                 this.tagId = tagId;
@@ -547,7 +546,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         public void onTagClick(JSONObject jsonObject) {
             try {
                 String vaId = jsonObject.getString("id");
-                if(!vaId.equals(WorksActivity.this.vaId) || type != TYPE_VA_WORK){
+                if (!vaId.equals(WorksActivity.this.vaId) || type != TYPE_VA_WORK) {
                     vaName = jsonObject.getString("name");
                     clearWork();
                     WorksActivity.this.vaId = vaId;
@@ -564,7 +563,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
     private AsyncHttpClient.JSONObjectCallback apisCallback = new AsyncHttpClient.JSONObjectCallback() {
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
-            if(e!=null){
+            if (e != null) {
                 e.printStackTrace();
                 alertException(e);
                 /**
@@ -587,18 +586,18 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
                  */
                 return;
             }
-            if(asyncHttpResponse == null || asyncHttpResponse.code() !=200){
-                if(jsonObject != null && jsonObject.has("works")){
+            if (asyncHttpResponse == null || asyncHttpResponse.code() != 200) {
+                if (jsonObject != null && jsonObject.has("works")) {
                     Log.d(TAG, "onCompleted: load local cache!");
-                }else {
+                } else {
                     Log.d(TAG, String.format("onCompleted:failed! "));
-                    if(!isDestroyed()){
+                    if (!isDestroyed()) {
                         ivCover.postDelayed(new Runnable() {
                             @Override
                             public void run() {
                                 reloadRecycleView();
                             }
-                        },3000);
+                        }, 3000);
                     }
                     return;
                 }
@@ -606,16 +605,16 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
             try {
                 JSONArray jsonArray = jsonObject.getJSONArray("works");
                 totalCount = jsonObject.getJSONObject("pagination").getInt("totalCount");
-                page = jsonObject.getJSONObject("pagination").getInt("currentPage") +1;
+                page = jsonObject.getJSONObject("pagination").getInt("currentPage") + 1;
 
-                if(jsonArray.length() != 0){
-                    page = Math.min(page,totalCount/jsonArray.length() + 1);
+                if (jsonArray.length() != 0) {
+                    page = Math.min(page, totalCount / jsonArray.length() + 1);
                 }
                 runOnUiThread(new Runnable() {
                     @SuppressLint("DefaultLocale")
                     @Override
                     public void run() {
-                        setTitle(String.format("%s (%d)",getCurrentTitle(),totalCount));
+                        setTitle(String.format("%s (%d)", getCurrentTitle(), totalCount));
                         for (int i = 0; i < jsonArray.length(); i++) {
                             try {
                                 works.add(jsonArray.getJSONObject(i));
@@ -624,12 +623,12 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
                                 alertException(jsonException);
                             }
                         }
-                        if(workAdapter == null){
-                            initLayout((int) App.getInstance().getValue(App.CONFIG_LAYOUT_TYPE,WorkAdapter.LAYOUT_SMALL_GRID));
+                        if (workAdapter == null) {
+                            initLayout((int) App.getInstance().getValue(App.CONFIG_LAYOUT_TYPE, WorkAdapter.LAYOUT_SMALL_GRID));
                             recyclerView.addOnScrollListener(scrollListener);
-                        }else {
-                            workAdapter.notifyItemRangeInserted(Math.max(0,works.size() - jsonArray.length()),jsonArray.length());
-                            workAdapter.notifyItemRangeChanged(Math.max(0,works.size() - jsonArray.length()),jsonArray.length());
+                        } else {
+                            workAdapter.notifyItemRangeInserted(Math.max(0, works.size() - jsonArray.length()), jsonArray.length());
+                            workAdapter.notifyItemRangeChanged(Math.max(0, works.size() - jsonArray.length()), jsonArray.length());
                         }
                     }
                 });
@@ -640,25 +639,25 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         }
     };
 
-    private String getCurrentTitle(){
-        if(type == TYPE_ALL_WORK){
+    private String getCurrentTitle() {
+        if (type == TYPE_ALL_WORK) {
             return getString(R.string.app_name);
-        }else if(type == TYPE_SELF_LISTENING){
+        } else if (type == TYPE_SELF_LISTENING) {
             return getString(R.string.listening);
-        }else if(type == TYPE_SELF_LISTENED){
+        } else if (type == TYPE_SELF_LISTENED) {
             return getString(R.string.listening);
-        }else if(type == TYPE_SELF_MARKED){
+        } else if (type == TYPE_SELF_MARKED) {
             return getString(R.string.listening);
-        }else if(type == TYPE_SELF_REPLAY){
+        } else if (type == TYPE_SELF_REPLAY) {
             return getString(R.string.listening);
-        }else if(type == TYPE_SELF_POSTPONED){
+        } else if (type == TYPE_SELF_POSTPONED) {
             return getString(R.string.listening);
-        }else if(type == TYPE_TAG_WORK){
+        } else if (type == TYPE_TAG_WORK) {
             return tagStr;
-        }else if(type == TYPE_VA_WORK){
+        } else if (type == TYPE_VA_WORK) {
             return vaName;
-        }else if(type == TYPE_LOCAL_WORK){
-            return String.format("%s",App.getInstance().isSaveExternal()?"外部公共目录":"内部私有目录");
+        } else if (type == TYPE_LOCAL_WORK) {
+            return String.format("%s", App.getInstance().isSaveExternal() ? "外部公共目录" : "内部私有目录");
         }
         return "--";
     }

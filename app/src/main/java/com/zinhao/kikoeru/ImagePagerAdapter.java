@@ -52,12 +52,12 @@ public class ImagePagerAdapter<T> extends PagerAdapter {
 
     @Override
     public boolean isViewFromObject(@NonNull View view, @NonNull Object object) {
-        return view==object;
+        return view == object;
     }
 
     @Override
     public void destroyItem(@NonNull ViewGroup container, int position, @NonNull Object object) {
-        container.removeView((View)object);
+        container.removeView((View) object);
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -65,12 +65,12 @@ public class ImagePagerAdapter<T> extends PagerAdapter {
     @Override
     public Object instantiateItem(final ViewGroup container, final int position) {
 
-        final View v = LayoutInflater.from(container.getContext()).inflate(R.layout.item_image,container,false);
-        final SubsamplingScaleImageView imageView =v.findViewById(R.id.imageView);
-        RoundedCorners roundedCorners= new RoundedCorners(10);
-        final RequestOptions requestOptions =RequestOptions.bitmapTransform(roundedCorners);
+        final View v = LayoutInflater.from(container.getContext()).inflate(R.layout.item_image, container, false);
+        final SubsamplingScaleImageView imageView = v.findViewById(R.id.imageView);
+        RoundedCorners roundedCorners = new RoundedCorners(10);
+        final RequestOptions requestOptions = RequestOptions.bitmapTransform(roundedCorners);
         T t = ts.get(position);
-        CustomViewTarget<SubsamplingScaleImageView,File> target = new CustomViewTarget<SubsamplingScaleImageView,File>(imageView) {
+        CustomViewTarget<SubsamplingScaleImageView, File> target = new CustomViewTarget<SubsamplingScaleImageView, File>(imageView) {
             @Override
             public void onLoadFailed(@Nullable Drawable drawable) {
             }
@@ -86,11 +86,11 @@ public class ImagePagerAdapter<T> extends PagerAdapter {
 
             }
         };
-        if(t instanceof String){
-            if(((String) t).startsWith("http")){
+        if (t instanceof String) {
+            if (((String) t).startsWith("http")) {
                 Glide.with(container.getContext()).asFile().load(t).apply(requestOptions)
                         .into(target);
-            }else {
+            } else {
                 Glide.with(container.getContext()).asFile().load(new File((String) t)).apply(requestOptions)
                         .into(target);
             }
@@ -99,7 +99,7 @@ public class ImagePagerAdapter<T> extends PagerAdapter {
         imageView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(final View v) {
-                download(position,v.getContext());
+                download(position, v.getContext());
                 return true;
             }
         });
@@ -113,9 +113,9 @@ public class ImagePagerAdapter<T> extends PagerAdapter {
         return v;
     }
 
-    public void download(final int position, final Context context){
-        if(ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
-            Toast.makeText(context,"请授予读写权限",Toast.LENGTH_SHORT).show();
+    public void download(final int position, final Context context) {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(context, "请授予读写权限", Toast.LENGTH_SHORT).show();
             return;
         }
         new AlertDialog.Builder(context).setTitle("下载图片?").setNegativeButton("是", new DialogInterface.OnClickListener() {
@@ -123,8 +123,8 @@ public class ImagePagerAdapter<T> extends PagerAdapter {
             public void onClick(DialogInterface dialog, int which) {
                 try {
                     String urlStr = new String(ts.get(position).toString().getBytes(), StandardCharsets.UTF_8);
-                    downLoadPic(urlStr ,pic);
-                    Toast.makeText(context,"已保存!",Toast.LENGTH_SHORT).show();
+                    downLoadPic(urlStr, pic);
+                    Toast.makeText(context, "已保存!", Toast.LENGTH_SHORT).show();
                 } catch (IOException e) {
                     e.printStackTrace();
                     App.getInstance().alertException(e);
@@ -140,19 +140,19 @@ public class ImagePagerAdapter<T> extends PagerAdapter {
 
     }
 
-    private void downLoadPic(final String urlStr,File into) throws IOException {
+    private void downLoadPic(final String urlStr, File into) throws IOException {
         File f = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-        if(!f.exists())
-            if(!f.mkdir()){
+        if (!f.exists())
+            if (!f.mkdir()) {
                 throw new FileNotFoundException("创建文件夹失败");
             }
-        String[] strs=urlStr.split("/");
-        final File pic =new File(f,URLDecoder.decode(strs[strs.length-1]));
-        FileInputStream fi =new FileInputStream(into);
-        FileOutputStream fo =new FileOutputStream(pic);
-        FileChannel fic =fi.getChannel();
-        FileChannel foc =fo.getChannel();
-        foc.transferFrom(fic,0,fic.size());
+        String[] strs = urlStr.split("/");
+        final File pic = new File(f, URLDecoder.decode(strs[strs.length - 1]));
+        FileInputStream fi = new FileInputStream(into);
+        FileOutputStream fo = new FileOutputStream(pic);
+        FileChannel fic = fi.getChannel();
+        FileChannel foc = fo.getChannel();
+        foc.transferFrom(fic, 0, fic.size());
         fo.close();
         fi.close();
         fic.close();
@@ -164,8 +164,9 @@ public class ImagePagerAdapter<T> extends PagerAdapter {
         void hideLayout(View view);
     }
 
-    public interface UpAndNextPagerCallBack{
+    public interface UpAndNextPagerCallBack {
         void up(View view);
+
         void next(View view);
     }
 
@@ -174,16 +175,16 @@ public class ImagePagerAdapter<T> extends PagerAdapter {
         return POSITION_NONE;
     }
 
-    public int findPositionByName(T t){
-        for(int i = 0; i< ts.size(); i++){
-            if(ts.get(i)==t){
+    public int findPositionByName(T t) {
+        for (int i = 0; i < ts.size(); i++) {
+            if (ts.get(i) == t) {
                 return i;
             }
         }
         return 1;
     }
 
-    public void remove(int position){
+    public void remove(int position) {
         ts.remove(position);
         notifyDataSetChanged();
     }
