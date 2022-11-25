@@ -26,7 +26,7 @@
         android:ems="10"
         android:inputType="number"
         android:text=""
-        android:hint="rj number,example 888888"
+        android:hint="@string/rj_number"
         android:gravity="center"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

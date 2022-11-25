@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
+import android.widget.EditText;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
 
@@ -21,7 +22,9 @@ public class VasActivity extends BaseActivity implements TagsView.TagClickListen
         setContentView(R.layout.layout_tags);
         VasView = findViewById(R.id.tagsView);
         VasView.setTagClickListener(this);
-        VasView.setTagBackgroundResource(R.drawable.card_bg_lrc);
+        VasView.setTagBackgroundResource(R.drawable.card_bg_va);
+        EditText input = findViewById(R.id.editText);
+        input.setHint(R.string.va_voicer);
         Api.doGetAllVas(callback);
     }
 

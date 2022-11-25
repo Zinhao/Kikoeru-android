@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_margin="10dp"
-    android:padding="10dp"
-    android:background="@drawable/card_bg_user"
-    android:elevation="18dp"
-    android:layout_height="70dp">
+                                                   xmlns:app="http://schemas.android.com/apk/res-auto"
+                                                   android:layout_width="match_parent"
+                                                   android:layout_margin="10dp"
+                                                   android:padding="10dp"
+                                                   android:background="@drawable/card_bg_user"
+                                                   android:elevation="18dp"
+                                                   android:layout_height="70dp">
 
     <TextView
         android:id="@+id/tvName"
@@ -26,7 +25,6 @@
         android:layout_height="25dp"
         android:text="@string/project_kikoeru_android_url"
         android:gravity="center_vertical"
-        android:textColor="?attr/colorPrimary"
         app:layout_constraintStart_toStartOf="@+id/tvName"
         app:layout_constraintTop_toBottomOf="@+id/tvName" />
 
@@ -48,5 +46,5 @@
         app:layout_constraintBottom_toBottomOf="@+id/imageButton3"
         app:layout_constraintEnd_toStartOf="@+id/imageButton3"
         app:layout_constraintTop_toTopOf="@+id/imageButton3"
-        app:srcCompat="@drawable/ic_baseline_loop_24" />
+        app:srcCompat="@drawable/ic_baseline_loop_blue_24" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -89,7 +89,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/tvPrice"
         app:layout_constraintTop_toBottomOf="@+id/tvPrice"
-        app:tagBackground="@drawable/card_bg_tagview"
+        app:tagBackground="@drawable/card_bg_tag"
         app:tags="健全 青春" />
 
     <com.zinhao.kikoeru.TagsView
@@ -103,7 +103,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="@+id/tvTags"
         app:layout_constraintTop_toBottomOf="@+id/tvTags"
-        app:tagBackground="@drawable/card_bg_lrc"
+        app:tagBackground="@drawable/card_bg_va"
         app:tags="こやまはる Kikoeru" />
 
     <TextView

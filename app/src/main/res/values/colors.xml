@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="main_color">#2E93FF</color>
+    <color name="main_color">#37B6FB</color>
     <color name="black">#FF000000</color>
     <color name="black_tran">#8A000000</color>
     <color name="black_tran_dark">#B3000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="white_tran">#40FFFFFF</color>
     <color name="play_control_icon_color">#FFFFFFFF</color>
-    <color name="pine_700">#2E93FF</color>
+    <color name="pine_700">#FF753F</color>
 </resources>

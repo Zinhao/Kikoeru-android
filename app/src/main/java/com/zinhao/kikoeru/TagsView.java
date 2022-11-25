@@ -137,7 +137,12 @@ public class TagsView<T> extends View{
                 Log.d(TAG, "onContextClick: ");
                 if(tagClickListener == null)
                     return false;
-                return true;
+                for (int i = 0; i < tagsRectFs.size(); i++) {
+                    if(tagsRectFs.get(i).contains(e.getX(),e.getY())){
+                        return true;
+                    }
+                }
+                return false;
             }
 
             @Override
@@ -145,7 +150,12 @@ public class TagsView<T> extends View{
                 Log.d(TAG, "onSingleTapUp: ");
                 if(tagClickListener == null)
                     return false;
-                return true;
+                for (int i = 0; i < tagsRectFs.size(); i++) {
+                    if(tagsRectFs.get(i).contains(e.getX(),e.getY())){
+                        return true;
+                    }
+                }
+                return false;
             }
 
             @Override
@@ -158,7 +168,12 @@ public class TagsView<T> extends View{
                 Log.d(TAG, "onDown: ");
                 if(tagClickListener == null)
                     return false;
-                return true;
+                for (int i = 0; i < tagsRectFs.size(); i++) {
+                    if(tagsRectFs.get(i).contains(e.getX(),e.getY())){
+                        return true;
+                    }
+                }
+                return false;
             }
 
             @Override
@@ -169,9 +184,10 @@ public class TagsView<T> extends View{
                 for (int i = 0; i < tagsRectFs.size(); i++) {
                     if(tagsRectFs.get(i).contains(e.getX(),e.getY())){
                         tagClickListener.onTagClick(getTagByIndex(i));
+                        return true;
                     }
                 }
-                return true;
+                return false;
             }
         };
         gestureDetector = new GestureDetector(getContext(),simpleOnGestureListener);

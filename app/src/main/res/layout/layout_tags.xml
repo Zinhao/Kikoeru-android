@@ -21,7 +21,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="10dp"
                 android:layout_marginRight="10dp"
-                app:tagBackground="@drawable/card_bg_tagview"/>
+                app:tagBackground="@drawable/card_bg_tag"/>
 
     </ScrollView>
 
@@ -31,7 +31,7 @@
         android:layout_height="wrap_content"
         android:ems="10"
         android:inputType="text"
-        android:hint="健全"
+        android:hint="@string/tag"
         android:imeOptions="actionSearch"
         android:singleLine="true"
         android:gravity="center_horizontal"
