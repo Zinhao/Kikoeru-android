@@ -605,6 +605,9 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
 
     @Override
     public void onPathChange(String path) {
+        if(path.length()>15){
+            path ="..." + path.substring(path.length()-12);
+        }
         setTitle(path);
     }
 }

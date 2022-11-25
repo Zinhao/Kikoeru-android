@@ -19,6 +19,7 @@ import com.koushikdutta.async.http.AsyncHttpResponse;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import java.util.Locale;
 
 public class LoginAccountActivity extends BaseActivity {
     private static final String TAG = "LoginAccountActivity";
@@ -171,7 +172,7 @@ public class LoginAccountActivity extends BaseActivity {
             return false;
         }
         if(!host.startsWith("http")){
-            return false;
+            host = String.format(Locale.US,"http://%s",host);
         }
         user.setName(userName);
         user.setPassword(password);
