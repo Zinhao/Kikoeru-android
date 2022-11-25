@@ -1,17 +1,13 @@
 package com.zinhao.kikoeru;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
@@ -52,6 +48,7 @@ public class App extends Application implements Application.ActivityLifecycleCal
 
     private RequestOptions defaultPic;
     private UserDao userDao;
+    private DaoMaster.OpenHelper helper;
 
     private final List<Activity> activities = new ArrayList<>();
 
@@ -89,8 +86,7 @@ public class App extends Application implements Application.ActivityLifecycleCal
     public void onCreate() {
         super.onCreate();
         instance = this;
-
-        DaoMaster.OpenHelper helper =new DaoMaster.OpenHelper(App.instance, "app.db") {};
+        helper = new DaoMaster.OpenHelper(App.instance, "app.db") {};
         SQLiteDatabase database = helper.getWritableDatabase();
         DaoMaster daoMaster = new DaoMaster(database);
         DaoSession daoSession = daoMaster.newSession();
@@ -127,68 +123,8 @@ public class App extends Application implements Application.ActivityLifecycleCal
         }
     }
 
-    public void alertMessage(AppMessage e){
-        if(activities.size() ==0)
-            return;
-        Activity activity = activities.get(activities.size()-1);
-        if(activity == null){
-            return;
-        }
-        if(activity instanceof BaseActivity){
-            ((BaseActivity) activity).alertMessage(e);
-        }
-    }
-
-    public void requestReadWriteExternalPermission(){
-        if(activities.size() ==0)
-            return;
-        Activity activity = activities.get(activities.size()-1);
-        if(activity == null){
-            return;
-        }
-        if(activity instanceof BaseActivity){
-            ((BaseActivity) activity).requestReadWriteExternalPermission(new Runnable() {
-                @Override
-                public void run() {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        if(!Environment.isExternalStorageManager()){
-                            return;
-                        }
-                    }else {
-                        if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED){
-                            return;
-                        }
-                    }
-                    setSaveExternal(true);
-                }
-            });
-        }
-    }
-
-    public static String getTagsStr(JSONObject jsonObject) throws JSONException {
-        JSONArray tagArray = jsonObject.getJSONArray("tags");
-        StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < tagArray.length(); i++) {
-            JSONObject tag = tagArray.getJSONObject(i);
-            stringBuilder.append(tag.getString("name"));
-            stringBuilder.append(" ");
-        }
-        return stringBuilder.toString();
-    }
-
     public static JSONArray getTagsList(JSONObject jsonObject) throws JSONException {
         return  jsonObject.getJSONArray("tags");
-    }
-
-    public static String getArtStr(JSONObject jsonObject) throws JSONException{
-        JSONArray tagArray = jsonObject.getJSONArray("vas");
-        StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < tagArray.length(); i++) {
-            JSONObject tag = tagArray.getJSONObject(i);
-            stringBuilder.append(tag.getString("name"));
-            stringBuilder.append(" ");
-        }
-        return stringBuilder.toString();
     }
 
     public static JSONArray getVasList(JSONObject jsonObject) throws JSONException {
@@ -257,9 +193,8 @@ public class App extends Application implements Application.ActivityLifecycleCal
     }
 
     public User currentUser(){
-        for (int i = 0; i < allUsers.size(); i++) {
-            User user = allUsers.get(i);
-            if(user.getId().equals(currentUserId)){
+        for (User user : allUsers) {
+            if (user.getId().equals(currentUserId)) {
                 return user;
             }
         }
@@ -299,5 +234,8 @@ public class App extends Application implements Application.ActivityLifecycleCal
     @Override
     public void onActivityDestroyed(@NonNull Activity activity) {
         activities.remove(activity);
+        if(activities.isEmpty()){
+            helper.close();
+        }
     }
 }
