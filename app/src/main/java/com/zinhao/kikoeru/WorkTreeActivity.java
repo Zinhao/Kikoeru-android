@@ -1,17 +1,9 @@
 package com.zinhao.kikoeru;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.core.content.FileProvider;
-import androidx.recyclerview.widget.DividerItemDecoration;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
@@ -30,11 +22,15 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.FileProvider;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -45,11 +41,10 @@ import java.util.List;
 import java.util.Locale;
 
 public class WorkTreeActivity extends BaseActivity implements View.OnClickListener,MusicChangeListener,
-        ServiceConnection,LrcRowChangeListener,View.OnLongClickListener, TagsView.TagClickListener<JSONObject>,
+        ServiceConnection,View.OnLongClickListener, TagsView.TagClickListener<JSONObject>,
         WorkTreeAdapter.RelativePathChangeListener{
     /**
-     * http://localhost:8888/api/tracks/357844
-     * @param savedInstanceState
+     * <a href="http://localhost:8888/api/tracks/357844">...</a>
      */
     private static final String TAG = "WorkActivity";
     private RecyclerView recyclerView;
@@ -77,20 +72,17 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
             }
             jsonWorkTrees = jsonArray;
             // TODO 来自不同服务器的同一个作品（RJ号码相同），当用户执行下载操作时，目录树不一致。
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    workTreeAdapter = new WorkTreeAdapter(jsonWorkTrees,work);
-                    workTreeAdapter.setItemClickListener(WorkTreeActivity.this);
-                    workTreeAdapter.setTagClickListener(WorkTreeActivity.this);
-                    workTreeAdapter.setVaClickListener(vaClickListener);
-                    workTreeAdapter.setItemLongClickListener(WorkTreeActivity.this);
-                    workTreeAdapter.setPathChangeListener(WorkTreeActivity.this);
-                    RecyclerView.ItemDecoration itemDecoration = new DividerItemDecoration(WorkTreeActivity.this,DividerItemDecoration.VERTICAL);
-                    recyclerView.addItemDecoration(itemDecoration);
-                    recyclerView.setLayoutManager(new LinearLayoutManager(WorkTreeActivity.this));
-                    recyclerView.setAdapter(workTreeAdapter);
-                }
+            runOnUiThread(() -> {
+                workTreeAdapter = new WorkTreeAdapter(jsonWorkTrees,work);
+                workTreeAdapter.setItemClickListener(WorkTreeActivity.this);
+                workTreeAdapter.setTagClickListener(WorkTreeActivity.this);
+                workTreeAdapter.setVaClickListener(vaClickListener);
+                workTreeAdapter.setItemLongClickListener(WorkTreeActivity.this);
+                workTreeAdapter.setPathChangeListener(WorkTreeActivity.this);
+                RecyclerView.ItemDecoration itemDecoration = new DividerItemDecoration(WorkTreeActivity.this,DividerItemDecoration.VERTICAL);
+                recyclerView.addItemDecoration(itemDecoration);
+                recyclerView.setLayoutManager(new LinearLayoutManager(WorkTreeActivity.this));
+                recyclerView.setAdapter(workTreeAdapter);
             });
         }
     };
@@ -117,7 +109,6 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         tvTitle = bottomLayout.findViewById(R.id.textView);
         tvWorkTitle = bottomLayout.findViewById(R.id.textView2);
         ibStatus = bottomLayout.findViewById(R.id.button);
-
         bindService(new Intent(this, AudioService.class),this,BIND_AUTO_CREATE);
         init();
     }
@@ -134,7 +125,6 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
             } catch (JSONException e) {
                 e.printStackTrace();
                 alertException(e);
-                return;
             }
         }
     }
@@ -188,13 +178,14 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
             }else if(item.getItemId() == 5){
                 Api.doPutReview(work.getInt("id"),Api.FILTER_POSTPONED,actionCallBack);
             }
-        }catch (Exception e){
-
+        }catch (JSONException e){
+            e.printStackTrace();
+            alertException(e);
         }
         return super.onOptionsItemSelected(item);
     }
 
-    private AsyncHttpClient.JSONObjectCallback actionCallBack = new AsyncHttpClient.JSONObjectCallback() {
+    private final AsyncHttpClient.JSONObjectCallback actionCallBack = new AsyncHttpClient.JSONObjectCallback() {
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
             if(e!=null){
@@ -206,12 +197,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
             if(asyncHttpResponse.code() == 200){
                 try {
                     String message = jsonObject.getString("message");
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(WorkTreeActivity.this,message,Toast.LENGTH_SHORT).show();
-                        }
-                    });
+                    runOnUiThread(() -> Toast.makeText(WorkTreeActivity.this,message,Toast.LENGTH_SHORT).show());
                 } catch (JSONException jsonException) {
                     jsonException.printStackTrace();
                     alertException(jsonException);
@@ -300,21 +286,19 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
             }
         }
         if(ctrlBinder.getCurrent()!=null && ctrlBinder.getCurrent().getString(JSONConst.WorkTree.MEDIA_STREAM_URL).equals(itemMediaStreamUrl)){
-
+            if(itemTitle.toLowerCase(Locale.ROOT).endsWith(".mp4")){
+                startActivity(new Intent(WorkTreeActivity.this,VideoPlayerActivity.class));
+            }else {
+                startActivity(new Intent(WorkTreeActivity.this, AudioPlayerActivity.class));
+            }
         }else {
-            ctrlBinder.setReapAll();
             ctrlBinder.play(musicArray,index);
-        }
-        if(itemTitle.toLowerCase(Locale.ROOT).endsWith(".mp4")){
-            startActivity(new Intent(WorkTreeActivity.this,VideoPlayerActivity.class));
-        }else {
-            startActivity(new Intent(WorkTreeActivity.this, AudioPlayerActivity.class));
         }
     }
 
     @Override
     public void onAlbumChange(int rjNumber) {
-        Glide.with(this).load(Api.HOST+String.format("/api/cover/%d?type=sam",rjNumber)).into(ivCover);
+        Glide.with(this).load(Api.HOST+String.format(Locale.US,"/api/cover/%d?type=sam",rjNumber)).into(ivCover);
     }
 
     @Override
@@ -333,6 +317,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         if(status == 0){
             ibStatus.setImageResource(R.drawable.ic_baseline_play_arrow_24);
         }else {
+            bottomLayout.setVisibility(View.VISIBLE);
             ibStatus.setImageResource(R.drawable.ic_baseline_pause_24);
         }
     }
@@ -341,56 +326,42 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
     protected void onDestroy() {
         super.onDestroy();
         ctrlBinder.removeMusicChangeListener(this);
-        ctrlBinder.removeLrcRowChangeListener(this);
         unbindService(this);
     }
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         ctrlBinder = (AudioService.CtrlBinder)service;
-        ibStatus.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(ctrlBinder.getController().getPlaybackState() == null)
-                    return;
-                if(ctrlBinder.getController().getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING){
-                    ctrlBinder.getController().getTransportControls().pause();
-                }else {
-                    ctrlBinder.getController().getTransportControls().play();
-                }
+        if(ctrlBinder.getController().getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING){
+            bottomLayout.setVisibility(View.VISIBLE);
+        }
+        ibStatus.setOnClickListener(v -> {
+            if(ctrlBinder.getController().getPlaybackState() == null)
+                return;
+            if(ctrlBinder.getController().getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING){
+                ctrlBinder.getController().getTransportControls().pause();
+            }else {
+                ctrlBinder.getController().getTransportControls().play();
             }
         });
-        bottomLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    if(ctrlBinder.getCurrentTitle().endsWith("mp4")){
-                        startActivity(new Intent(WorkTreeActivity.this,VideoPlayerActivity.class));
-                    }else if(ctrlBinder.getCurrentTitle().endsWith("mp3")){
-
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    alertException(e);
+        bottomLayout.setOnClickListener(v -> {
+            try {
+                if(ctrlBinder.getCurrentTitle().endsWith("mp4")){
+                    startActivity(new Intent(WorkTreeActivity.this,VideoPlayerActivity.class));
+                }else {
+                    startActivity(new Intent(WorkTreeActivity.this, AudioPlayerActivity.class));
                 }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                alertException(e);
             }
         });
         ctrlBinder.addMusicChangeListener(this);
-        ctrlBinder.addLrcRowChangeListener(this);
     }
 
     @Override
     public void onServiceDisconnected(ComponentName name) {
 
-    }
-
-    @Override
-    public void onChange(Lrc.LrcRow currentRow) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-            }
-        });
     }
 
     @Override
@@ -412,137 +383,106 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                 DownloadUtils.Mission mapMission = DownloadUtils.mapMission(item);
                 if(mapMission != null){
                     builder.setTitle(R.string.downloading);
-                    builder.setNegativeButton(R.string.cancel_download, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            mapMission.stop();
-                        }
-                    });
-                    builder.setPositiveButton(R.string.check_mission, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            startActivity(new Intent(WorkTreeActivity.this,DownLoadMissionActivity.class));
-                            dialogInterface.dismiss();
-                        }
+                    builder.setNegativeButton(R.string.cancel_download, (dialog, which) -> mapMission.stop());
+                    builder.setPositiveButton(R.string.check_mission, (dialogInterface, i) -> {
+                        startActivity(new Intent(WorkTreeActivity.this,DownLoadMissionActivity.class));
+                        dialogInterface.dismiss();
                     });
                 }else {
-                    builder.setNegativeButton(R.string.open, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            try {
-                                if(itemType.equals("audio")){
-                                    openAudioOrVideo(item);
-                                } else if(itemType.equals("text")){
-                                    openText(item);
-                                }else if(itemType.equals("image")){
-                                   openImage(item);
-                                }
-                            } catch (JSONException e) {
-                                e.printStackTrace();
+                    builder.setNegativeButton(R.string.open, (dialog, which) -> {
+                        try {
+                            if(itemType.equals("audio")){
+                                openAudioOrVideo(item);
+                            } else if(itemType.equals("text")){
+                                openText(item);
+                            }else if(itemType.equals("image")){
+                               openImage(item);
                             }
-
+                        } catch (JSONException e) {
+                            e.printStackTrace();
                         }
+
                     });
-                    builder.setPositiveButton("open with", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            Intent intent = new Intent(Intent.ACTION_VIEW);
-                            Uri uri = FileProvider.getUriForFile(WorkTreeActivity.this,getPackageName()+".fileProvider",itemFile);
-                            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                            intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                            intent.setDataAndType(uri,String.format("%s/*",itemType));
-                            try {
-                                startActivity(intent);
-                            }catch (ActivityNotFoundException e){
-                                alertException(e);
-                            }
-
+                    builder.setPositiveButton("open with", (dialog, which) -> {
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        Uri uri = FileProvider.getUriForFile(WorkTreeActivity.this,getPackageName()+".fileProvider",itemFile);
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                        intent.setDataAndType(uri,String.format("%s/*",itemType));
+                        try {
+                            startActivity(intent);
+                        }catch (ActivityNotFoundException e){
+                            alertException(e);
                         }
+
                     });
                 }
 
             }else {
                 builder.setTitle(getString(R.string.not_download));
                 builder.setMessage(itemFile.getAbsolutePath());
-                builder.setNegativeButton(R.string.download, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if(work.has(JSONConst.Work.IS_LOCAL_WORK)){
-                            // 从本地目录树开始下载
-                            if(!work.has(JSONConst.Work.HOST)){
+                builder.setNegativeButton(R.string.download, (dialog, which) -> {
+                    if(work.has(JSONConst.Work.IS_LOCAL_WORK)){
+                        // 从本地目录树开始下载
+                        if(!work.has(JSONConst.Work.HOST)){
+                            return;
+                        }
+                        try {
+                            String workHost = work.getString(JSONConst.Work.HOST);
+                            if(!Api.HOST.equals(workHost)){
+                                Toast.makeText(WorkTreeActivity.this,"switch host user then start download!",Toast.LENGTH_SHORT).show();
                                 return;
                             }
-                            try {
-                                String workHost = work.getString(JSONConst.Work.HOST);
-                                if(!Api.HOST.equals(workHost)){
-                                    Toast.makeText(WorkTreeActivity.this,"switch host user then start download!",Toast.LENGTH_SHORT).show();
+                        } catch (JSONException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                    boolean havePermission;
+                    final DownloadUtils.Mission downLoadMission = new DownloadUtils.Mission(item);
+                    downLoadMission.setSuccessCallback(() -> runOnUiThread(() -> {
+                        if(!isDestroyed()){
+                            workTreeAdapter.notifyWorkDataSetChanged();
+                            workTreeAdapter.notifyDataSetChanged();
+                        }
+                    }));
+                    if(App.getInstance().isSaveExternal()){
+                        havePermission = requestReadWriteExternalPermission(() -> {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                if(!Environment.isExternalStorageManager()){
                                     return;
                                 }
-                            } catch (JSONException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
-                        boolean havePermission;
-                        final DownloadUtils.Mission downLoadMission = new DownloadUtils.Mission(item);
-                        downLoadMission.setSuccessCallback(new Runnable() {
-                            @Override
-                            public void run() {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        if(!isDestroyed()){
-                                            workTreeAdapter.notifyWorkDataSetChanged();
-                                            workTreeAdapter.notifyDataSetChanged();
-                                        }
-                                    }
-                                });
-                            }
-                        });
-                        if(App.getInstance().isSaveExternal()){
-                            havePermission = requestReadWriteExternalPermission(new Runnable() {
-                                @Override
-                                public void run() {
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                        if(!Environment.isExternalStorageManager()){
-                                            return;
-                                        }
-                                    }else {
-                                        if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED){
-                                            return;
-                                        }
-                                    }
-                                    saveWorkWithTree();
-                                    downLoadMission.start();
+                            }else {
+                                if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED){
+                                    return;
                                 }
-                            });
-                        }else {
-                            havePermission = true;
-                        }
-                        if(havePermission){
+                            }
                             saveWorkWithTree();
                             downLoadMission.start();
-                        }
-                        dialog.dismiss();
-
+                        });
+                    }else {
+                        havePermission = true;
                     }
+                    if(havePermission){
+                        saveWorkWithTree();
+                        downLoadMission.start();
+                    }
+                    dialog.dismiss();
+
                 });
                 final String itemStreamUrl = item.getString(JSONConst.WorkTree.MEDIA_STREAM_URL);
-                builder.setPositiveButton("open in browser", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Intent intent = new Intent(Intent.ACTION_VIEW);
-                        String readableUrl;
-                        if(!itemStreamUrl.startsWith("http")){
-                            readableUrl = String.format("%s%s?token=%s",Api.HOST,itemStreamUrl,Api.token);
-                        }else {
-                            readableUrl = String.format("%s?token=%s",itemStreamUrl,Api.token);
-                        }
-                        intent.setData(Uri.parse(readableUrl));
-                        try {
-                            startActivity(intent);
-                        }catch (ActivityNotFoundException e){
-                            alertException(e);
-                        }
+                builder.setPositiveButton("open in browser", (dialog, which) -> {
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    String readableUrl;
+                    if(!itemStreamUrl.startsWith("http")){
+                        readableUrl = String.format("%s%s?token=%s",Api.HOST,itemStreamUrl,Api.token);
+                    }else {
+                        readableUrl = String.format("%s?token=%s",itemStreamUrl,Api.token);
+                    }
+                    intent.setData(Uri.parse(readableUrl));
+                    try {
+                        startActivity(intent);
+                    }catch (ActivityNotFoundException e){
+                        alertException(e);
                     }
                 });
             }
@@ -583,23 +523,20 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
     }
 
 
-    private final TagsView.TagClickListener<JSONObject> vaClickListener = new TagsView.TagClickListener<JSONObject>() {
-        @Override
-        public void onTagClick(JSONObject jsonObject) {
-            try {
-                String vaId = jsonObject.getString("id");
-                Log.d(TAG, "onTagClick: "+ vaId);
-                String vaName = jsonObject.getString("name");
-                setTitle(vaName);
-                Intent intent = new Intent(WorkTreeActivity.this,WorksActivity.class);
-                intent.putExtra("resultType","va");
-                intent.putExtra("id",vaId);
-                intent.putExtra("name",vaName);
-                startActivity(intent);
-            } catch (JSONException e) {
-                e.printStackTrace();
-                alertException(e);
-            }
+    private final TagsView.TagClickListener<JSONObject> vaClickListener = jsonObject -> {
+        try {
+            String vaId = jsonObject.getString("id");
+            Log.d(TAG, "onTagClick: "+ vaId);
+            String vaName = jsonObject.getString("name");
+            setTitle(vaName);
+            Intent intent = new Intent(WorkTreeActivity.this,WorksActivity.class);
+            intent.putExtra("resultType","va");
+            intent.putExtra("id",vaId);
+            intent.putExtra("name",vaName);
+            startActivity(intent);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            alertException(e);
         }
     };
 
