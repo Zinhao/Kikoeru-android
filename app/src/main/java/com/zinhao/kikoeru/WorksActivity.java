@@ -15,7 +15,6 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.*;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.ListPopupWindow;
@@ -24,11 +23,9 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.bumptech.glide.Glide;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -39,7 +36,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class WorksActivity extends BaseActivity implements MusicChangeListener,ServiceConnection,LrcRowChangeListener,TagsView.TagClickListener<JSONObject> {
+public class WorksActivity extends BaseActivity implements MusicChangeListener,ServiceConnection,TagsView.TagClickListener<JSONObject> {
     private static final String TAG = "MainActivity";
     private RecyclerView recyclerView;
     private WorkAdapter workAdapter;
@@ -76,10 +73,6 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
     private static final int TAG_SELECT_RESULT = 14;
     private static final int VA_SELECT_RESULT = 15;
 
-    private ImageButton bt1;
-    private ImageButton bt2;
-    private ImageButton bt3;
-
     private ListPopupWindow progressMenu;
     private ListPopupWindow moreMenu;
     @Override
@@ -92,9 +85,9 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         tvTitle = bottomLayout.findViewById(R.id.textView);
         tvWorkTitle = bottomLayout.findViewById(R.id.textView2);
         ibStatus = bottomLayout.findViewById(R.id.button);
-        bt1 = findViewById(R.id.bt1);
-        bt2 = findViewById(R.id.bt2);
-        bt3 = findViewById(R.id.bt3);
+        ImageButton bt1 = findViewById(R.id.bt1);
+        ImageButton bt2 = findViewById(R.id.bt2);
+        ImageButton bt3 = findViewById(R.id.bt3);
         dividerItemDecoration =  new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
         startForegroundService(new Intent(this,AudioService.class));
         bindService(new Intent(this, AudioService.class), this,BIND_AUTO_CREATE);
@@ -122,16 +115,13 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         works = new ArrayList<>();
         reloadRecycleView();
 
-        bt1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                type = TYPE_ALL_WORK;
-                clearWork();
-                reloadRecycleView();
-            }
+        bt1.setOnClickListener(v -> {
+            type = TYPE_ALL_WORK;
+            clearWork();
+            reloadRecycleView();
         });
         progressMenu = new ListPopupWindow(this);
-        progressMenu.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
+        progressMenu.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,
                 Arrays.asList(getString(R.string.marked),
                         getString(R.string.listening),
                         getString(R.string.listened),
@@ -139,37 +129,29 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
                         getString(R.string.postponed))));
         progressMenu.setModal(true);
         progressMenu.setAnchorView(bt2);
-        progressMenu.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                progressMenu.dismiss();
-                switch (position){
-                    case 0:
-                        type = TYPE_SELF_MARKED;
-                        break;
-                    case 1:
-                        type = TYPE_SELF_LISTENING;
-                        break;
-                    case 2:
-                        type = TYPE_SELF_LISTENED;
-                        break;
-                    case 3:
-                        type = TYPE_SELF_REPLAY;
-                        break;
-                    case 4:
-                        type = TYPE_SELF_POSTPONED;
-                        break;
-                }
-                clearWork();
-                reloadRecycleView();
+        progressMenu.setOnItemClickListener((parent, view, position, id) -> {
+            progressMenu.dismiss();
+            switch (position){
+                case 0:
+                    type = TYPE_SELF_MARKED;
+                    break;
+                case 1:
+                    type = TYPE_SELF_LISTENING;
+                    break;
+                case 2:
+                    type = TYPE_SELF_LISTENED;
+                    break;
+                case 3:
+                    type = TYPE_SELF_REPLAY;
+                    break;
+                case 4:
+                    type = TYPE_SELF_POSTPONED;
+                    break;
             }
+            clearWork();
+            reloadRecycleView();
         });
-        bt2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                progressMenu.show();
-            }
-        });
+        bt2.setOnClickListener(v -> progressMenu.show());
 
         moreMenu = new ListPopupWindow(this);
         moreMenu.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
@@ -178,31 +160,23 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
                         getString(R.string.local_works))));
         moreMenu.setModal(true);
         moreMenu.setAnchorView(bt3);
-        moreMenu.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                moreMenu.dismiss();
-                switch (position){
-                    case 0:
-                        startActivityForResult(new Intent(view.getContext(),VasActivity.class),VA_SELECT_RESULT);
-                        break;
-                    case 1:
-                        startActivityForResult(new Intent(view.getContext(),TagsActivity.class),TAG_SELECT_RESULT);
-                        break;
-                    case 2:
-                        type = TYPE_LOCAL_WORK;
-                        clearWork();
-                        reloadRecycleView();
-                        break;
-                }
+        moreMenu.setOnItemClickListener((parent, view, position, id) -> {
+            moreMenu.dismiss();
+            switch (position){
+                case 0:
+                    startActivityForResult(new Intent(view.getContext(),VasActivity.class),VA_SELECT_RESULT);
+                    break;
+                case 1:
+                    startActivityForResult(new Intent(view.getContext(),TagsActivity.class),TAG_SELECT_RESULT);
+                    break;
+                case 2:
+                    type = TYPE_LOCAL_WORK;
+                    clearWork();
+                    reloadRecycleView();
+                    break;
             }
         });
-        bt3.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                moreMenu.show();
-            }
-        });
+        bt3.setOnClickListener(v -> moreMenu.show());
     }
 
     private void toggleBottom(){
@@ -327,22 +301,10 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
             }
         });
         ctrlBinder.addMusicChangeListener(this);
-        ctrlBinder.addLrcRowChangeListener(this);
     }
 
     @Override
-    public void onServiceDisconnected(ComponentName name) {
-
-    }
-
-    @Override
-    public void onChange(Lrc.LrcRow currentRow) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-            }
-        });
-    }
+    public void onServiceDisconnected(ComponentName name) {}
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -458,13 +420,10 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
         RecyclerView.LayoutManager layoutManager = null;
         if (layoutType == WorkAdapter.LAYOUT_LIST) {
             layoutManager = new LinearLayoutManager(WorksActivity.this);
-            recyclerView.addItemDecoration(dividerItemDecoration);
         } else if (layoutType == WorkAdapter.LAYOUT_SMALL_GRID) {
             layoutManager = new GridLayoutManager(WorksActivity.this, 3);
-            recyclerView.removeItemDecoration(dividerItemDecoration);
         } else if (layoutType == WorkAdapter.LAYOUT_BIG_GRID) {
             layoutManager = new GridLayoutManager(WorksActivity.this, 2);
-            recyclerView.removeItemDecoration(dividerItemDecoration);
         }
         workAdapter = new WorkAdapter(works, layoutType);
         workAdapter.setTagClickListener(this);
@@ -524,7 +483,6 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
     @Override
     protected void onDestroy() {
         ctrlBinder.removeMusicChangeListener(this);
-        ctrlBinder.removeLrcRowChangeListener(this);
 
         PlaybackStateCompat playbackStateCompat = ctrlBinder.getController().getPlaybackState();
         if(playbackStateCompat == null){
@@ -657,7 +615,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
                     @SuppressLint("DefaultLocale")
                     @Override
                     public void run() {
-                        setTitle(String.format("%s (%d)",getTitle(),totalCount));
+                        setTitle(String.format("%s (%d)",getCurrentTitle(),totalCount));
                         for (int i = 0; i < jsonArray.length(); i++) {
                             try {
                                 works.add(jsonArray.getJSONObject(i));
@@ -681,6 +639,29 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener,S
             }
         }
     };
+
+    private String getCurrentTitle(){
+        if(type == TYPE_ALL_WORK){
+            return getString(R.string.app_name);
+        }else if(type == TYPE_SELF_LISTENING){
+            return getString(R.string.listening);
+        }else if(type == TYPE_SELF_LISTENED){
+            return getString(R.string.listening);
+        }else if(type == TYPE_SELF_MARKED){
+            return getString(R.string.listening);
+        }else if(type == TYPE_SELF_REPLAY){
+            return getString(R.string.listening);
+        }else if(type == TYPE_SELF_POSTPONED){
+            return getString(R.string.listening);
+        }else if(type == TYPE_TAG_WORK){
+            return tagStr;
+        }else if(type == TYPE_VA_WORK){
+            return vaName;
+        }else if(type == TYPE_LOCAL_WORK){
+            return String.format("%s",App.getInstance().isSaveExternal()?"外部公共目录":"内部私有目录");
+        }
+        return "--";
+    }
 
     @Override
     public void onBackPressed() {
