@@ -3,8 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:padding="2dp"
-    android:layout_margin="5dp"
+    android:layout_margin="4dp"
     android:elevation="18dp"
     android:background="@drawable/card_bg_work"
     android:layout_height="wrap_content">
@@ -19,6 +18,7 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        android:contentDescription="@string/cover_image"
         tools:srcCompat="@tools:sample/avatars" />
 
     <TextView
@@ -26,7 +26,7 @@
         android:layout_margin="5dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="RJ23435"
+        android:text="@string/rj23435"
         android:paddingStart="5dp"
         android:paddingEnd="5dp"
         android:paddingTop="2dp"
@@ -42,7 +42,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="5dp"
-        android:text="2022-01-02"
+        android:text="@string/_2022_01_02"
         android:paddingStart="5dp"
         android:paddingEnd="5dp"
         android:paddingTop="2dp"
@@ -54,7 +54,7 @@
         app:layout_constraintEnd_toEndOf="@+id/ivCover" />
 
     <TextView
-            android:text="https://api.asmr.net"
+            android:text="@string/https_api_asmr_net"
             android:layout_width="wrap_content"
             android:background="@drawable/card_bg_text"
             android:layout_margin="5dp"
