@@ -53,6 +53,10 @@
     <string name="user_guest">Guest</string>
     <string name="user_sigin_in">Sign In</string>
     <string name="user_sign_up">Sign Up</string>
+    <string name="cover_image">cover image</string>
+    <string name="rj23435" translatable="false">RJ23435</string>
+    <string name="_2022_01_02" translatable="false">2022-01-02</string>
+    <string name="https_api_asmr_net" translatable="false">https://api.asmr.net</string>
 
 
 </resources>

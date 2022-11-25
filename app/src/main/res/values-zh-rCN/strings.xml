@@ -46,4 +46,5 @@
     <string name="user_guest">来宾</string>
     <string name="user_sigin_in">登录</string>
     <string name="user_sign_up">注册</string>
+    <string name="cover_image">cover image</string>
 </resources>

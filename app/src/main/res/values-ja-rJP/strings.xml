@@ -46,4 +46,5 @@
     <string name="user_guest">ゲスト</string>
     <string name="user_sigin_in">サインイン</string>
     <string name="user_sign_up">登録</string>
+    <string name="cover_image">cover image</string>
 </resources>
