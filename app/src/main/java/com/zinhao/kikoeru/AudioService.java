@@ -370,7 +370,7 @@ public class AudioService extends Service {
             notificationBuilder.setContentTitle(ctrlBinder.current.getString("title"));
             notificationBuilder.setContentText(ctrlBinder.current.getString("title"));
             notificationBuilder.setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, AudioPlayerActivity.class), PendingIntent.FLAG_IMMUTABLE));
-            Glide.with(this).asBitmap().load(App.getInstance().currentUser().getHost() + String.format("/api/cover/%d?type=sam&token=%s", ctrlBinder.currentAlbumId,Api.token)).into(new SimpleTarget<Bitmap>() {
+            Glide.with(this).asBitmap().load(App.getInstance().currentUser().getHost() + String.format("/api/cover/%d?type=sam&token=%s", ctrlBinder.currentAlbumId, Api.token)).into(new SimpleTarget<Bitmap>() {
                 @Override
                 public void onResourceReady(@NonNull Bitmap bitmap, @Nullable Transition<? super Bitmap> transition) {
                     notificationBuilder.setLargeIcon(bitmap);
@@ -406,9 +406,9 @@ public class AudioService extends Service {
         } else if (ACTION_PLAY.equals(intent.getAction())) {
             mediaSession.getController().getTransportControls().play();
         } else if (ACTION_SHOW_LRC.equals(intent.getAction())) {
-            if(!ctrlBinder.isLrcWindowShow()){
+            if (!ctrlBinder.isLrcWindowShow()) {
                 ctrlBinder.showLrcFloatWindow();
-            }else{
+            } else {
                 ctrlBinder.hideLrcFloatWindow();
             }
         }
@@ -732,11 +732,11 @@ public class AudioService extends Service {
         }
 
         public void showLrcFloatWindow() {
-            if (!Settings.canDrawOverlays(getApplicationContext()) || lrcView == null){
+            if (!Settings.canDrawOverlays(getApplicationContext()) || lrcView == null) {
                 Intent rqIntent = new Intent(AudioService.this, LrcFloatWindow.class);
                 rqIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(rqIntent);
-            }else{
+            } else {
                 if (!lrcWindowShow) {
                     windowManager.addView(lrcView, lrcWindowParams);
                 }
@@ -745,7 +745,7 @@ public class AudioService extends Service {
         }
 
         public void hideLrcFloatWindow() {
-            if(lrcView == null)
+            if (lrcView == null)
                 return;
             if (lrcWindowShow) {
                 windowManager.removeView(lrcView);

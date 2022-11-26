@@ -21,10 +21,11 @@ import java.util.Locale;
 public class LrcFloatWindow extends BaseActivity implements ServiceConnection, View.OnTouchListener {
     private AudioService.CtrlBinder ctrlBinder;
     private AlertDialog askDrawOverlaysDialog;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(!Settings.canDrawOverlays(this)){
+        if (!Settings.canDrawOverlays(this)) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage("还没有显示悬浮窗口的权限！")
                     .setNegativeButton("取消", new DialogInterface.OnClickListener() {
@@ -36,7 +37,7 @@ public class LrcFloatWindow extends BaseActivity implements ServiceConnection, V
                     }).setPositiveButton("去开启", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse(String.format(Locale.US,"package:%s", getPackageName()))), 1);
+                            startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse(String.format(Locale.US, "package:%s", getPackageName()))), 1);
                         }
                     }).setCancelable(false);
             askDrawOverlaysDialog = builder.create();
@@ -49,7 +50,7 @@ public class LrcFloatWindow extends BaseActivity implements ServiceConnection, V
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         ctrlBinder = (AudioService.CtrlBinder) service;
-        if(ctrlBinder.getLrcFloatView() == null){
+        if (ctrlBinder.getLrcFloatView() == null) {
             TextView view = (TextView) LayoutInflater.from(this).inflate(R.layout.lrc_layout, null, false);
             view.setOnTouchListener(this);
             ctrlBinder.setLrcView(view);
@@ -63,7 +64,8 @@ public class LrcFloatWindow extends BaseActivity implements ServiceConnection, V
     }
 
     @Override
-    public void onServiceDisconnected(ComponentName name) {}
+    public void onServiceDisconnected(ComponentName name) {
+    }
 
     @Override
     protected void onDestroy() {

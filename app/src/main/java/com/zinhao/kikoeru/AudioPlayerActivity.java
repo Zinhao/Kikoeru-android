@@ -147,8 +147,8 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
         }
     };
 
-    private void updateLoopIcon(){
-        if(ctrlBinder==null)
+    private void updateLoopIcon() {
+        if (ctrlBinder == null)
             return;
         if (ctrlBinder.getReapMode() == Player.REPEAT_MODE_ONE) {
             ibLoop.setImageResource(R.drawable.ic_baseline_flip_camera_android_24);
@@ -197,7 +197,7 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
 
     @Override
     public void onAlbumChange(int rjNumber) {
-        Glide.with(this).load(Api.formatGetUrl(String.format(Locale.US,"/api/cover/%d", rjNumber),true)).apply(options).into(imageView);
+        Glide.with(this).load(Api.formatGetUrl(String.format(Locale.US, "/api/cover/%d", rjNumber), true)).apply(options).into(imageView);
     }
 
     @Override
