@@ -94,13 +94,57 @@
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/nav_layout.xml" value="0.45416666666666666" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/layout/video_layout.xml" value="0.3859375" />
         <entry key="..\:/Users/q1521/AndroidStudioProjects/Kikoeru/app/src/main/res/menu/activity_main_drawer.xml" value="0.44895833333333335" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable-night/card_bg_current_play.xml" value="0.3955" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable-night/ic_baseline_volume_up_24.xml" value="0.2765" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/blue_white_repeat_bg.xml" value="0.2" />
         <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/card_bg_current_play.xml" value="0.3955" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/card_bg_lrc.xml" value="0.399" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/card_bg_tagview.xml" value="0.399" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/card_bg_va.xml" value="0.399" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/ic_baseline_audiotrack_24.xml" value="0.3955" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/ic_baseline_close_24.xml" value="0.3955" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/ic_baseline_delete_forever_24.xml" value="0.2145" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/ic_baseline_flip_camera_android_24.xml" value="0.2145" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/ic_baseline_folder_24.xml" value="0.2145" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/ic_baseline_image_24.xml" value="0.2145" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/ic_baseline_insert_drive_file_24.xml" value="0.2145" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/ic_baseline_keyboard_arrow_up_24.xml" value="0.3955" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/ic_baseline_loop_24.xml" value="0.2145" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/ic_baseline_loop_blue_24.xml" value="0.399" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/ic_baseline_pause_24.xml" value="0.3955" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/ic_baseline_play_arrow_24.xml" value="0.3955" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/ic_baseline_skip_next_24.xml" value="0.3955" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/ic_baseline_skip_previous_24.xml" value="0.1845" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/ic_baseline_text_fields_24.xml" value="0.3955" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/ic_baseline_text_snippet_24.xml" value="0.2145" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/ic_baseline_video_library_24.xml" value="0.2145" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/ic_baseline_volume_up_24.xml" value="0.2195" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/ic_baseline_work_24.xml" value="0.3955" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/ic_launcher_foreground.xml" value="0.118" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/item_bg.xml" value="0.2145" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/player_bg.xml" value="0.176" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/drawable/red_white_bg.xml" value="0.3945" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/layout/activity_about.xml" value="0.3229166666666667" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/layout/activity_image_browser.xml" value="0.34479166666666666" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/layout/activity_lrc_show.xml" value="0.3958333333333333" />
         <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/layout/activity_main.xml" value="0.38125" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/layout/activity_more.xml" value="0.3229166666666667" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/layout/activity_player.xml" value="0.3958333333333333" />
         <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/layout/activity_search.xml" value="0.3958333333333333" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/layout/activity_work.xml" value="0.36041666666666666" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/layout/item_image.xml" value="0.34479166666666666" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/layout/item_mission_progress.xml" value="0.22708333333333333" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/layout/item_open_source_project.xml" value="0.22708333333333333" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/layout/item_server_and_user.xml" value="0.39947916666666666" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/layout/item_text_row.xml" value="0.3958333333333333" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/layout/item_work_1.xml" value="0.39947916666666666" />
         <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/layout/item_work_2.xml" value="0.3958333333333333" />
         <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/layout/item_work_3.xml" value="0.2786458333333333" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/layout/item_work_tree_1.xml" value="0.22708333333333333" />
         <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/layout/layout_current_play.xml" value="0.3958333333333333" />
         <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/layout/layout_tags.xml" value="0.3958333333333333" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.136" />
+        <entry key="..\:/Users/zinhao/Code/Kikoeru-android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.1495" />
       </map>
     </option>
   </component>
