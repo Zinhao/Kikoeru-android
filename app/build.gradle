@@ -10,8 +10,8 @@ android {
         applicationId "com.zinhao.kikoeru"
         minSdk 26
         targetSdk 32
-        versionCode 6
-        versionName "beta_4.3.0"
+        versionCode 7
+        versionName "Release_5.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
