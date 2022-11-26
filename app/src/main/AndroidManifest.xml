@@ -56,17 +56,18 @@
         <activity
             android:name=".VideoPlayerActivity"
             android:launchMode="singleTask"
-            android:theme="@style/Theme.Kikoeru.NoActionBar" />
+            android:theme="@style/Theme.Kikoeru.NoActionBar.Fullscreen" />
         <activity
             android:name=".AudioPlayerActivity"
             android:launchMode="singleTask" />
         <activity
             android:name=".LrcFloatWindow"
-            android:theme="@style/Theme.AppCompat.Dialog.MinWidth" />
+            android:excludeFromRecents="true"
+            android:theme="@style/Theme.Kikoeru" />
         <activity
             android:name=".ImageBrowserActivity"
             android:launchMode="singleTask"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+            android:theme="@style/Theme.Kikoeru.NoActionBar.Fullscreen" />
         <activity
             android:name=".TagsActivity"
             android:exported="true"

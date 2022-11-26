@@ -21,6 +21,7 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.provider.Settings;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
@@ -338,10 +339,9 @@ public class AudioService extends Service {
         mediaStyle.setMediaSession(mediaSession.getSessionToken());
         notificationBuilder.setStyle(mediaStyle);
 
-        Intent previousIntent = new Intent(this, LrcFloatWindow.class);
+        Intent previousIntent = new Intent(this, AudioService.class);
         previousIntent.setAction(ACTION_SHOW_LRC);
-        previousIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        PendingIntent showLrcPendingIntent = PendingIntent.getActivity(this, 1, previousIntent, PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent showLrcPendingIntent = PendingIntent.getService(this, 1, previousIntent, PendingIntent.FLAG_IMMUTABLE);
 
         Intent playIntent = new Intent(this, AudioService.class);
         playIntent.setAction(ACTION_PLAY);
@@ -370,7 +370,7 @@ public class AudioService extends Service {
             notificationBuilder.setContentTitle(ctrlBinder.current.getString("title"));
             notificationBuilder.setContentText(ctrlBinder.current.getString("title"));
             notificationBuilder.setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, AudioPlayerActivity.class), PendingIntent.FLAG_IMMUTABLE));
-            Glide.with(this).asBitmap().load(Api.HOST + String.format("/api/cover/%d?type=sam&token=%s", ctrlBinder.currentAlbumId, Api.token)).into(new SimpleTarget<Bitmap>() {
+            Glide.with(this).asBitmap().load(App.getInstance().currentUser().getHost() + String.format("/api/cover/%d?type=sam&token=%s", ctrlBinder.currentAlbumId,Api.token)).into(new SimpleTarget<Bitmap>() {
                 @Override
                 public void onResourceReady(@NonNull Bitmap bitmap, @Nullable Transition<? super Bitmap> transition) {
                     notificationBuilder.setLargeIcon(bitmap);
@@ -405,6 +405,12 @@ public class AudioService extends Service {
             mediaSession.getController().getTransportControls().skipToPrevious();
         } else if (ACTION_PLAY.equals(intent.getAction())) {
             mediaSession.getController().getTransportControls().play();
+        } else if (ACTION_SHOW_LRC.equals(intent.getAction())) {
+            if(!ctrlBinder.isLrcWindowShow()){
+                ctrlBinder.showLrcFloatWindow();
+            }else{
+                ctrlBinder.hideLrcFloatWindow();
+            }
         }
         return super.onStartCommand(intent, flags, startId);
     }
@@ -486,6 +492,7 @@ public class AudioService extends Service {
 
         public CtrlBinder() {
             mLrcUpdateTimer = new Timer();
+            windowManager = getSystemService(WindowManager.class);
             LocalFileCache.getInstance().readLastPlayList(AudioService.this, lastPlayListCallback);
             mLrcUpdateTimer.schedule(new TimerTask() {
                 @Override
@@ -546,14 +553,6 @@ public class AudioService extends Service {
 
         public void setLrcWindowShow(boolean lrcWindowShow) {
             this.lrcWindowShow = lrcWindowShow;
-        }
-
-        public WindowManager getWindowManager() {
-            return windowManager;
-        }
-
-        public void setWindowManager(WindowManager windowManager) {
-            this.windowManager = windowManager;
         }
 
         private AsyncHttpClient.JSONObjectCallback checkLrcCallBack = new AsyncHttpClient.JSONObjectCallback() {
@@ -691,7 +690,7 @@ public class AudioService extends Service {
                     if (path.startsWith("http")) {
                         path = path + "?token=" + Api.token;
                     } else {
-                        path = Api.HOST + path + "?token=" + Api.token;
+                        path = App.getInstance().currentUser().getHost() + path + "?token=" + Api.token;
                     }
                     builder.setUri(path);
                 }
@@ -732,20 +731,24 @@ public class AudioService extends Service {
             this.lrcView = lrcView;
         }
 
-        public void showOrHideLrcFloatWindow() {
-            if (!lrcWindowShow) {
+        public void showLrcFloatWindow() {
+            if (!Settings.canDrawOverlays(getApplicationContext()) || lrcView == null){
+                Intent rqIntent = new Intent(AudioService.this, LrcFloatWindow.class);
+                rqIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(rqIntent);
+            }else{
+                if (!lrcWindowShow) {
+                    windowManager.addView(lrcView, lrcWindowParams);
+                }
                 lrcWindowShow = true;
-                windowManager.addView(lrcView, lrcWindowParams);
-            } else {
-                lrcWindowShow = false;
-                windowManager.removeView(lrcView);
             }
         }
 
         public void hideLrcFloatWindow() {
-            if (!lrcWindowShow) {
-                if (lrcView != null)
-                    windowManager.removeView(lrcView);
+            if(lrcView == null)
+                return;
+            if (lrcWindowShow) {
+                windowManager.removeView(lrcView);
             }
             lrcWindowShow = false;
         }

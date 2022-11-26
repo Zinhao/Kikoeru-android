@@ -28,6 +28,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Locale;
+
 public class AudioPlayerActivity extends BaseActivity implements ServiceConnection, MusicChangeListener, LrcRowChangeListener, SeekBar.OnSeekBarChangeListener {
     private AudioService.CtrlBinder ctrlBinder;
     private ImageView imageView;
@@ -110,14 +112,7 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
                 } else if (ctrlBinder.getReapMode() == Player.REPEAT_MODE_OFF) {
                     ctrlBinder.setReapOne();
                 }
-                if (ctrlBinder.getReapMode() == Player.REPEAT_MODE_ONE) {
-                    ibLoop.setImageResource(R.drawable.ic_baseline_flip_camera_android_24);
-                } else if (ctrlBinder.getReapMode() == Player.REPEAT_MODE_ALL) {
-                    ibLoop.setImageResource(R.drawable.ic_baseline_loop_24);
-                } else if (ctrlBinder.getReapMode() == Player.REPEAT_MODE_OFF) {
-                    ibLoop.setImageResource(R.drawable.ic_baseline_close_24);
-                }
-
+                updateLoopIcon();
             }
         });
         timeProgressView.setOnSeekBarChangeListener(this);
@@ -152,6 +147,18 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
         }
     };
 
+    private void updateLoopIcon(){
+        if(ctrlBinder==null)
+            return;
+        if (ctrlBinder.getReapMode() == Player.REPEAT_MODE_ONE) {
+            ibLoop.setImageResource(R.drawable.ic_baseline_flip_camera_android_24);
+        } else if (ctrlBinder.getReapMode() == Player.REPEAT_MODE_ALL) {
+            ibLoop.setImageResource(R.drawable.ic_baseline_loop_24);
+        } else if (ctrlBinder.getReapMode() == Player.REPEAT_MODE_OFF) {
+            ibLoop.setImageResource(R.drawable.ic_baseline_close_24);
+        }
+    }
+
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         ctrlBinder = (AudioService.CtrlBinder) service;
@@ -159,8 +166,9 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
         ctrlBinder.addLrcRowChangeListener(this);
         if (ctrlBinder.isLrcWindowShow()) {
             needShowLrcWhenDestroy = true;
-            ctrlBinder.showOrHideLrcFloatWindow();
+            ctrlBinder.hideLrcFloatWindow();
         }
+        updateLoopIcon();
         ibWork.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -189,7 +197,7 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
 
     @Override
     public void onAlbumChange(int rjNumber) {
-        Glide.with(this).load(Api.HOST + String.format("/api/cover/%d?token=%s", rjNumber, Api.token)).apply(options).into(imageView);
+        Glide.with(this).load(Api.formatGetUrl(String.format(Locale.US,"/api/cover/%d", rjNumber),true)).apply(options).into(imageView);
     }
 
     @Override
@@ -239,7 +247,7 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
             ctrlBinder.removeMusicChangeListener(this);
             unbindService(this);
             if (!ctrlBinder.isLrcWindowShow() && needShowLrcWhenDestroy)
-                startActivity(new Intent(this, LrcFloatWindow.class));
+                ctrlBinder.showLrcFloatWindow();
         }
         super.onDestroy();
     }

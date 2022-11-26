@@ -16,13 +16,32 @@ import android.view.View;
 import android.widget.TextView;
 import androidx.annotation.Nullable;
 
+import java.util.Locale;
+
 public class LrcFloatWindow extends BaseActivity implements ServiceConnection, View.OnTouchListener {
-
     private AudioService.CtrlBinder ctrlBinder;
-
+    private AlertDialog askDrawOverlaysDialog;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if(!Settings.canDrawOverlays(this)){
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("还没有显示悬浮窗口的权限！")
+                    .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                            finish();
+                        }
+                    }).setPositiveButton("去开启", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse(String.format(Locale.US,"package:%s", getPackageName()))), 1);
+                        }
+                    }).setCancelable(false);
+            askDrawOverlaysDialog = builder.create();
+            askDrawOverlaysDialog.show();
+        }
         bindService(new Intent(this, AudioService.class), this, BIND_AUTO_CREATE);
     }
 
@@ -30,16 +49,21 @@ public class LrcFloatWindow extends BaseActivity implements ServiceConnection, V
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         ctrlBinder = (AudioService.CtrlBinder) service;
-        if (ctrlBinder.getWindowManager() == null) {
-            ctrlBinder.setWindowManager(getWindowManager());
+        if(ctrlBinder.getLrcFloatView() == null){
+            TextView view = (TextView) LayoutInflater.from(this).inflate(R.layout.lrc_layout, null, false);
+            view.setOnTouchListener(this);
+            ctrlBinder.setLrcView(view);
         }
-        showFloatWindow();
+        if (Settings.canDrawOverlays(this)) {
+            // 有权限
+            ctrlBinder.showLrcFloatWindow();
+            finishAndRemoveTask();
+        }
+
     }
 
     @Override
-    public void onServiceDisconnected(ComponentName name) {
-
-    }
+    public void onServiceDisconnected(ComponentName name) {}
 
     @Override
     protected void onDestroy() {
@@ -77,42 +101,12 @@ public class LrcFloatWindow extends BaseActivity implements ServiceConnection, V
         return true;
     }
 
-    @SuppressLint("ClickableViewAccessibility")
-    private void showFloatWindow() {
-        if (ctrlBinder.getLrcFloatView() == null) {
-            TextView view = (TextView) LayoutInflater.from(this).inflate(R.layout.lrc_layout, null, false);
-            view.setOnTouchListener(this);
-            ctrlBinder.setLrcView(view);
-        }
-
-        if (!Settings.canDrawOverlays(this)) {
-            new AlertDialog.Builder(this).setMessage("还没有显示悬浮窗口的权限！")
-                    .setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
-                            finish();
-                        }
-                    }).setPositiveButton("去开启", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse(String.format("package:%s", getPackageName()))), 1);
-                        }
-                    }).setCancelable(false).create().show();
-        } else {
-            ctrlBinder.showOrHideLrcFloatWindow();
-            finish();
-        }
-
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (Settings.canDrawOverlays(this)) {
-            showFloatWindow();
-            finish();
+            ctrlBinder.showLrcFloatWindow();
         }
+        finishAndRemoveTask();
     }
-
 }

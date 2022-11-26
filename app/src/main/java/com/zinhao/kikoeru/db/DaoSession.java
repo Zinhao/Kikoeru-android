@@ -13,7 +13,7 @@ import java.util.Map;
 
 /**
  * {@inheritDoc}
- *
+ * 
  * @see org.greenrobot.greendao.AbstractDaoSession
  */
 public class DaoSession extends AbstractDaoSession {
@@ -33,7 +33,7 @@ public class DaoSession extends AbstractDaoSession {
 
         registerDao(User.class, userDao);
     }
-
+    
     public void clear() {
         userDaoConfig.clearIdentityScope();
     }

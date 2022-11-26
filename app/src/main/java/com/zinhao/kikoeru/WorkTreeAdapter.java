@@ -188,7 +188,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         } else if (holder instanceof DetailViewHolder) {
             DetailViewHolder girdHolder = (DetailViewHolder) holder;
             try {
-                Glide.with(holder.itemView.getContext()).load(Api.HOST + String.format("/api/cover/%d?token=%s", headerInfo.getInt("id"), Api.token)).apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
+                Glide.with(holder.itemView.getContext()).load(App.getInstance().currentUser().getHost() + String.format("/api/cover/%d?token=%s", headerInfo.getInt("id"), Api.token)).apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
                 girdHolder.tvTitle.setText(headerInfo.getString("title"));
                 girdHolder.tvArt.setTags(App.getVasList(headerInfo), TagsView.JSON_TEXT_GET.setKey("name"));
                 girdHolder.tvArt.setTagClickListener(vaClickListener);

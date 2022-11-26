@@ -97,7 +97,13 @@ public class App extends Application implements Application.ActivityLifecycleCal
         currentUserId = getValue(App.CONFIG_USER_DATABASE_ID, -1);
         appDebug = getValue(App.CONFIG_DEBUG, 0) == 1;
         saveExternal = getValue(App.CONFIG_SAVE_EXTERNAL, 0) == 1;
+
         getAllUsers();
+        User user = App.getInstance().currentUser();
+        if (user != null) {
+            Api.init(user.getToken(), user.getHost());
+        }
+
         defaultPic = new RequestOptions().placeholder(R.drawable.ic_no_cover).apply(RequestOptions.bitmapTransform(new RoundedCorners(10)));
 
         DownloadUtils.getInstance().init(this);

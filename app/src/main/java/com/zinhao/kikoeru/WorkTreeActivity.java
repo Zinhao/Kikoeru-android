@@ -260,7 +260,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         String url = item.getString(JSONConst.WorkTree.MEDIA_STREAM_URL);
         Intent intent = new Intent(Intent.ACTION_VIEW);
         if (!url.startsWith("http")) {
-            url = String.format("%s%s", Api.HOST, url);
+            url = String.format("%s%s", App.getInstance().currentUser().getHost(), url);
         }
         intent.setData(Uri.parse(url));
         try {
@@ -298,7 +298,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
 
     @Override
     public void onAlbumChange(int rjNumber) {
-        Glide.with(this).load(Api.HOST + String.format(Locale.US, "/api/cover/%d?type=sam", rjNumber)).into(ivCover);
+        Glide.with(this).load(App.getInstance().currentUser().getHost() + String.format(Locale.US, "/api/cover/%d?type=sam", rjNumber)).into(ivCover);
     }
 
     @Override
@@ -429,7 +429,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                         }
                         try {
                             String workHost = work.getString(JSONConst.Work.HOST);
-                            if (!Api.HOST.equals(workHost)) {
+                            if (!App.getInstance().currentUser().getHost().equals(workHost)) {
                                 Toast.makeText(WorkTreeActivity.this, "switch host user then start download!", Toast.LENGTH_SHORT).show();
                                 return;
                             }
@@ -474,7 +474,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                     Intent intent = new Intent(Intent.ACTION_VIEW);
                     String readableUrl;
                     if (!itemStreamUrl.startsWith("http")) {
-                        readableUrl = String.format("%s%s?token=%s", Api.HOST, itemStreamUrl, Api.token);
+                        readableUrl = String.format("%s%s?token=%s", App.getInstance().currentUser().getHost(), itemStreamUrl, Api.token);
                     } else {
                         readableUrl = String.format("%s?token=%s", itemStreamUrl, Api.token);
                     }
@@ -497,7 +497,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
     private void saveWorkWithTree() {
         if (jsonWorkTrees != null) {
             try {
-                work.put(JSONConst.Work.HOST, Api.HOST);
+                work.put(JSONConst.Work.HOST, App.getInstance().currentUser().getHost());
                 LocalFileCache.getInstance().saveWork(work, jsonWorkTrees);
             } catch (JSONException jsonException) {
                 jsonException.printStackTrace();

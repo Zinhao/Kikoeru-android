@@ -1,6 +1,7 @@
 package com.zinhao.kikoeru;
 
 import android.net.Uri;
+import androidx.annotation.NonNull;
 import androidx.annotation.StringDef;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpRequest;
@@ -13,9 +14,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.Locale;
 
 public class Api {
-    public static String HOST = "localhost:8888";
+    private static String HOST = "localhost:8888";
     private static final String TAG = "Api";
-    public static final String REMOTE_HOST = "localhost:8888";
+    public static final String REMOTE_HOST = "https://api.asmr.one";
     public static final String LOCAL_HOST = "localhost:8888";
     public static String authorization = "";
     public static String token = "";
@@ -23,7 +24,7 @@ public class Api {
     private static int sort = 1;
     private static String order = "id";
 
-    public static void init(String tokenStr, String host) {
+    public static void init(@NonNull String tokenStr, @NonNull String host) {
         token = tokenStr;
         authorization = String.format("Bearer %s", tokenStr);
         if (host.startsWith("http")) {
@@ -36,7 +37,7 @@ public class Api {
         sort = (int) App.getInstance().getValue(App.CONFIG_SORT, 0);
     }
 
-    private static String makeSort() {
+    private static @NonNull String makeSort() {
         if (sort != 1) {
             return "desc";
         } else {
@@ -154,12 +155,12 @@ public class Api {
 
     /**
      * GET
-     * https://api.asmr.one/api/review?order=updated_at&sort=desc&page=1&filter=marked      我的进度 - 想听
-     * https://api.asmr.one/api/review?order=updated_at&sort=desc&page=1&filter=listening   我的进度 - 在听
-     * https://api.asmr.one/api/review?order=updated_at&sort=desc&page=1&filter=listened    我的进度 - 听过
-     * https://api.asmr.one/api/review?order=updated_at&sort=desc&page=1&filter=replay      我的进度 - 重听
-     * https://api.asmr.one/api/review?order=updated_at&sort=desc&page=1&filter=postponed   我的进度 - 搁置
-     * https://api.asmr.one/api/review?order=updated_at&sort=desc&page=1                    我的评价
+     * <a href="https://api.asmr.one/api/review?order=updated_at&sort=desc&page=1&filter=marked">...</a>      我的进度 - 想听
+     * <a href="https://api.asmr.one/api/review?order=updated_at&sort=desc&page=1&filter=listening">...</a>   我的进度 - 在听
+     * <a href="https://api.asmr.one/api/review?order=updated_at&sort=desc&page=1&filter=listened">...</a>    我的进度 - 听过
+     * <a href="https://api.asmr.one/api/review?order=updated_at&sort=desc&page=1&filter=replay">...</a>      我的进度 - 重听
+     * <a href="https://api.asmr.one/api/review?order=updated_at&sort=desc&page=1&filter=postponed">...</a>   我的进度 - 搁置
+     * <a href="https://api.asmr.one/api/review?order=updated_at&sort=desc&page=1">...</a>                    我的评价
      */
     public static void doGetReview(@Filter String filter, int page, AsyncHttpClient.JSONObjectCallback callback) {
         AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST + String.format("/api/review?order=updated_at&sort=desc&page=%d&filter=%s", page, filter)), "GET");
@@ -170,7 +171,7 @@ public class Api {
 
     /**
      * PUT
-     * 标记在听 https://api.asmr.one/api/review?starOnly=false&progressOnly=true
+     * 标记在听 <a href="https://api.asmr.one/api/review?starOnly=false&progressOnly=true">...</a>
      * data:   {"user_name":"guest","work_id":380205,"progress":"listening"}
      * result: 200: {message: "更新进度成功"}
      */
@@ -204,8 +205,6 @@ public class Api {
             } else {
                 return String.format("%s%s", HOST, path);
             }
-
         }
     }
-
 }

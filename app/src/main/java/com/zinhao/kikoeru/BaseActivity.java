@@ -60,8 +60,8 @@ public class BaseActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (!Environment.isExternalStorageManager()) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("Tip");
-                builder.setMessage("存储到自定义外部目录，即使应用被删除，你缓存的内容也不会被删除，检测到权限未打开，需要权限。");
+                builder.setTitle(R.string.tip);
+                builder.setMessage(R.string.external_storage_tip);
                 builder.setNegativeButton("去授予", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {

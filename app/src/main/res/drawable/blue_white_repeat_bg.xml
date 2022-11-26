@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
-        android:src="@drawable/blue_white"
-        android:tileMode="repeat"
-        android:gravity="center"
-        android:alpha="0.8"
-        android:dither="true">
-</bitmap>
