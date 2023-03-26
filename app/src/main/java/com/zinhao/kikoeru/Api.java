@@ -14,10 +14,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.Locale;
 
 public class Api {
-    private static String HOST = "localhost:8888";
+    private static String HOST = "http://localhost:8888";
     private static final String TAG = "Api";
     public static final String REMOTE_HOST = "https://api.asmr.one";
-    public static final String LOCAL_HOST = "localhost:8888";
+    public static final String LOCAL_HOST = "http://localhost:8888";
     public static String authorization = "";
     public static String token = "";
     private static int subtitle = 1;

@@ -7,11 +7,14 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.SeekBar;
 import androidx.annotation.Nullable;
+
+import java.util.Locale;
 
 /**
  * 2021/2/14 0:15
@@ -21,8 +24,8 @@ import androidx.annotation.Nullable;
 public class TimeProgressView extends View implements View.OnTouchListener {
     private static final int MIN_HEIGHT = 50;
     private static final int MIN_WIDTH = 400;
-    private static final float PROGRESS_POINT_WIDTH = 10;
-    private static final float PROGRESS_POINT_HEIGHT = 30;
+    private float thumbWidth;
+    private float thumbHeight;
     private int max = 100;
     private int min;
     private int progress = 100;
@@ -56,9 +59,12 @@ public class TimeProgressView extends View implements View.OnTouchListener {
         progressPointRect = new RectF();
         remainRect = new RectF();
         seekBarPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        seekBarPaint.setColor(Color.GREEN);
+        seekBarPaint.setColor(Color.WHITE);
+        seekBarPaint.setStrokeCap(Paint.Cap.ROUND);
         Paint.FontMetrics fontMetrics = textPaint.getFontMetrics();
         textDistance = (fontMetrics.bottom - fontMetrics.top) / 2 - fontMetrics.bottom;
+        thumbWidth = dp2px(10,getResources().getDisplayMetrics());
+        thumbHeight = dp2px(20,getResources().getDisplayMetrics());
         setOnTouchListener(this);
 
     }
@@ -103,7 +109,7 @@ public class TimeProgressView extends View implements View.OnTouchListener {
     private String makeCurrentTimeStr() {
         int minute = progress / type;
         int second = progress % type / (type / 60);
-        return String.format("%02d:%02d", minute, second);
+        return String.format(Locale.CHINA,"%02d:%02d", minute, second);
     }
 
     @SuppressLint("DefaultLocale")
@@ -126,21 +132,24 @@ public class TimeProgressView extends View implements View.OnTouchListener {
 
         //处理wrap_content的几种特殊情况
         if (widthSpecMode == MeasureSpec.AT_MOST && heightSpecMode == MeasureSpec.AT_MOST) {
-            w = MIN_WIDTH;  //单位是px
-            h = MIN_HEIGHT;
+            w = (int) dp2px(MIN_WIDTH,getResources().getDisplayMetrics());  //单位是px
+            h = (int) dp2px(MIN_HEIGHT,getResources().getDisplayMetrics());
         } else if (widthSpecMode == MeasureSpec.AT_MOST) {
             //只要宽度布局参数为wrap_content， 宽度给固定值200dp(处理方式不一，按照需求来)
-            w = MIN_WIDTH;
+            w =  (int) dp2px(MIN_WIDTH,getResources().getDisplayMetrics());
         } else if (heightSpecMode == MeasureSpec.AT_MOST) {
-            h = MIN_HEIGHT;
+            h = (int) dp2px(MIN_HEIGHT,getResources().getDisplayMetrics());
         }
         //给两个字段设置值，完成最终测量
         textY = h / 2f + textDistance;
-        barStartX = textPaint.measureText("00:00") + PROGRESS_POINT_WIDTH / 2;
+        barStartX = textPaint.measureText("00:00") + thumbWidth / 2;
         barEndX = w - barStartX;
         barTopY = h / 5f * 2;
         barBottomY = h / 5f * 3;
         allProgressWidth = barEndX - barStartX;
+        thumbHeight = h/2f;
+        thumbWidth = thumbHeight/3f;
+
         setMeasuredDimension(w, h);
     }
 
@@ -161,27 +170,27 @@ public class TimeProgressView extends View implements View.OnTouchListener {
 
         float progressPe = Math.min((float) progress / max, 1f);
 
-        float nowProgressX = allProgressWidth * progressPe + barStartX - PROGRESS_POINT_WIDTH / 2f;
-        float progressRectTop = getHeight() / 2f - PROGRESS_POINT_HEIGHT / 2f;
-        float progressRectBottom = progressRectTop + PROGRESS_POINT_HEIGHT;
+        float nowProgressX = allProgressWidth * progressPe + barStartX - thumbWidth / 2f;
+        float progressRectTop = getHeight() / 2f - thumbHeight / 2f;
+        float progressRectBottom = progressRectTop + thumbHeight;
         // already pass
-        alreadyPassRect.set(barStartX, barTopY, nowProgressX + PROGRESS_POINT_WIDTH / 2f, barBottomY);
+        alreadyPassRect.set(barStartX, barTopY, nowProgressX + thumbWidth / 2f, barBottomY);
         // remain
-        remainRect.set(nowProgressX + PROGRESS_POINT_WIDTH / 2f, barTopY, barEndX, barBottomY);
+        remainRect.set(nowProgressX + thumbWidth / 2f, barTopY, barEndX, barBottomY);
         // oval point
-        progressPointRect.set(nowProgressX, progressRectTop, nowProgressX + PROGRESS_POINT_WIDTH, progressRectBottom);
+        progressPointRect.set(nowProgressX, progressRectTop, nowProgressX + thumbWidth, progressRectBottom);
 
         canvas.drawText(makeCurrentTimeStr(), 0, textY, textPaint);
-        canvas.drawText(maxTimeStr, barEndX + PROGRESS_POINT_WIDTH / 2, textY, textPaint);
+        canvas.drawText(maxTimeStr, barEndX + thumbWidth / 2, textY, textPaint);
 
         seekBarPaint.setAlpha(255);
-        canvas.drawRect(alreadyPassRect, seekBarPaint);
+        canvas.drawRoundRect(alreadyPassRect,alreadyPassRect.height()/4,alreadyPassRect.height()/4, seekBarPaint);
 
         seekBarPaint.setAlpha(100);
-        canvas.drawRect(remainRect, seekBarPaint);
+        canvas.drawRoundRect(remainRect,remainRect.height()/4,remainRect.height()/4, seekBarPaint);
 
         seekBarPaint.setAlpha(255);
-        canvas.drawRect(progressPointRect, seekBarPaint);
+        canvas.drawRoundRect(progressPointRect,progressPointRect.width()/4,progressPointRect.width()/4, seekBarPaint);
 //        canvas.drawOval(progressPointRect,seekBarPaint);
 
     }
@@ -235,5 +244,9 @@ public class TimeProgressView extends View implements View.OnTouchListener {
                 break;
         }
         return true;
+    }
+
+    private static float dp2px(float dp, DisplayMetrics displayMetrics){
+        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,dp,displayMetrics);
     }
 }

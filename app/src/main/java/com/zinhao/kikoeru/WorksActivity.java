@@ -37,11 +37,16 @@ import java.util.List;
 
 public class WorksActivity extends BaseActivity implements MusicChangeListener, ServiceConnection, TagsView.TagClickListener<JSONObject> {
     private static final String TAG = "MainActivity";
+    private static final String CONFIG_TYPE = "last_type";
+    private static final String CONFIG_PAGE = "last_page";
+    private static final String CONFIG_PARAM_INT = "last_param_int";
+    private static final String CONFIG_PARAM_STR = "last_param_str";
     private RecyclerView recyclerView;
     private WorkAdapter workAdapter;
     private List<JSONObject> works;
     private RecyclerView.OnScrollListener scrollListener;
     private int page = 1;
+    private int currentPage = 0;
     private int totalCount = 0;
 
     private View bottomLayout;
@@ -52,6 +57,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
     private TextView tvTitle;
     private TextView tvWorkTitle;
     private ImageButton ibStatus;
+    private ImageButton ibFloatLrcWindow;
     private int tagId = -1;
     private String tagStr = "";
     private String vaId = "";
@@ -85,6 +91,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         tvTitle = bottomLayout.findViewById(R.id.textView);
         tvWorkTitle = bottomLayout.findViewById(R.id.textView2);
         ibStatus = bottomLayout.findViewById(R.id.button);
+        ibFloatLrcWindow = bottomLayout.findViewById(R.id.imageButton);
         ImageButton bt1 = findViewById(R.id.bt1);
         ImageButton bt2 = findViewById(R.id.bt2);
         ImageButton bt3 = findViewById(R.id.bt3);
@@ -112,6 +119,10 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
             }
         };
         works = new ArrayList<>();
+        type = (int) App.getInstance().getValue(CONFIG_TYPE,TYPE_ALL_WORK);
+        page = (int) App.getInstance().getValue(CONFIG_PAGE,1);
+        vaId = App.getInstance().getValue(CONFIG_PARAM_STR,"");
+        tagId = (int) App.getInstance().getValue(CONFIG_PARAM_INT,-1);
         reloadRecycleView();
 
         bt1.setOnClickListener(v -> {
@@ -176,6 +187,16 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
             }
         });
         bt3.setOnClickListener(v -> moreMenu.show());
+        ibFloatLrcWindow.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(ctrlBinder.isLrcWindowShow()){
+                    ctrlBinder.hideLrcFloatWindow();
+                }else{
+                    ctrlBinder.showLrcFloatWindow();
+                }
+            }
+        });
     }
 
     private void toggleBottom() {
@@ -605,6 +626,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
             try {
                 JSONArray jsonArray = jsonObject.getJSONArray("works");
                 totalCount = jsonObject.getJSONObject("pagination").getInt("totalCount");
+                currentPage = page;
                 page = jsonObject.getJSONObject("pagination").getInt("currentPage") + 1;
 
                 if (jsonArray.length() != 0) {
@@ -645,19 +667,19 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         } else if (type == TYPE_SELF_LISTENING) {
             return getString(R.string.listening);
         } else if (type == TYPE_SELF_LISTENED) {
-            return getString(R.string.listening);
+            return getString(R.string.listened);
         } else if (type == TYPE_SELF_MARKED) {
-            return getString(R.string.listening);
+            return getString(R.string.marked);
         } else if (type == TYPE_SELF_REPLAY) {
-            return getString(R.string.listening);
+            return getString(R.string.replay);
         } else if (type == TYPE_SELF_POSTPONED) {
-            return getString(R.string.listening);
+            return getString(R.string.postponed);
         } else if (type == TYPE_TAG_WORK) {
             return tagStr;
         } else if (type == TYPE_VA_WORK) {
             return vaName;
         } else if (type == TYPE_LOCAL_WORK) {
-            return String.format("%s", App.getInstance().isSaveExternal() ? "外部公共目录" : "内部私有目录");
+            return String.format("%s", App.getInstance().isSaveExternal() ? getString(R.string.extra_path) : getString(R.string.private_path));
         }
         return "--";
     }
@@ -666,6 +688,14 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
     public void onBackPressed() {
         super.onBackPressed();
         try {
+            App.getInstance().setValue(CONFIG_TYPE,type);
+            App.getInstance().setValue(CONFIG_PAGE,currentPage);
+            if(type == TYPE_TAG_WORK){
+                App.getInstance().setValue(CONFIG_PARAM_INT,tagId);
+            }else if(type == TYPE_VA_WORK){
+                App.getInstance().setValue(CONFIG_PARAM_STR,vaId);
+            }
+
             DownloadUtils.getInstance().close();
         } catch (IOException e) {
             e.printStackTrace();

@@ -7,7 +7,7 @@
     <string name="project_subsampling_scale_image_view_license" translatable="false">https://github.com/davemorrissey/subsampling-scale-image-view/blob/master/LICENSE</string>
     <string name="file_provider" translatable="false">com.zinhao.kikoeru.fileProvider</string>
 
-    <string name="channel_description">play control</string>
+    <string name="channel_description">player control</string>
     <string name="action_settings">Settings</string>
     <string name="sign_out">sign out</string>
     <string name="my_progress">self progress</string>
@@ -58,9 +58,11 @@
     <string name="_2022_01_02" translatable="false">2022-01-02</string>
     <string name="https_api_asmr_net" translatable="false">https://api.asmr.net</string>
     <string name="external_storage_tip">
-        存储到自定义外部目录，即使应用被删除，你缓存的内容也不会被删除，检测到权限未打开，需要权限。
+        存储到自定义外部目录，即使应用被删除，你下载的内容也不会被删除，检测到权限未打开，需要权限。
     </string>
     <string name="tip">Tip</string>
+    <string name="extra_path">外部公共目录</string>
+    <string name="private_path">内部私有目录</string>
 
 
 </resources>

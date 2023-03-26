@@ -37,7 +37,7 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
     private ImageButton ibPrevious;
     private ImageButton ibPause;
     private ImageButton ibNext;
-    private ImageButton ibWork;
+    private ImageButton ibLrc;
     private ImageButton ibLoop;
     private TextView tvLrc;
     private TextView tvUpLrc;
@@ -50,12 +50,18 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
         imageView = findViewById(R.id.ivCover);
+        imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Api.doGetWork(String.valueOf(ctrlBinder.getCurrentAlbumId()), 1, searchWorkCallback);
+            }
+        });
         RoundedCorners roundedCorners = new RoundedCorners(20);
         options = RequestOptions.bitmapTransform(roundedCorners);
         ibPrevious = findViewById(R.id.ib1);
         ibPause = findViewById(R.id.ib2);
         ibNext = findViewById(R.id.ib3);
-        ibWork = findViewById(R.id.imageButton2);
+        ibLrc = findViewById(R.id.imageButton2);
         ibLoop = findViewById(R.id.ibLoop);
         tvLrc = findViewById(R.id.tvLrc);
         tvUpLrc = findViewById(R.id.tvUpLrc);
@@ -169,10 +175,14 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
             ctrlBinder.hideLrcFloatWindow();
         }
         updateLoopIcon();
-        ibWork.setOnClickListener(new View.OnClickListener() {
+        ibLrc.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Api.doGetWork(String.valueOf(ctrlBinder.getCurrentAlbumId()), 1, searchWorkCallback);
+                if(ctrlBinder.isLrcWindowShow()){
+                    ctrlBinder.hideLrcFloatWindow();
+                }else{
+                    ctrlBinder.showLrcFloatWindow();
+                }
             }
         });
         timeProgressView.setMax((int) ctrlBinder.getExoPlayer().getDuration());

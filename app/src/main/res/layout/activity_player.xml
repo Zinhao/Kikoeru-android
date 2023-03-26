@@ -20,7 +20,7 @@
     <com.zinhao.kikoeru.TimeProgressView
         android:id="@+id/time_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="45dp"
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="24dp"
@@ -67,8 +67,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:textSize="24sp"
-        android:text=""
+        android:textSize="18sp"
+        android:padding="5dp"
+        android:text="---"
+        android:gravity="center"
         app:layout_constraintEnd_toEndOf="@+id/ivCover"
         app:layout_constraintStart_toStartOf="@+id/ivCover"
         app:layout_constraintTop_toBottomOf="@+id/ivCover" />
@@ -77,10 +79,15 @@
         android:id="@+id/tvLrc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text=""
-        android:textSize="24sp"
-        android:drawableLeft="@drawable/ic_baseline_volume_up_24"
+        android:padding="5dp"
+        android:text="---"
+        android:textSize="22sp"
+        android:shadowColor="@color/black"
+        android:shadowDx="5"
+        android:shadowDy="5"
+        android:shadowRadius="5"
+        android:textColor="@color/white"
+        android:gravity="center"
         app:layout_constraintEnd_toEndOf="@+id/ivCover"
         app:layout_constraintStart_toStartOf="@+id/ivCover"
         app:layout_constraintTop_toBottomOf="@+id/tvUpLrc" />
@@ -89,9 +96,10 @@
         android:id="@+id/tvNextLrc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text=""
-        android:textSize="24sp"
+        android:text="---"
+        android:textSize="18sp"
+        android:padding="5dp"
+        android:gravity="center"
         app:layout_constraintEnd_toEndOf="@+id/ivCover"
         app:layout_constraintStart_toStartOf="@+id/ivCover"
         app:layout_constraintTop_toBottomOf="@+id/tvLrc" />
@@ -105,7 +113,7 @@
         app:layout_constraintBottom_toBottomOf="@+id/ib3"
         app:layout_constraintStart_toEndOf="@+id/ib3"
         app:layout_constraintTop_toTopOf="@+id/ib3"
-        app:srcCompat="@drawable/ic_baseline_work_24" />
+        app:srcCompat="@drawable/ic_baseline_text_fields_24" />
 
     <ImageButton
         android:id="@+id/ibLoop"

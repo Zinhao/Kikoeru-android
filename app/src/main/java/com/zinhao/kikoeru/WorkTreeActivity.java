@@ -59,6 +59,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
     private TextView tvTitle;
     private TextView tvWorkTitle;
     private ImageButton ibStatus;
+    private ImageButton ibFloatLrc;
 
     private final AsyncHttpClient.JSONArrayCallback docTreeCallback = new AsyncHttpClient.JSONArrayCallback() {
         @Override
@@ -109,6 +110,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         tvTitle = bottomLayout.findViewById(R.id.textView);
         tvWorkTitle = bottomLayout.findViewById(R.id.textView2);
         ibStatus = bottomLayout.findViewById(R.id.button);
+        ibFloatLrc = bottomLayout.findViewById(R.id.imageButton);
         bindService(new Intent(this, AudioService.class), this, BIND_AUTO_CREATE);
         init();
     }
@@ -342,6 +344,16 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                 ctrlBinder.getController().getTransportControls().pause();
             } else {
                 ctrlBinder.getController().getTransportControls().play();
+            }
+        });
+        ibFloatLrc.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(ctrlBinder.isLrcWindowShow()){
+                    ctrlBinder.hideLrcFloatWindow();
+                }else{
+                    ctrlBinder.showLrcFloatWindow();
+                }
             }
         });
         bottomLayout.setOnClickListener(v -> {

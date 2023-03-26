@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="channel_description">play control</string>
+    <string name="channel_description">player control</string>
     <string name="action_settings">設定</string>
     <string name="sign_out">サインアウト</string>
     <string name="my_progress">進捗</string>
@@ -51,4 +51,6 @@
         存储到自定义外部目录，即使应用被删除，你缓存的内容也不会被删除，检测到权限未打开，需要权限。
     </string>
     <string name="tip">Tip</string>
+    <string name="extra_path">public dir</string>
+    <string name="private_path">private dir</string>
 </resources>
