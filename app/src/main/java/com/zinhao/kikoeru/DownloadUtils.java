@@ -48,6 +48,11 @@ public class DownloadUtils implements Closeable {
         private String hash;
         private static final int BLOCK_SIZE = 1024 * 1024;
         private Runnable successCallback;
+        private Exception missionException;
+
+        public Exception getMissionException() {
+            return missionException;
+        }
 
         public void setSuccessCallback(Runnable successCallback) {
             this.successCallback = successCallback;
@@ -90,6 +95,7 @@ public class DownloadUtils implements Closeable {
                 getInstance().missionList.add(this);
             } catch (JSONException e) {
                 e.printStackTrace();
+                missionException = e;
                 App.getInstance().alertException(e);
             }
         }
@@ -98,6 +104,7 @@ public class DownloadUtils implements Closeable {
             try {
                 return hash.equals(jsonObject.getString(JSONConst.WorkTree.HASH));
             } catch (JSONException e) {
+                missionException = e;
                 e.printStackTrace();
                 return false;
             }
@@ -115,9 +122,9 @@ public class DownloadUtils implements Closeable {
             float downLoadedM = downloaded / m;
             float totalM = total / m;
             if (isCompleted()) {
-                return String.format(Locale.US, "已完成(共%.2fMb)", downLoadedM);
+                return String.format(Locale.US, "已完成(共%.2fMB)", downLoadedM);
             }
-            return String.format(Locale.US, "%.2fMb / %.2fMb", downLoadedM, totalM);
+            return String.format(Locale.US, "%.2fMB / %.2fMB", downLoadedM, totalM);
         }
 
         public String getTitle() {
@@ -186,10 +193,12 @@ public class DownloadUtils implements Closeable {
                 request = new AsyncHttpRequest(Uri.parse(getDownLoadUrl()), "GET");
             } catch (JSONException e) {
                 e.printStackTrace();
+                missionException = e;
                 App.getInstance().alertException(e);
                 return;
             }
             request.setTimeout(5000);
+            request.addHeader("authorization", Api.authorization);
             this.downLoadClient = new AsyncHttpClient(new AsyncServer());
             if (downloaded != 0 && mapFile.exists()) {
                 continueDownLoad();
@@ -206,12 +215,14 @@ public class DownloadUtils implements Closeable {
             try {
                 fout = new BufferedOutputStream(new FileOutputStream(mapFile, true), 8192);
             } catch (FileNotFoundException var8) {
+                missionException = var8;
                 return;
             }
             downLoadClient.execute(request, new HttpConnectCallback() {
                 @Override
                 public void onConnectCompleted(Exception e, AsyncHttpResponse response) {
                     if (e != null) {
+                        missionException = e;
                         try {
                             fout.close();
                         } catch (IOException ignored) {
@@ -226,6 +237,7 @@ public class DownloadUtils implements Closeable {
                         });
                         response.setEndCallback(new CompletedCallback() {
                             public void onCompleted(Exception ex) {
+                                missionException = ex;
                                 try {
                                     fout.close();
                                 } catch (IOException var3) {
@@ -256,6 +268,7 @@ public class DownloadUtils implements Closeable {
             setDownloading(false);
             completed = true;
             if (e != null) {
+                missionException = e;
                 App.getInstance().alertException(e);
                 return;
             }
@@ -302,6 +315,7 @@ public class DownloadUtils implements Closeable {
                 jsonObject.put("total", total);
                 jsonObject.put("eTag", eTag);
             } catch (JSONException e) {
+                missionException = e;
                 e.printStackTrace();
             }
             return jsonObject;

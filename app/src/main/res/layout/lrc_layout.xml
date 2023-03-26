@@ -5,8 +5,12 @@
     android:gravity="center"
     android:padding="10dp"
     android:textSize="20sp"
-    android:background="@drawable/card_bg_lrc"
     android:textColor="@color/white"
+          android:background="#57000000"
+          android:shadowRadius="5"
+          android:shadowDy="3"
+          android:shadowDx="3"
+          android:shadowColor="@color/black"
     android:layout_height="wrap_content">
 
 </TextView>

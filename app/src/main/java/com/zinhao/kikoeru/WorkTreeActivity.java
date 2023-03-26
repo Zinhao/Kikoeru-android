@@ -477,9 +477,9 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                     if (havePermission) {
                         saveWorkWithTree();
                         downLoadMission.start();
+                        startActivity(new Intent(WorkTreeActivity.this, DownLoadMissionActivity.class));
                     }
                     dialog.dismiss();
-
                 });
                 final String itemStreamUrl = item.getString(JSONConst.WorkTree.MEDIA_STREAM_URL);
                 builder.setPositiveButton("open in browser", (dialog, which) -> {
