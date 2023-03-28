@@ -308,7 +308,7 @@ public class TagsView<T> extends View {
             float rectH = rectFH + textPadding;
 
             if (x + rectW > w) {
-                y += rectH + getPaddingTop() + getPaddingBottom();
+                y += rectH+getPaddingBottom();
                 x = 0;
             }
             tagsRectFs.get(i).set(x, y, x + rectW, y + rectH);

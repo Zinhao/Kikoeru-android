@@ -27,6 +27,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public static final int LAYOUT_LIST = 846;
     public static final int LAYOUT_SMALL_GRID = 847;
     public static final int LAYOUT_BIG_GRID = 848;
+    public static final int LAYOUT_STAGGERED = 849;
 
     public void setTagClickListener(TagsView.TagClickListener<?> tagClickListener) {
         this.tagClickListener = tagClickListener;
@@ -71,6 +72,9 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_1, parent, false);
             return new SimpleViewHolder(v);
         } else if (layoutType == LAYOUT_BIG_GRID) {
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_2, parent, false);
+            return new GirdViewHolder(v);
+        } else if (layoutType == LAYOUT_STAGGERED) {
             View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_2, parent, false);
             return new GirdViewHolder(v);
         } else {

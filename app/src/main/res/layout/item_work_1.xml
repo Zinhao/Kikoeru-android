@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="120dp"
-                android:background="@drawable/card_bg_work"
+    android:layout_height="wrap_content"
                 android:layout_marginLeft="10dp"
                 android:layout_marginRight="10dp"
                 android:layout_marginBottom="5dp"
-                android:elevation="5dp"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <ImageView
@@ -25,8 +23,8 @@
             android:layout_width="match_parent"
             android:layout_height="20dp"
             android:layout_alignTop="@+id/ivCover"
-            android:layout_marginStart="0dp"
-            android:layout_marginTop="5dp"
+            android:layout_marginStart="6dp"
+            android:layout_marginTop="6dp"
             android:layout_toEndOf="@+id/ivCover"
             android:text="title"
     />
@@ -40,7 +38,7 @@
             android:layout_marginStart="0dp"
             android:layout_marginTop="0dp"
             app:tagBackground="@drawable/card_bg_tag"
-            app:tags="健全 纯爱 校园"/>
+            app:tags="健全 纯爱 校园 健全 纯爱 校园 健全 纯爱 校园"/>
 
     <com.zinhao.kikoeru.TagsView
             android:id="@+id/tvComArt"

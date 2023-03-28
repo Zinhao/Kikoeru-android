@@ -19,9 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.ListPopupWindow;
 import androidx.core.app.ActivityCompat;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.*;
 import com.bumptech.glide.Glide;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
@@ -80,6 +78,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
 
     private ListPopupWindow progressMenu;
     private ListPopupWindow moreMenu;
+    private RecyclerView.ItemDecoration itemDecoration;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,6 +96,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         ImageButton bt3 = findViewById(R.id.bt3);
         startForegroundService(new Intent(this, AudioService.class));
         bindService(new Intent(this, AudioService.class), this, BIND_AUTO_CREATE);
+        itemDecoration = new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
         outAnim = AnimationUtils.loadAnimation(this, R.anim.move_bottom_out);
         inAnim = AnimationUtils.loadAnimation(this, R.anim.move_bottom_in);
         scrollListener = new RecyclerView.OnScrollListener() {
@@ -336,6 +336,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         layoutMenu.add(2, 10, 10, R.string.list_layout);
         layoutMenu.add(2, 11, 11, R.string.cover_layout);
         layoutMenu.add(2, 12, 12, R.string.detail_layout);
+        layoutMenu.add(2, 13, 13, "staggered");
         layoutMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
 
         menu.add(0, 15, 15, R.string.more);
@@ -361,6 +362,8 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
                 layoutType = WorkAdapter.LAYOUT_LIST;
             } else if (item.getItemId() == 12) {
                 layoutType = WorkAdapter.LAYOUT_BIG_GRID;
+            } else if (item.getItemId() == 13) {
+                layoutType = WorkAdapter.LAYOUT_STAGGERED;
             }
             App.getInstance().setValue(App.CONFIG_LAYOUT_TYPE, layoutType);
             initLayout(layoutType);
@@ -438,12 +441,19 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
 
     private void initLayout(int layoutType) {
         RecyclerView.LayoutManager layoutManager = null;
+        recyclerView.removeItemDecoration(itemDecoration);
         if (layoutType == WorkAdapter.LAYOUT_LIST) {
             layoutManager = new LinearLayoutManager(WorksActivity.this);
+            recyclerView.addItemDecoration(itemDecoration);
         } else if (layoutType == WorkAdapter.LAYOUT_SMALL_GRID) {
-            layoutManager = new GridLayoutManager(WorksActivity.this, 3);
+            int col = Math.max(getResources().getDisplayMetrics().widthPixels/395,3);
+            layoutManager = new GridLayoutManager(WorksActivity.this, col);
         } else if (layoutType == WorkAdapter.LAYOUT_BIG_GRID) {
-            layoutManager = new GridLayoutManager(WorksActivity.this, 2);
+            int col = Math.max(getResources().getDisplayMetrics().widthPixels/395,2);
+            layoutManager = new GridLayoutManager(WorksActivity.this, col);
+        }else if(layoutType == WorkAdapter.LAYOUT_STAGGERED){
+            int col = Math.max(getResources().getDisplayMetrics().widthPixels/395,2);
+            layoutManager = new StaggeredGridLayoutManager(col,StaggeredGridLayoutManager.VERTICAL);
         }
         workAdapter = new WorkAdapter(works, layoutType);
         workAdapter.setTagClickListener(this);

@@ -10,8 +10,8 @@ android {
         applicationId "com.zinhao.kikoeru"
         minSdk 26
         targetSdk 32
-        versionCode 7
-        versionName "Release_5.0"
+        versionCode 8
+        versionName "Release_5.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -46,4 +46,6 @@ dependencies {
     implementation 'androidx.exifinterface:exifinterface:1.3.2'
     //greendao
     implementation 'org.greenrobot:greendao:3.3.0'
+    //调色板
+    implementation 'androidx.palette:palette:1.0.0'
 }

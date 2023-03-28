@@ -15,24 +15,22 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:adjustViewBounds="true"
-            android:scaleType="fitStart"
+            android:scaleType="center"
             android:src="@drawable/ic_no_cover"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>
 
     <TextView
-        android:id="@+id/tvTitle"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
-        android:maxLines="2"
-        android:text="ドン引きしながらもご奉仕してくれる押しに弱いえちえちカノジョ【フォーリ"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/ivCover"
-        app:layout_constraintTop_toBottomOf="@+id/ivCover" />
+            android:id="@+id/tvTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:maxLines="2"
+            android:text="ドン引きしながらもご奉仕してくれる押しに弱いえちえちカノジョ【フォーリ"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ivCover" app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginStart="8dp"/>
 
     <TextView
         android:id="@+id/tvCom"
@@ -128,7 +126,6 @@
             android:paddingLeft="5dp"
             android:paddingRight="5dp"
             android:layout_height="wrap_content" android:id="@+id/tvHost"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintBottom_toBottomOf="@+id/ivCover"/>
+            app:layout_constraintBottom_toBottomOf="@+id/ivCover" app:layout_constraintStart_toStartOf="@+id/ivCover"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

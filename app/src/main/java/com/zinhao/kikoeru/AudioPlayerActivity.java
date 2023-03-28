@@ -3,6 +3,9 @@ package com.zinhao.kikoeru;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Bitmap;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.media.session.PlaybackStateCompat;
@@ -16,11 +19,15 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.palette.graphics.Palette;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.CustomViewTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.google.android.exoplayer2.Player;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
@@ -207,7 +214,40 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
 
     @Override
     public void onAlbumChange(int rjNumber) {
-        Glide.with(this).load(Api.formatGetUrl(String.format(Locale.US, "/api/cover/%d", rjNumber), true)).apply(options).into(imageView);
+        Glide.with(this).asBitmap().load(Api.formatGetUrl(String.format(Locale.US, "/api/cover/%d", rjNumber), true)).apply(options).into(new CustomViewTarget<ImageView, Bitmap>(imageView) {
+
+            @Override
+            public void onLoadFailed(@Nullable Drawable drawable) {
+
+            }
+
+            @Override
+            public void onResourceReady(@NonNull Bitmap bitmap, @Nullable Transition<? super Bitmap> transition) {
+                imageView.setImageBitmap(bitmap);
+                Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
+                    @Override
+                    public void onGenerated(@Nullable Palette palette) {
+                        View bg = (View) imageView.getParent();
+                        if(bg!=null&& palette!=null){
+                            int mainColor = palette.getDarkMutedColor(ActivityCompat.getColor(AudioPlayerActivity.this,R.color.main_color));
+                            bg.setBackgroundColor(mainColor);
+                            getWindow().setNavigationBarColor(mainColor);
+                            getWindow().setStatusBarColor(mainColor);
+                            ActionBar actionBar = getSupportActionBar();
+                            if(actionBar!=null)
+                                actionBar.setBackgroundDrawable(new ColorDrawable(mainColor));
+
+                        }
+
+                    }
+                });
+            }
+
+            @Override
+            protected void onResourceCleared(@Nullable Drawable drawable) {
+
+            }
+        });
     }
 
     @Override

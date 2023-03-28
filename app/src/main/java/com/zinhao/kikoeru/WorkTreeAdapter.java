@@ -98,7 +98,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_tree_1, parent, false);
             return new SimpleViewHolder(v);
         } else if (viewType == TYPE_HEADER) {
-            v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_2, parent, false);
+            v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_header, parent, false);
             return new DetailViewHolder(v);
         } else {
             v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_tree_1, parent, false);
