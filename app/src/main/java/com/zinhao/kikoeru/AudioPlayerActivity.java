@@ -193,6 +193,11 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
             }
         });
         timeProgressView.setMax((int) ctrlBinder.getExoPlayer().getDuration());
+        if (ctrlBinder != null && ctrlBinder.getExoPlayer() != null && ctrlBinder.getExoPlayer().isPlaying()) {
+            long current = ctrlBinder.getExoPlayer().getCurrentPosition();
+            long buffer = ctrlBinder.getExoPlayer().getBufferedPosition();
+            timeProgressView.setProgress((int) current, (int)buffer);
+        }
         updateSeek();
     }
 
@@ -282,7 +287,8 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
             public void run() {
                 if (ctrlBinder != null && ctrlBinder.getExoPlayer() != null && ctrlBinder.getExoPlayer().isPlaying()) {
                     long current = ctrlBinder.getExoPlayer().getCurrentPosition();
-                    timeProgressView.setProgress((int) current);
+                    long buffer = ctrlBinder.getExoPlayer().getBufferedPosition();
+                    timeProgressView.setProgress((int) current, (int)buffer);
                 }
                 if (!isDestroyed())
                     updateSeek();

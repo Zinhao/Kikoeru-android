@@ -1,6 +1,9 @@
 package com.zinhao.kikoeru;
 
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -34,6 +37,23 @@ public class DownLoadMissionActivity extends BaseActivity implements Runnable {
     protected void onStop() {
         super.onStop();
         isStop = true;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuItem clear = menu.add(0,0,0,"清除已下载项目");
+        clear.setIcon(R.drawable.ic_baseline_delete_forever_white_24);
+        clear.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if(item.getItemId() == 0){
+            DownloadUtils.getInstance().removeCompleteMission();
+            missionAdapter.notifyDataSetChanged();
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void update() {

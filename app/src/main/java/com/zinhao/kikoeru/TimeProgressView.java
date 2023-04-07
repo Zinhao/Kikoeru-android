@@ -29,9 +29,11 @@ public class TimeProgressView extends View implements View.OnTouchListener {
     private int max = 100;
     private int min;
     private int progress = 100;
+    private int buffer = 0;
     private final Paint textPaint;
     private final Paint seekBarPaint;
     private final RectF alreadyPassRect;
+    private final RectF bufferRect;
     private final RectF remainRect;
     private final RectF progressPointRect;
     private String maxTimeStr = "00:00";
@@ -58,6 +60,7 @@ public class TimeProgressView extends View implements View.OnTouchListener {
         alreadyPassRect = new RectF();
         progressPointRect = new RectF();
         remainRect = new RectF();
+        bufferRect = new RectF();
         seekBarPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         seekBarPaint.setColor(Color.WHITE);
         seekBarPaint.setStrokeCap(Paint.Cap.ROUND);
@@ -89,6 +92,13 @@ public class TimeProgressView extends View implements View.OnTouchListener {
             invalidate();
     }
 
+    public void setProgress(int progress,int buffer) {
+        this.progress = progress;
+        this.buffer = buffer;
+        if (!isTouch)
+            invalidate();
+    }
+
     public int getMax() {
         return max;
     }
@@ -96,6 +106,12 @@ public class TimeProgressView extends View implements View.OnTouchListener {
     public void setMax(int max) {
         this.max = max;
         maxTimeStr = makeMaxTimeStr();
+    }
+
+    public void setBuffer(int buffer) {
+        this.buffer = buffer;
+        if (!isTouch)
+            invalidate();
     }
 
     public int getMin() {
@@ -169,8 +185,10 @@ public class TimeProgressView extends View implements View.OnTouchListener {
         super.onDraw(canvas);
 
         float progressPe = Math.min((float) progress / max, 1f);
+        float bufferPe = Math.min((float) buffer / max, 1f);
 
         float nowProgressX = allProgressWidth * progressPe + barStartX - thumbWidth / 2f;
+        float nowBufferX = allProgressWidth * bufferPe + barStartX - thumbWidth / 2f;
         float progressRectTop = getHeight() / 2f - thumbHeight / 2f;
         float progressRectBottom = progressRectTop + thumbHeight;
         // already pass
@@ -179,9 +197,14 @@ public class TimeProgressView extends View implements View.OnTouchListener {
         remainRect.set(nowProgressX + thumbWidth / 2f, barTopY, barEndX, barBottomY);
         // oval point
         progressPointRect.set(nowProgressX, progressRectTop, nowProgressX + thumbWidth, progressRectBottom);
+        // buffer
+        bufferRect.set(barStartX,barTopY,nowBufferX + thumbWidth/2f,barBottomY);
 
         canvas.drawText(makeCurrentTimeStr(), 0, textY, textPaint);
         canvas.drawText(maxTimeStr, barEndX + thumbWidth / 2, textY, textPaint);
+
+        seekBarPaint.setAlpha(100);
+        canvas.drawRoundRect(bufferRect,bufferRect.height()/4,bufferRect.height()/4,seekBarPaint);
 
         seekBarPaint.setAlpha(255);
         canvas.drawRoundRect(alreadyPassRect,alreadyPassRect.height()/4,alreadyPassRect.height()/4, seekBarPaint);

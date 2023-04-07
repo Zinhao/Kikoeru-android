@@ -345,6 +345,15 @@ public class DownloadUtils implements Closeable {
         return -1;
     }
 
+    public int removeCompleteMission() {
+        for (int i = missionList.size()-1; i >= 0; i--) {
+            if(missionList.get(i).completed){
+                missionList.remove(i);
+            }
+        }
+        return -1;
+    }
+
     public void init(Context context) {
         missionConfigFile = new File(context.getCacheDir(), "downloadMission.json");
         missionList.clear();
