@@ -24,8 +24,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
@@ -149,9 +151,18 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
 
     @Override
     public void onBackPressed() {
-        if (workTreeAdapter == null || workTreeAdapter.parentDir()) {
-            super.onBackPressed();
+        if(recyclerView.getAdapter() == workAdapter){
+            RecyclerView.ItemDecoration itemDecoration = new DividerItemDecoration(WorkTreeActivity.this, DividerItemDecoration.VERTICAL);
+            recyclerView.addItemDecoration(itemDecoration);
+            recyclerView.setLayoutManager(new LinearLayoutManager(WorkTreeActivity.this));
+            recyclerView.setAdapter(workTreeAdapter);
+            workAdapter = null;
+        }else{
+            if (workTreeAdapter == null || workTreeAdapter.parentDir()) {
+                super.onBackPressed();
+            }
         }
+
     }
 
     @Override
@@ -534,6 +545,55 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         }
     }
 
+    private WorkAdapter workAdapter;
+    private List<JSONObject> works;
+    private int page = 1;
+
+    private final AsyncHttpClient.JSONObjectCallback apisCallback = new AsyncHttpClient.JSONObjectCallback() {
+        @Override
+        public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
+            if (e != null) {
+                e.printStackTrace();
+                alertException(e);
+                return;
+            }
+            if (asyncHttpResponse == null || asyncHttpResponse.code() != 200) {
+                return;
+            }
+            try {
+                JSONArray jsonArray = jsonObject.getJSONArray("works");
+                int totalCount = jsonObject.getJSONObject("pagination").getInt("totalCount");
+                page = jsonObject.getJSONObject("pagination").getInt("currentPage") + 1;
+
+                if (jsonArray.length() != 0) {
+                    page = Math.min(page, totalCount / jsonArray.length() + 1);
+                }
+                runOnUiThread(new Runnable() {
+                    @SuppressLint("DefaultLocale")
+                    @Override
+                    public void run() {
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            try {
+                                if(works == null){
+                                    works = new ArrayList<>();
+                                }
+                                works.add(jsonArray.getJSONObject(i));
+                            } catch (JSONException jsonException) {
+                                jsonException.printStackTrace();
+                                alertException(jsonException);
+                            }
+                        }
+                        initLayout();
+                        workAdapter.notifyItemRangeInserted(Math.max(0, works.size() - jsonArray.length()), jsonArray.length());
+                        workAdapter.notifyItemRangeChanged(Math.max(0, works.size() - jsonArray.length()), jsonArray.length());
+                    }
+                });
+            } catch (JSONException jsonException) {
+                jsonException.printStackTrace();
+                alertException(jsonException);
+            }
+        }
+    };
 
     private final TagsView.TagClickListener<JSONObject> vaClickListener = jsonObject -> {
         try {
@@ -541,16 +601,30 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
             Log.d(TAG, "onTagClick: " + vaId);
             String vaName = jsonObject.getString("name");
             setTitle(vaName);
-            Intent intent = new Intent(WorkTreeActivity.this, WorksActivity.class);
-            intent.putExtra("resultType", "va");
-            intent.putExtra("id", vaId);
-            intent.putExtra("name", vaName);
-            startActivity(intent);
+            Api.doGetWorkByVa(page, vaId, apisCallback);
         } catch (JSONException e) {
             e.printStackTrace();
             alertException(e);
         }
     };
+
+    private void initLayout() {
+        RecyclerView.LayoutManager layoutManager = null;
+        int col = Math.max(getResources().getDisplayMetrics().widthPixels/395,3);
+        layoutManager = new GridLayoutManager(this, col);
+        workAdapter = new WorkAdapter(works, WorkAdapter.LAYOUT_SMALL_GRID);
+        workAdapter.setItemClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                JSONObject item = (JSONObject) v.getTag();
+                Intent intent = new Intent(v.getContext(), WorkTreeActivity.class);
+                intent.putExtra("work_json_str", item.toString());
+                ActivityCompat.startActivity(v.getContext(), intent, null);
+            }
+        });
+        recyclerView.setLayoutManager(layoutManager);
+        recyclerView.setAdapter(workAdapter);
+    }
 
     @Override
     public void onPathChange(String path) {
