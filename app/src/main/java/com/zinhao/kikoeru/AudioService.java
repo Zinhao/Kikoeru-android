@@ -36,6 +36,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
@@ -266,7 +267,7 @@ public class AudioService extends Service {
                         Api.checkLrc(ctrlBinder.current.getString(JSONConst.WorkTree.HASH), ctrlBinder.checkLrcCallBack);
                     }
                 } catch (JSONException e) {
-                    e.printStackTrace();
+                    e.printStackTrace(System.err);
                 }
 
                 ctrlBinder.musicChangeListeners.forEach(new Consumer<MusicChangeListener>() {
@@ -498,14 +499,8 @@ public class AudioService extends Service {
                 @Override
                 public void run() {
                     mHandler.post(updateLrcTask);
-                    lrcRowChangeListeners.forEach(new Consumer<LrcRowChangeListener>() {
-                        @Override
-                        public void accept(LrcRowChangeListener listener) {
-                            listener.onChange(mLrc.getCurrent());
-                        }
-                    });
                 }
-            }, 0, 500);
+            }, 0, 100);
             updateLrcTask = new Runnable() {
                 @Override
                 public void run() {
@@ -514,6 +509,12 @@ public class AudioService extends Service {
                         if (lrcView instanceof TextView) {
                             ((TextView) lrcView).setText(mLrc.getCurrent().content);
                         }
+                        lrcRowChangeListeners.forEach(new Consumer<LrcRowChangeListener>() {
+                            @Override
+                            public void accept(LrcRowChangeListener listener) {
+                                listener.onChange(mLrc.getCurrent());
+                            }
+                        });
                     }
                 }
             };

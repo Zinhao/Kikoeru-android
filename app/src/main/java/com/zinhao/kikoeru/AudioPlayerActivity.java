@@ -210,9 +210,13 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                tvUpLrc.setText(currentRow.getUpRow().content);
-                tvLrc.setText(currentRow.content);
-                tvNextLrc.setText(currentRow.getNextRow().content);
+//                tvUpLrc.setText(String.format("%s %s",currentRow.getUpRow().strTime,currentRow.getUpRow().content));
+//                tvLrc.setText(currentRow.content);
+//                tvNextLrc.setText(currentRow.getNextRow().content);
+
+                tvUpLrc.setText(String.format("%s %s",currentRow.getUpRow().strTime,currentRow.getUpRow().content));
+                tvLrc.setText(String.format("%s %s",currentRow.strTime,currentRow.content));
+                tvNextLrc.setText(String.format("%s %s",currentRow.getNextRow().strTime,currentRow.getNextRow().content));
             }
         });
     }

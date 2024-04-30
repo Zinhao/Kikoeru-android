@@ -97,23 +97,27 @@ public class LocalFileCache implements Runnable, Closeable {
         String name = audioFile.getName();
         String beforeName = name.substring(0, name.lastIndexOf("."));
         File lrcFile = new File(dir, beforeName + ".lrc");
-        if (lrcFile.exists()) {
-            mission.add(new Runnable() {
-                @Override
-                public void run() {
-                    String lrcText = null;
-                    try {
-                        lrcText = readTextSync(lrcFile);
-                        callback.onCompleted(null, new LocalResponse(200), lrcText);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        callback.onCompleted(e, new LocalResponse(404), null);
-                    }
-                }
-            });
-            return true;
+        if(!lrcFile.exists()){
+            lrcFile = new File(dir,name + ".vtt");
         }
-        return false;
+        if(!lrcFile.exists()){
+            return false;
+        }
+        File finalLrcFile = lrcFile;
+        mission.add(new Runnable() {
+            @Override
+            public void run() {
+                String lrcText = null;
+                try {
+                    lrcText = readTextSync(finalLrcFile);
+                    callback.onCompleted(null, new LocalResponse(200), lrcText);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    callback.onCompleted(e, new LocalResponse(404), null);
+                }
+            }
+        });
+        return true;
     }
 
     public void removeWork(int id) {
