@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
     <uses-permission
         android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
@@ -84,7 +85,7 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".AudioService" />
+        <service android:name=".AudioService" android:foregroundServiceType="mediaPlayback"/>
 
         <provider
             android:name="androidx.core.content.FileProvider"

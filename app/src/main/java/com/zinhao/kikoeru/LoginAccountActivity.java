@@ -83,7 +83,7 @@ public class LoginAccountActivity extends BaseActivity {
         });
     }
 
-    private AsyncHttpClient.JSONObjectCallback signInCallback = new AsyncHttpClient.JSONObjectCallback() {
+    private final AsyncHttpClient.JSONObjectCallback signInCallback = new AsyncHttpClient.JSONObjectCallback() {
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
             runOnUiThread(new Runnable() {
@@ -131,7 +131,7 @@ public class LoginAccountActivity extends BaseActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(LoginAccountActivity.this, String.format("%d:%s", asyncHttpResponse.code(), stringBuilder.toString()), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(LoginAccountActivity.this, String.format(Locale.getDefault(),"%d:%s", asyncHttpResponse.code(), stringBuilder), Toast.LENGTH_SHORT).show();
                     }
                 });
             }

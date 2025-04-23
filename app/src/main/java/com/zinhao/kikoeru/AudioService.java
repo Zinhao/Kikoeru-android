@@ -703,6 +703,7 @@ public class AudioService extends Service {
 
                 mediaItemList.add(mediaItem);
             }
+
             mediaPlayer.setMediaItems(mediaItemList, index, 0);
             mediaPlayer.prepare();
             mediaPlayer.play();
