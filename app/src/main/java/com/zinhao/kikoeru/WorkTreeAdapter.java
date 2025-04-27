@@ -24,6 +24,7 @@ import java.util.List;
 public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private JSONArray data;
     private View.OnClickListener itemClickListener;
+    private View.OnClickListener parentDirClickListener;
     private View.OnLongClickListener longClickListener;
     private TagsView.TagClickListener tagClickListener;
     private TagsView.TagClickListener vaClickListener;
@@ -33,6 +34,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private JSONObject headerInfo;
     private static final int TYPE_HEADER = 295;
     private static final int TYPE_FILE = 296;
+    private static final int TYPE_PARENT_DIR = 297;
     private int unCacheItemBackgroundColor = -1;
     private int cachedItemBackgroundColor = -1;
 
@@ -60,6 +62,10 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         this.longClickListener = longClickListener;
     }
 
+    public void setParentDirClickListener(View.OnClickListener parentDirClickListener) {
+        this.parentDirClickListener = parentDirClickListener;
+    }
+
     public JSONArray getData() {
         return data;
     }
@@ -76,6 +82,8 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     public int getItemViewType(int position) {
         if (position == 0) {
             return TYPE_HEADER;
+        }else if(position == 1){
+            return TYPE_PARENT_DIR;
         }
         return TYPE_FILE;
     }
@@ -100,6 +108,9 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         } else if (viewType == TYPE_HEADER) {
             v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_header, parent, false);
             return new DetailViewHolder(v);
+        } else if (viewType == TYPE_PARENT_DIR) {
+            v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_tree_2, parent, false);
+            return new ParentDirViewHolder(v);
         } else {
             v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_tree_1, parent, false);
         }
@@ -123,7 +134,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof SimpleViewHolder) {
             try {
-                JSONObject item = data.getJSONObject(position - 1);
+                JSONObject item = data.getJSONObject(position - 2);
                 String itemTitle = item.getString("title");
                 ((SimpleViewHolder) holder).tvTitle.setText(itemTitle);
                 boolean exists = item.getBoolean(JSONConst.WorkTree.EXISTS);
@@ -209,6 +220,8 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 e.printStackTrace();
                 App.getInstance().alertException(e);
             }
+        }else if(holder instanceof ParentDirViewHolder){
+            holder.itemView.setOnClickListener(parentDirClickListener);
         }
     }
 
@@ -218,7 +231,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     }
 
     public boolean parentDir() {
-        if (parentData == null || parentData.size() == 0) {
+        if (parentData == null || parentData.isEmpty()) {
             return true;
         }
         data = parentData.remove(parentData.size() - 1);
@@ -242,7 +255,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     @Override
     public int getItemCount() {
-        return data.length() + 1;
+        return data.length() + 2;
     }
 
     public static class SimpleViewHolder extends RecyclerView.ViewHolder {
@@ -283,6 +296,13 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             tvPrice = itemView.findViewById(R.id.tvPrice);
             tvSaleCount = itemView.findViewById(R.id.tvSaleCount);
             tvHost = itemView.findViewById(R.id.tvHost);
+        }
+    }
+
+    public static class ParentDirViewHolder extends RecyclerView.ViewHolder{
+
+        public ParentDirViewHolder(@NonNull View itemView) {
+            super(itemView);
         }
     }
 

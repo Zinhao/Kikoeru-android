@@ -19,6 +19,7 @@ import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.provider.Settings;
@@ -168,7 +169,7 @@ public class AudioService extends Service {
                     isActionPause = true;
                     return;
                 }
-                if (bluetoothAdapter != null && bluetoothAdapter.getProfileConnectionState(BluetoothProfile.HEADSET) == BluetoothProfile.STATE_DISCONNECTED) {
+                if (bluetoothAdapter != null && bluetoothAdapter.getProfileConnectionState(BluetoothProfile.HEADSET) == BluetoothAdapter.STATE_DISCONNECTED) {
                     mediaSession.getController().getTransportControls().pause();
                     isActionPause = true;
                 }
@@ -283,7 +284,11 @@ public class AudioService extends Service {
                 Log.d(TAG, "onMetadata: " + metadata.toString());
             }
         });
-        registerReceiver(headsetActionReceiver, headsetActionReceiver.intentFilter);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(headsetActionReceiver, headsetActionReceiver.intentFilter, Context.RECEIVER_NOT_EXPORTED);
+        }else{
+            registerReceiver(headsetActionReceiver, headsetActionReceiver.intentFilter);
+        }
         ctrlBinder = new CtrlBinder();
         try {
             updateNotificationState();
@@ -669,7 +674,7 @@ public class AudioService extends Service {
         }
 
         public void play(List<JSONObject> playList, int index) throws JSONException {
-            if (playList.size() == 0)
+            if (playList.isEmpty())
                 return;
             this.playList.clear();
             this.playList.addAll(playList);

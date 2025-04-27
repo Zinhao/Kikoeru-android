@@ -78,6 +78,17 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
             runOnUiThread(() -> {
                 workTreeAdapter = new WorkTreeAdapter(jsonWorkTrees, work);
                 workTreeAdapter.setItemClickListener(WorkTreeActivity.this);
+                workTreeAdapter.setParentDirClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (workTreeAdapter != null) {
+                            boolean r = workTreeAdapter.parentDir();
+                            if(r){
+                                finish();
+                            }
+                        }
+                    }
+                });
                 workTreeAdapter.setTagClickListener(WorkTreeActivity.this);
                 workTreeAdapter.setVaClickListener(vaClickListener);
                 workTreeAdapter.setItemLongClickListener(WorkTreeActivity.this);
@@ -158,9 +169,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
             recyclerView.setAdapter(workTreeAdapter);
             workAdapter = null;
         }else{
-            if (workTreeAdapter == null || workTreeAdapter.parentDir()) {
-                super.onBackPressed();
-            }
+            super.onBackPressed();
         }
 
     }
