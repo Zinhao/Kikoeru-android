@@ -168,6 +168,9 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
             recyclerView.setLayoutManager(new LinearLayoutManager(WorkTreeActivity.this));
             recyclerView.setAdapter(workTreeAdapter);
             workAdapter = null;
+            if(workTreeAdapter == null){
+                super.onBackPressed();
+            }
         }else{
             super.onBackPressed();
         }

@@ -470,10 +470,13 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         workAdapter.setItemLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
+                if(type != TYPE_LOCAL_WORK){
+                    return true;
+                }
                 ListPopupWindow listPopupWindow = new ListPopupWindow(v.getContext());
                 listPopupWindow.setModal(true);
                 listPopupWindow.setAnchorView(v);
-                listPopupWindow.setAdapter(new ArrayAdapter<String>(v.getContext(), android.R.layout.simple_list_item_1, Collections.singletonList("delete")));
+                listPopupWindow.setAdapter(new ArrayAdapter<String>(v.getContext(), android.R.layout.simple_list_item_1, Collections.singletonList(getString(R.string.delete_cache))));
                 listPopupWindow.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {

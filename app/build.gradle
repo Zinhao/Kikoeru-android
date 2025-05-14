@@ -10,9 +10,10 @@ android {
         applicationId "com.zinhao.kikoeru"
         minSdk 26
         targetSdk 34
-        versionCode 9
-        versionName "Release_5.2"
+        versionCode 10
+        versionName "Release_6.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        setProperty("archivesBaseName", applicationId +"-v" + versionCode +"(" + versionName +")")
     }
 
     buildTypes {

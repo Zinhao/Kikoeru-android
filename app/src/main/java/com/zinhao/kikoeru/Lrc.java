@@ -182,7 +182,7 @@ public class Lrc {
     }
 
     public static class LrcRow {
-        public static final LrcRow NONE = new LrcRow("00:00", 0, "");
+        public static final LrcRow NONE = new LrcRow("无歌词", 0, "");
         public LrcRow upRow = NONE;
         public LrcRow nextRow = NONE;
         public String strTime;

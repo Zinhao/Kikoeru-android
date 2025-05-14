@@ -726,6 +726,10 @@ public class AudioService extends Service {
             return mLrc;
         }
 
+        public void setmLrc(String lrcText){
+            mLrc = new Lrc(lrcText);
+        }
+
         public WindowManager.LayoutParams getLrcWindowParams() {
             return lrcWindowParams;
         }

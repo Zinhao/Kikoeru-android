@@ -55,5 +55,5 @@
     <string name="private_path">私有目录</string>
     <string name="no_lrc">无歌词</string>
     <string name="stop_delay">定时停止</string>
-    <string name="delete_cache">删除缓存</string>
+    <string name="delete_cache">删除快取</string>
 </resources>

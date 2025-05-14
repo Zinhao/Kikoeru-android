@@ -210,13 +210,15 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-//                tvUpLrc.setText(String.format("%s %s",currentRow.getUpRow().strTime,currentRow.getUpRow().content));
-//                tvLrc.setText(currentRow.content);
-//                tvNextLrc.setText(currentRow.getNextRow().content);
-
-                tvUpLrc.setText(String.format("%s %s",currentRow.getUpRow().strTime,currentRow.getUpRow().content));
+                if(currentRow == Lrc.LrcRow.NONE){
+                    tvUpLrc.setText("");
+                    tvNextLrc.setText("");
+                }else{
+                    tvUpLrc.setText(String.format("%s %s",currentRow.getUpRow().strTime,currentRow.getUpRow().content));
+                    tvNextLrc.setText(String.format("%s %s",currentRow.getNextRow().strTime,currentRow.getNextRow().content));
+                }
                 tvLrc.setText(String.format("%s %s",currentRow.strTime,currentRow.content));
-                tvNextLrc.setText(String.format("%s %s",currentRow.getNextRow().strTime,currentRow.getNextRow().content));
+
             }
         });
     }
@@ -321,7 +323,7 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        SubMenu subMenu = menu.addSubMenu(0, 0, 0, "stop after");
+        SubMenu subMenu = menu.addSubMenu(0, 0, 0, R.string.stop_delay);
         subMenu.add(1, 1, 1, "30 minutes");
         subMenu.add(1, 2, 2, "60 minutes");
         subMenu.add(1, 3, 3, "90 minutes");
