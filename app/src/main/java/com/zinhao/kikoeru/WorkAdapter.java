@@ -13,6 +13,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -22,6 +24,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private TagsView.TextGet<JSONObject> textGet;
     private TagsView.TagClickListener tagClickListener;
     private TagsView.TagClickListener vaClickListener;
+    private TagsView.TagClickListener circlesClickListener;
     private View.OnClickListener itemClickListener;
     private View.OnLongClickListener itemLongClickListener;
     public static final int LAYOUT_LIST = 846;
@@ -35,6 +38,10 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     public void setItemClickListener(View.OnClickListener itemClickListener) {
         this.itemClickListener = itemClickListener;
+    }
+
+    public void setCirclesClickListener(TagsView.TagClickListener circlesClickListener) {
+        this.circlesClickListener = circlesClickListener;
     }
 
     public void setItemLongClickListener(View.OnLongClickListener itemLongClickListener) {
@@ -97,6 +104,8 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 ((SimpleViewHolder) holder).tvComArt.setTags(App.getVasList(item), TagsView.JSON_TEXT_GET.setKey("name"));
                 ((SimpleViewHolder) holder).tvComArt.setTagClickListener(vaClickListener);
                 ((SimpleViewHolder) holder).tvTags.setTags(App.getTagsList(item), textGet);
+                ((SimpleViewHolder) holder).tvCircles.setTags(Collections.singletonList(item.getString("name")),TagsView.STRING_TEXT_GET);
+                ((SimpleViewHolder) holder).tvCircles.setTagClickListener(circlesClickListener);
                 ((SimpleViewHolder) holder).tvTags.setTagClickListener(tagClickListener);
                 Glide.with(holder.itemView.getContext()).load(App.getInstance().currentUser().getHost() + String.format("/api/cover/%d?type=sam&token=%s", item.getInt("id"), Api.token))
                         .apply(App.getInstance().getDefaultPic()).into(((SimpleViewHolder) holder).ivCover);
@@ -115,6 +124,8 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 girdHolder.tvArt.setTagClickListener(vaClickListener);
                 girdHolder.tvCom.setText(item.getString("name"));
                 girdHolder.tvTags.setTags(App.getTagsList(item), textGet);
+                girdHolder.tvCircles.setTags(Collections.singletonList(item.getString("name")),TagsView.STRING_TEXT_GET);
+                girdHolder.tvCircles.setTagClickListener(circlesClickListener);
                 girdHolder.tvTags.setTagClickListener(tagClickListener);
                 girdHolder.tvRjNumber.setText(String.format("RJ%d", item.getInt("id")));
                 girdHolder.tvDate.setText(item.getString("release"));
@@ -164,6 +175,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         private final TextView tvTitle;
         private final TagsView<JSONArray> tvComArt;
         private final TagsView<JSONArray> tvTags;
+        private final TagsView<List<String>> tvCircles;
 
 
         public SimpleViewHolder(@NonNull View itemView) {
@@ -172,6 +184,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             tvTitle = itemView.findViewById(R.id.tvTitle);
             tvComArt = itemView.findViewById(R.id.tvComArt);
             tvTags = itemView.findViewById(R.id.tvTags);
+            tvCircles = itemView.findViewById(R.id.tvCircles);
         }
     }
 
@@ -181,6 +194,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         private final TextView tvCom;
         private final TagsView<JSONArray> tvArt;
         private final TagsView<JSONArray> tvTags;
+        private final TagsView<List<String>> tvCircles;
         private final TextView tvRjNumber;
         private final TextView tvDate;
         private final TextView tvPrice;
@@ -199,6 +213,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             tvPrice = itemView.findViewById(R.id.tvPrice);
             tvSaleCount = itemView.findViewById(R.id.tvSaleCount);
             tvHost = itemView.findViewById(R.id.tvHost);
+            tvCircles = itemView.findViewById(R.id.tvCircles);
         }
     }
 

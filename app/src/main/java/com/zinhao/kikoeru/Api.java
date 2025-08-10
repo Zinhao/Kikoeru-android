@@ -86,6 +86,14 @@ public class Api {
         AsyncHttpClient.getDefaultInstance().executeJSONObject(request, callback);
     }
 
+    public static void doGetWorkByCircles(int page, long circlesId, AsyncHttpClient.JSONObjectCallback callback) {
+        //    http://localhost:8980/api/circles/54978/works?order=release&sort=desc&page=1&seed=59
+        AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST + String.format("/api/circles/%d/works?order=%s&sort=%s&page=%d&seed=21&subtitle=%d", circlesId, order, makeSort(), page, subtitle)), "GET");
+        request.setTimeout(5000);
+        request.addHeader("authorization", authorization);
+        AsyncHttpClient.getDefaultInstance().executeJSONObject(request, callback);
+    }
+
     public static void doGetAllTags(AsyncHttpClient.JSONArrayCallback callback) {
         AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST + "/api/tags/"), "GET");
         request.setTimeout(5000);
@@ -167,6 +175,17 @@ public class Api {
         request.setTimeout(5000);
         request.addHeader("authorization", authorization);
         AsyncHttpClient.getDefaultInstance().executeJSONObject(request, callback);
+    }
+
+    /***
+     * http://localhost:8980/api/circles/
+     * @param callback
+     */
+    public static void doGetCirclesList(AsyncHttpClient.JSONArrayCallback callback) {
+        AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST + "/api/circles/"), "GET");
+        request.setTimeout(5000);
+        request.addHeader("authorization", authorization);
+        AsyncHttpClient.getDefaultInstance().executeJSONArray(request, callback);
     }
 
     /**

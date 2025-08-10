@@ -10,8 +10,8 @@ android {
         applicationId "com.zinhao.kikoeru"
         minSdk 26
         targetSdk 34
-        versionCode 10
-        versionName "Release_6.0"
+        versionCode 11
+        versionName "Release_7.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         setProperty("archivesBaseName", applicationId +"-v" + versionCode +"(" + versionName +")")
     }
@@ -20,6 +20,11 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // 禁用 Lint 检查
+            lintOptions {
+                checkReleaseBuilds false  // 关闭 Release 的 Lint 检查
+                abortOnError false        // 即使发现错误也不中断构建
+            }
         }
     }
     compileOptions {

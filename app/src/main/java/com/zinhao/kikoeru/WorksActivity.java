@@ -60,6 +60,8 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
     private String tagStr = "";
     private String vaId = "";
     private String vaName = "";
+    private String circlesName = "";
+    private long circlesId = -1;
 
     private static final int TYPE_ALL_WORK = 491;
     private static final int TYPE_SELF_LISTENING = 492;
@@ -70,11 +72,13 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
     private static final int TYPE_TAG_WORK = 497;
     private static final int TYPE_LOCAL_WORK = 498;
     private static final int TYPE_VA_WORK = 499;
+    private static final int TYPE_CIRCLES_WORK = 500;
 
     private int type = TYPE_ALL_WORK;
     private AudioService.CtrlBinder ctrlBinder;
     private static final int TAG_SELECT_RESULT = 14;
     private static final int VA_SELECT_RESULT = 15;
+    private static final int CIRCLES_SELECT_RESULT = 16;
 
     private ListPopupWindow progressMenu;
     private ListPopupWindow moreMenu;
@@ -166,7 +170,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         moreMenu = new ListPopupWindow(this);
         moreMenu.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
                 Arrays.asList(getString(R.string.va_voicer),
-                        getString(R.string.tag),
+                        getString(R.string.tag),"Circles",
                         getString(R.string.local_works))));
         moreMenu.setModal(true);
         moreMenu.setAnchorView(bt3);
@@ -180,6 +184,9 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
                     startActivityForResult(new Intent(view.getContext(), TagsActivity.class), TAG_SELECT_RESULT);
                     break;
                 case 2:
+                    startActivityForResult(new Intent(view.getContext(), CirclesActivity.class), CIRCLES_SELECT_RESULT);
+                    break;
+                case 3:
                     type = TYPE_LOCAL_WORK;
                     clearWork();
                     reloadRecycleView();
@@ -248,7 +255,10 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         } else if (type == TYPE_VA_WORK) {
             setTitle(vaName);
             Api.doGetWorkByVa(page, vaId, apisCallback);
-        } else if (type == TYPE_LOCAL_WORK) {
+        } else if (type == TYPE_CIRCLES_WORK) {
+            setTitle(circlesName);
+            Api.doGetWorkByCircles(page, circlesId, apisCallback);
+        }else if (type == TYPE_LOCAL_WORK) {
             setTitle(String.format("%s", App.getInstance().isSaveExternal() ? "外部公共目录" : "内部私有目录"));
             try {
                 LocalFileCache.getInstance().readLocalWorks(this, apisCallback);
@@ -436,6 +446,23 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
                 }
                 reloadRecycleView();
             }
+        }else if(requestCode == CIRCLES_SELECT_RESULT){
+            if (resultCode == RESULT_OK && data != null) {
+                String resultType = data.getStringExtra("resultType");
+                if (resultType == null) {
+                    return;
+                }
+                if (resultType.equals("circles")) {
+                    long circlesId = data.getLongExtra("id",-1);
+                    if (this.circlesId != circlesId && circlesId!=-1) {
+                        type = TYPE_CIRCLES_WORK;
+                        circlesName = data.getStringExtra("name");
+                        clearWork();
+                        this.circlesId = circlesId;
+                        reloadRecycleView();
+                    }
+                }
+            }
         }
     }
 
@@ -458,6 +485,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         workAdapter = new WorkAdapter(works, layoutType);
         workAdapter.setTagClickListener(this);
         workAdapter.setVaClickListener(vaClickListener);
+        workAdapter.setCirclesClickListener(circlesClickListener);
         workAdapter.setItemClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -476,7 +504,8 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
                 ListPopupWindow listPopupWindow = new ListPopupWindow(v.getContext());
                 listPopupWindow.setModal(true);
                 listPopupWindow.setAnchorView(v);
-                listPopupWindow.setAdapter(new ArrayAdapter<String>(v.getContext(), android.R.layout.simple_list_item_1, Collections.singletonList(getString(R.string.delete_cache))));
+                String _str = getString(R.string.delete_cache);
+                listPopupWindow.setAdapter(new ArrayAdapter<String>(v.getContext(), android.R.layout.simple_list_item_1, Collections.singletonList(_str)));
                 listPopupWindow.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -594,6 +623,21 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         }
     };
 
+    private final TagsView.TagClickListener<String> circlesClickListener = circlesName -> {
+        //todo
+        //http://localhost:8980/api/circles/
+        //http://localhost:8980/api/circles/54978/works?order=release&sort=desc&page=1&seed=59
+        long circlesId = App.getInstance().mapCirclesId(circlesName);
+        if(circlesId!=-1){
+            clearWork();
+            WorksActivity.this.circlesName = circlesName;
+            WorksActivity.this.circlesId = circlesId;
+            type = TYPE_CIRCLES_WORK;
+            reloadRecycleView();
+        }
+        Log.d(TAG, "onTagClick: " + circlesName);
+    };
+
     private AsyncHttpClient.JSONObjectCallback apisCallback = new AsyncHttpClient.JSONObjectCallback() {
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
@@ -691,6 +735,8 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
             return tagStr;
         } else if (type == TYPE_VA_WORK) {
             return vaName;
+        } else if (type == TYPE_CIRCLES_WORK) {
+            return circlesName;
         } else if (type == TYPE_LOCAL_WORK) {
             return String.format("%s", App.getInstance().isSaveExternal() ? getString(R.string.extra_path) : getString(R.string.private_path));
         }

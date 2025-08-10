@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -19,6 +20,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -28,6 +30,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private View.OnLongClickListener longClickListener;
     private TagsView.TagClickListener tagClickListener;
     private TagsView.TagClickListener vaClickListener;
+    private TagsView.TagClickListener circlesClickListener;
     private List<JSONArray> parentData;
     private List<String> pathList;
     private RelativePathChangeListener pathChangeListener;
@@ -40,6 +43,10 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     public void setHeaderInfo(JSONObject headerInfo) {
         this.headerInfo = headerInfo;
+    }
+
+    public void setCirclesClickListener(TagsView.TagClickListener circlesClickListener) {
+        this.circlesClickListener = circlesClickListener;
     }
 
     public void setPathChangeListener(RelativePathChangeListener pathChangeListener) {
@@ -75,7 +82,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         this.headerInfo = headerInfo;
         this.pathList = new ArrayList<>();
         parentData = new ArrayList<>();
-        notifyWorkDataSetChanged();
+        mapFileExistValue();
     }
 
     @Override
@@ -117,7 +124,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         return new SimpleViewHolder(v);
     }
 
-    public void notifyWorkDataSetChanged() {
+    public void mapFileExistValue() {
         for (int i = 0; i < data.length(); i++) {
             JSONObject item = null;
             try {
@@ -129,13 +136,28 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         }
     }
 
-    @SuppressLint("DefaultLocale")
+    @SuppressLint({"DefaultLocale", "SetTextI18n"})
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof SimpleViewHolder) {
             try {
                 JSONObject item = data.getJSONObject(position - 2);
                 String itemTitle = item.getString("title");
+                DownloadUtils.Mission mapMission = DownloadUtils.mapMission(item);
+                if(mapMission!=null){
+                    mapMission.setStepCallback(()->{
+                        holder.itemView.post(()->{
+                            notifyItemChanged(position);
+                        });
+                    });
+                    int progress = mapMission.getProgress();
+                    ((SimpleViewHolder) holder).pb1.setVisibility(View.VISIBLE);
+                    ((SimpleViewHolder) holder).pb1.setProgress(progress);
+                    ((SimpleViewHolder) holder).tvCount.setText(progress +"%");
+                }else{
+                    ((SimpleViewHolder) holder).pb1.setVisibility(View.GONE);
+                    ((SimpleViewHolder) holder).tvCount.setText(item.getString("type"));
+                }
                 ((SimpleViewHolder) holder).tvTitle.setText(itemTitle);
                 boolean exists = item.getBoolean(JSONConst.WorkTree.EXISTS);
                 if (exists) {
@@ -143,7 +165,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 } else {
                     ((SimpleViewHolder) holder).ivCover.setBackgroundColor(unCacheItemBackgroundColor);
                 }
-                ((SimpleViewHolder) holder).tvCount.setText(item.getString("type"));
+
                 if ("folder".equals(item.getString("type"))) {
                     JSONArray jsonArray = item.getJSONArray("children");
                     ((SimpleViewHolder) holder).tvCount.setText(String.format("%d 项", jsonArray.length()));
@@ -176,7 +198,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                                         if (pathChangeListener != null) {
                                             pathChangeListener.onPathChange(getRelativePath());
                                         }
-                                        notifyWorkDataSetChanged();
+                                        mapFileExistValue();
                                         notifyDataSetChanged();
                                     } catch (JSONException e) {
                                         e.printStackTrace();
@@ -206,6 +228,8 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 girdHolder.tvCom.setText(headerInfo.getString("name"));
                 girdHolder.tvTags.setTags(App.getTagsList(headerInfo), TagsView.JSON_TEXT_GET.setKey("name"));
                 girdHolder.tvTags.setTagClickListener(tagClickListener);
+                girdHolder.tvCircles.setTags(Collections.singletonList(headerInfo.getString("name")),TagsView.STRING_TEXT_GET);
+                girdHolder.tvCircles.setTagClickListener(circlesClickListener);
                 girdHolder.tvRjNumber.setText(String.format("RJ%d", headerInfo.getInt("id")));
                 girdHolder.tvDate.setText(headerInfo.getString("release"));
                 girdHolder.tvPrice.setText(String.format("%d 日元", headerInfo.getInt("price")));
@@ -262,6 +286,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         private ImageView ivCover;
         private TextView tvTitle;
         private TextView tvCount;
+        private ProgressBar pb1;
 
 
         public SimpleViewHolder(@NonNull View itemView) {
@@ -269,6 +294,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             ivCover = itemView.findViewById(R.id.ivCover);
             tvTitle = itemView.findViewById(R.id.tvTitle);
             tvCount = itemView.findViewById(R.id.tvCount);
+            pb1 = itemView.findViewById(R.id.pb1);
         }
     }
 
@@ -283,6 +309,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         private TextView tvPrice;
         private TextView tvSaleCount;
         private final TextView tvHost;
+        private final TagsView<List<String>> tvCircles;
 
         public DetailViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -296,6 +323,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             tvPrice = itemView.findViewById(R.id.tvPrice);
             tvSaleCount = itemView.findViewById(R.id.tvSaleCount);
             tvHost = itemView.findViewById(R.id.tvHost);
+            tvCircles = itemView.findViewById(R.id.tvCircles);
         }
     }
 

@@ -34,6 +34,19 @@
             android:layout_alignStart="@+id/tvTitle"
             android:layout_marginStart="0dp"
             android:layout_marginTop="0dp"
-            android:text="tag"/>
+            android:text="10%"/>
+
+    <ProgressBar
+            android:id="@+id/pb1"
+            android:progress="10"
+            android:max="100"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:layout_below="@+id/tvTitle"
+            android:layout_alignStart="@+id/tvTitle"
+            android:layout_marginStart="40dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginTop="0dp"/>
 
 </RelativeLayout>

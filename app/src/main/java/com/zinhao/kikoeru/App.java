@@ -12,6 +12,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
+import com.koushikdutta.async.http.AsyncHttpClient;
+import com.koushikdutta.async.http.AsyncHttpResponse;
 import com.zinhao.kikoeru.db.DaoMaster;
 import com.zinhao.kikoeru.db.DaoSession;
 import com.zinhao.kikoeru.db.UserDao;
@@ -20,6 +22,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class App extends Application implements Application.ActivityLifecycleCallbacks {
@@ -52,6 +55,7 @@ public class App extends Application implements Application.ActivityLifecycleCal
     private DaoMaster.OpenHelper helper;
 
     private final List<Activity> activities = new ArrayList<>();
+    private final HashMap<String,Long> circlesIdMap = new HashMap<>();
 
     public void setAppDebug(boolean appDebug) {
         this.appDebug = appDebug;
@@ -77,6 +81,35 @@ public class App extends Application implements Application.ActivityLifecycleCal
 
     public void setCurrentUserId(long currentUserId) {
         this.currentUserId = currentUserId;
+    }
+
+    public long mapCirclesId(String circlesName){
+        if(circlesIdMap.containsKey(circlesName)){
+            final Long id = circlesIdMap.get(circlesName);
+            if(id == null){
+                return -1;
+            }
+            return id;
+        }
+        return -1;
+    }
+
+    public void initCirclesIdMap(JSONArray circlesList) throws JSONException {
+        /***
+         *  {
+         *         "id": 54978,
+         *         "name": "#ハチゼロニ",
+         *         "count": 2
+         *     },
+         */
+        for (int i = 0; i < circlesList.length(); i++) {
+            JSONObject j = circlesList.getJSONObject(i);
+            circlesIdMap.put(j.getString("name"),j.getLong("id"));
+        }
+    }
+
+    public HashMap<String, Long> getCirclesIdMap() {
+        return circlesIdMap;
     }
 
     public RequestOptions getDefaultPic() {
@@ -117,6 +150,21 @@ public class App extends Application implements Application.ActivityLifecycleCal
         channelMusicService.enableVibration(false);
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.createNotificationChannel(channelMusicService);
+
+        Api.doGetCirclesList(new AsyncHttpClient.JSONArrayCallback() {
+            @Override
+            public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONArray jsonArray) {
+                if(e!=null){
+                    App.getInstance().alertException(e);
+                    return;
+                }
+                try {
+                    App.getInstance().initCirclesIdMap(jsonArray);
+                } catch (JSONException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        });
     }
 
     public void alertException(Exception e) {

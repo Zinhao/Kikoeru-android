@@ -91,10 +91,12 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                 });
                 workTreeAdapter.setTagClickListener(WorkTreeActivity.this);
                 workTreeAdapter.setVaClickListener(vaClickListener);
+                workTreeAdapter.setCirclesClickListener(circlesClickListener);
                 workTreeAdapter.setItemLongClickListener(WorkTreeActivity.this);
                 workTreeAdapter.setPathChangeListener(WorkTreeActivity.this);
                 RecyclerView.ItemDecoration itemDecoration = new DividerItemDecoration(WorkTreeActivity.this, DividerItemDecoration.VERTICAL);
                 recyclerView.addItemDecoration(itemDecoration);
+                recyclerView.setItemAnimator(null);
                 recyclerView.setLayoutManager(new LinearLayoutManager(WorkTreeActivity.this));
                 recyclerView.setAdapter(workTreeAdapter);
             });
@@ -476,8 +478,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                     final DownloadUtils.Mission downLoadMission = new DownloadUtils.Mission(item);
                     downLoadMission.setSuccessCallback(() -> runOnUiThread(() -> {
                         if (!isDestroyed()) {
-                            workTreeAdapter.notifyWorkDataSetChanged();
-                            workTreeAdapter.notifyDataSetChanged();
+                            workTreeAdapter.mapFileExistValue();
                         }
                     }));
                     if (App.getInstance().isSaveExternal()) {
@@ -500,7 +501,9 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                     if (havePermission) {
                         saveWorkWithTree();
                         downLoadMission.start();
-                        startActivity(new Intent(WorkTreeActivity.this, DownLoadMissionActivity.class));
+                        runOnUiThread(()->{
+                            workTreeAdapter.notifyDataSetChanged();
+                        });
                     }
                     dialog.dismiss();
                 });
@@ -618,6 +621,18 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
             e.printStackTrace();
             alertException(e);
         }
+    };
+
+    private final TagsView.TagClickListener<String> circlesClickListener = circlesName -> {
+        //todo
+        //http://localhost:8980/api/circles/
+        //http://localhost:8980/api/circles/54978/works?order=release&sort=desc&page=1&seed=59
+        long circlesId = App.getInstance().mapCirclesId(circlesName);
+        if(circlesId!=-1){
+            Api.doGetWorkByCircles(page,circlesId,apisCallback);
+        }
+        setTitle(circlesName);
+        Log.d(TAG, "onTagClick: " + circlesName);
     };
 
     private void initLayout() {
