@@ -84,11 +84,16 @@ public class UserRepository {
                     user.setHost(host);
                     user.setToken(loginResponse.getToken());
                     
-                    long userId = App.getInstance().insertUser(user);
-                    App.getInstance().setCurrentUserId(userId);
-                    Api.init(loginResponse.getToken(), host);
+                    App.getInstance().insertUser(user, new Runnable() {
+                        @Override
+                        public void run() {
+                            Log.i("UserRepository", "Login success, userId=" + user.getId());
+                            Api.init(loginResponse.getToken(), host);
+                        }
+                    });
+
                     
-                    Log.i("UserRepository", "Login success, userId=" + userId);
+
                     result.postValue(Result.success(loginResponse));
                 } else {
                     String errorMsg = loginResponse.getErrorMessage();
