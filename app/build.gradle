@@ -1,6 +1,5 @@
 plugins {
     id 'com.android.application'
-    id 'org.greenrobot.greendao'
 }
 
 android {
@@ -8,12 +7,20 @@ android {
 
     defaultConfig {
         applicationId "com.zinhao.kikoeru"
-        minSdk 26
+        minSdk 30
+        //noinspection OldTargetApi,EditedTargetSdkVersion
         targetSdk 34
-        versionCode 11
-        versionName "Release_7.0"
+        versionCode 12
+        versionName "Release_8.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         setProperty("archivesBaseName", applicationId +"-v" + versionCode +"(" + versionName +")")
+        javaCompileOptions {
+            annotationProcessorOptions {
+                compilerArgumentProviders(
+                        new RoomSchemaArgProvider(new File(projectDir, "schemas"))
+                )
+            }
+        }
     }
 
     buildTypes {
@@ -34,24 +41,41 @@ android {
     buildFeatures {
         viewBinding true
     }
-}
-
-greendao {
-    schemaVersion 1 //数据库版本号
-    daoPackage 'com.zinhao.kikoeru.db'// 设置DaoMaster、DaoSession、Dao 包名
-    targetGenDir 'src/main/java'//设置DaoMaster、DaoSession、Dao目录
+    namespace 'com.zinhao.kikoeru'
 }
 
 dependencies {
+    def room_version = "2.5.2"
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'com.google.android.material:material:1.3.0'
     implementation 'androidx.media:media:1.5.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
-    implementation fileTree(dir: 'libs', include: ['*.aar', '*.jar'], exclude: [])
-    testImplementation 'junit:junit:4.+'
+    implementation fileTree(dir: 'libs', include: ['*.aar', '*.jar'], exclude: ["guava-27.1-android.jar"])
+    testImplementation 'junit:junit:4.13.2'
     implementation 'androidx.exifinterface:exifinterface:1.3.2'
-    //greendao
-    implementation 'org.greenrobot:greendao:3.3.0'
+    //room
+    //noinspection GradleDependency
+    implementation ("androidx.room:room-runtime:$room_version")
+    annotationProcessor ("androidx.room:room-compiler:$room_version")
     //调色板
     implementation 'androidx.palette:palette:1.0.0'
+    implementation 'com.google.guava:guava:32.0.1-jre'
+}
+
+class RoomSchemaArgProvider implements CommandLineArgumentProvider {
+
+    @InputDirectory
+    @PathSensitive(PathSensitivity.RELATIVE)
+    File schemaDir
+
+    RoomSchemaArgProvider(File schemaDir) {
+        this.schemaDir = schemaDir
+    }
+
+    @Override
+    Iterable<String> asArguments() {
+        // Note: If you're using KSP, you should change the line below to return
+        // ["room.schemaLocation=${schemaDir.path}"]
+        return ["-Aroom.schemaLocation=${schemaDir.path}"]
+    }
 }

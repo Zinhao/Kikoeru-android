@@ -104,8 +104,11 @@ public class LoginAccountActivity extends BaseActivity {
                         String token = jsonObject.getString("token");
                         user.setToken(token);
                         Api.init(token, user.getHost());
-                        App.getInstance().setValue(App.CONFIG_USER_DATABASE_ID, app.insertUser(user));
-                        saveAndNext();
+                        app.insertUser(user,()->{
+                            App.getInstance().setValue(App.CONFIG_USER_DATABASE_ID, user.getId());
+                            saveAndNext();
+                        });
+
                     } catch (JSONException jsonException) {
                         jsonException.printStackTrace();
                         alertException(jsonException);

@@ -463,6 +463,10 @@ public class LocalFileCache implements Runnable, Closeable {
             }
         });
     }
+    public void doSomething(Runnable runnable){
+        mission.add(runnable);
+    }
+
 
     @Override
     public void run() {

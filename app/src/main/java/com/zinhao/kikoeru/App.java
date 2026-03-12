@@ -6,17 +6,14 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.room.Room;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
-import com.zinhao.kikoeru.db.DaoMaster;
-import com.zinhao.kikoeru.db.DaoSession;
-import com.zinhao.kikoeru.db.UserDao;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -47,12 +44,11 @@ public class App extends Application implements Application.ActivityLifecycleCal
     private boolean appDebug = false;
 
 
-    private List<User> allUsers;
+    private final List<User> allUsers = new ArrayList<>();
     private long currentUserId;
 
     private RequestOptions defaultPic;
     private UserDao userDao;
-    private DaoMaster.OpenHelper helper;
 
     private final List<Activity> activities = new ArrayList<>();
     private final HashMap<String,Long> circlesIdMap = new HashMap<>();
@@ -120,12 +116,8 @@ public class App extends Application implements Application.ActivityLifecycleCal
     public void onCreate() {
         super.onCreate();
         instance = this;
-        helper = new DaoMaster.OpenHelper(App.instance, "app.db") {
-        };
-        SQLiteDatabase database = helper.getWritableDatabase();
-        DaoMaster daoMaster = new DaoMaster(database);
-        DaoSession daoSession = daoMaster.newSession();
-        userDao = daoSession.getUserDao();
+        AppDatabase appDatabase = Room.databaseBuilder(getApplicationContext(), AppDatabase.class,"app.db").build();
+        userDao = appDatabase.userDao();
 
         currentUserId = getValue(App.CONFIG_USER_DATABASE_ID, -1);
         appDebug = getValue(App.CONFIG_DEBUG, 0) == 1;
@@ -227,29 +219,41 @@ public class App extends Application implements Application.ActivityLifecycleCal
         return position;
     }
 
-    public long insertUser(User user) {
-        allUsers.add(user);
-        currentUserId = userDao.insert(user);
-        return currentUserId;
+    public void insertUser(User user,Runnable callback) {
+        LocalFileCache.getInstance().doSomething(()->{
+            currentUserId = userDao.insert(user);
+            user.setId(currentUserId);
+            allUsers.add(user);
+            callback.run();
+        });
     }
 
     public void deleteUser(User user) {
         allUsers.remove(user);
-        userDao.delete(user);
+        LocalFileCache.getInstance().doSomething(()->{
+            userDao.delete(user);
+        });
     }
 
     public void updateUser(User user) {
-        userDao.update(user);
+        LocalFileCache.getInstance().doSomething(()->{
+            userDao.update(user);
+        });
     }
 
     public List<User> getAllUsers() {
-        if (allUsers == null)
-            allUsers = userDao.loadAll();
+        LocalFileCache.getInstance().doSomething(()->{
+            allUsers.clear();
+            allUsers.addAll(userDao.getAllUser());
+        });
         return allUsers;
     }
 
     public User currentUser() {
         for (User user : allUsers) {
+            if(user.getId() == null){
+                continue;
+            }
             if (user.getId().equals(currentUserId)) {
                 return user;
             }
@@ -291,7 +295,7 @@ public class App extends Application implements Application.ActivityLifecycleCal
     public void onActivityDestroyed(@NonNull Activity activity) {
         activities.remove(activity);
         if (activities.isEmpty()) {
-            helper.close();
+//            helper.close();
         }
     }
 }
