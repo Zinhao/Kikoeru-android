@@ -49,4 +49,12 @@ dependencies {
     implementation 'org.greenrobot:greendao:3.3.0'
     //调色板
     implementation 'androidx.palette:palette:1.0.0'
+    
+    // MVVM - Lifecycle components
+    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.5.1'
+    implementation 'androidx.lifecycle:lifecycle-livedata:2.5.1'
+    implementation 'androidx.lifecycle:lifecycle-common-java8:2.5.1'
+    
+    // Gson for JSON parsing
+    implementation 'com.google.code.gson:gson:2.8.9'
 }

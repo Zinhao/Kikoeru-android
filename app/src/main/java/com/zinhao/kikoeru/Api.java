@@ -37,7 +37,7 @@ public class Api {
         sort = (int) App.getInstance().getValue(App.CONFIG_SORT, 0);
     }
 
-    private static @NonNull String makeSort() {
+    public static @NonNull String makeSort() {
         if (sort != 1) {
             return "desc";
         } else {
@@ -139,6 +139,8 @@ public class Api {
             e.printStackTrace();
         }
         request.setBody(new JSONObjectBody(pwd));
+        request.setTimeout(15000);
+        request.addHeader("Content-Type", "application/json");
         AsyncHttpClient.getDefaultInstance().executeJSONObject(request, callback);
     }
 
