@@ -44,105 +44,90 @@ public class WorkRepository {
     /**
      * 获取作品列表
      */
-    public LiveData<Result<WorksResponse>> getWorks(int page, String order, String sort, int subtitle) {
-        MutableLiveData<Result<WorksResponse>> result = new MutableLiveData<>();
-        result.setValue(Result.loading());
-        
+    public void getWorks(int page, String order, String sort, int subtitle, ResultCallback<WorksResponse> callback) {
+        android.util.Log.d("WorkRepository", "getWorks: page=" + page);
         Api.doGetWorks(page, new AsyncHttpClient.JSONObjectCallback() {
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse response, JSONObject jsonObject) {
-                handleWorksResponse(e, response, jsonObject, result);
+                handleWorksResponse(e, response, jsonObject, callback);
             }
         });
-        
-        return result;
     }
     
     /**
      * 根据标签获取作品
      */
-    public LiveData<Result<WorksResponse>> getWorksByTag(int page, int tagId) {
-        MutableLiveData<Result<WorksResponse>> result = new MutableLiveData<>();
-        result.setValue(Result.loading());
-        
+    public void getWorksByTag(int page, int tagId, ResultCallback<WorksResponse> callback) {
         Api.doGetWorksByTag(page, tagId, new AsyncHttpClient.JSONObjectCallback() {
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse response, JSONObject jsonObject) {
-                handleWorksResponse(e, response, jsonObject, result);
+                handleWorksResponse(e, response, jsonObject, callback);
             }
         });
-        
-        return result;
     }
     
     /**
      * 根据声优获取作品
      */
-    public LiveData<Result<WorksResponse>> getWorksByVa(int page, String vaId) {
-        MutableLiveData<Result<WorksResponse>> result = new MutableLiveData<>();
-        result.setValue(Result.loading());
-        
+    public void getWorksByVa(int page, String vaId, ResultCallback<WorksResponse> callback) {
         Api.doGetWorkByVa(page, vaId, new AsyncHttpClient.JSONObjectCallback() {
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse response, JSONObject jsonObject) {
-                handleWorksResponse(e, response, jsonObject, result);
+                handleWorksResponse(e, response, jsonObject, callback);
             }
         });
-        
-        return result;
+    }
+    
+    /**
+     * 根据社团获取作品
+     */
+    public void getWorksByCircles(int page, long circlesId, ResultCallback<WorksResponse> callback) {
+        Api.doGetWorkByCircles(page, circlesId, new AsyncHttpClient.JSONObjectCallback() {
+            @Override
+            public void onCompleted(Exception e, AsyncHttpResponse response, JSONObject jsonObject) {
+                handleWorksResponse(e, response, jsonObject, callback);
+            }
+        });
     }
     
     /**
      * 搜索作品
      */
-    public LiveData<Result<WorksResponse>> searchWorks(String keyword, int page) {
-        MutableLiveData<Result<WorksResponse>> result = new MutableLiveData<>();
-        result.setValue(Result.loading());
-        
+    public void searchWorks(String keyword, int page, ResultCallback<WorksResponse> callback) {
         Api.doGetWork(keyword, page, new AsyncHttpClient.JSONObjectCallback() {
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse response, JSONObject jsonObject) {
-                handleWorksResponse(e, response, jsonObject, result);
+                handleWorksResponse(e, response, jsonObject, callback);
             }
         });
-        
-        return result;
     }
     
     /**
      * 根据进度筛选获取作品
      */
-    public LiveData<Result<WorksResponse>> getWorksByProgress(@Api.Filter String filter, int page) {
-        MutableLiveData<Result<WorksResponse>> result = new MutableLiveData<>();
-        result.setValue(Result.loading());
-        
+    public void getWorksByProgress(@Api.Filter String filter, int page, ResultCallback<WorksResponse> callback) {
         Api.doGetReview(filter, page, new AsyncHttpClient.JSONObjectCallback() {
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse response, JSONObject jsonObject) {
-                handleWorksResponse(e, response, jsonObject, result);
+                handleWorksResponse(e, response, jsonObject, callback);
             }
         });
-        
-        return result;
     }
     
     /**
      * 获取本地作品
      */
-    public LiveData<Result<List<Work>>> getLocalWorks() {
-        MutableLiveData<Result<List<Work>>> result = new MutableLiveData<>();
-        result.setValue(Result.loading());
-        
+    public void getLocalWorks(ResultCallback<List<Work>> callback) {
         try {
             LocalFileCache.getInstance().readLocalWorks(null, new AsyncHttpClient.JSONObjectCallback() {
                 @Override
                 public void onCompleted(Exception e, AsyncHttpResponse response, JSONObject jsonObject) {
                     if (e != null) {
-                        result.postValue(Result.error(e.getMessage(), e));
+                        callback.onError(e.getMessage(), e);
                         return;
                     }
                     if (jsonObject == null) {
-                        result.postValue(Result.success(new ArrayList<>()));
+                        callback.onSuccess(new ArrayList<>());
                         return;
                     }
                     try {
@@ -150,81 +135,69 @@ public class WorkRepository {
                         for (Work work : works) {
                             work.setLocalWork(true);
                         }
-                        result.postValue(Result.success(works));
+                        callback.onSuccess(works);
                     } catch (JSONException ex) {
-                        result.postValue(Result.error(ex.getMessage(), ex));
+                        callback.onError(ex.getMessage(), ex);
                     }
                 }
             });
         } catch (JSONException e) {
-            result.setValue(Result.error(e.getMessage(), e));
+            callback.onError(e.getMessage(), e);
         }
-        
-        return result;
     }
     
     /**
      * 获取作品音轨列表
      */
-    public LiveData<Result<List<Track>>> getWorkTracks(int workId) {
-        MutableLiveData<Result<List<Track>>> result = new MutableLiveData<>();
-        result.setValue(Result.loading());
-        
+    public void getWorkTracks(int workId, ResultCallback<List<Track>> callback) {
         Api.doGetDocTree(workId, new AsyncHttpClient.JSONArrayCallback() {
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse response, JSONArray jsonArray) {
                 if (e != null) {
-                    result.postValue(Result.error(e.getMessage(), e));
+                    callback.onError(e.getMessage(), e);
                     return;
                 }
                 if (response == null || response.code() != 200) {
-                    result.postValue(Result.error("Request failed"));
+                    callback.onError("Request failed", null);
                     return;
                 }
                 try {
                     List<Track> tracks = parseTracks(jsonArray);
-                    result.postValue(Result.success(tracks));
+                    callback.onSuccess(tracks);
                 } catch (JSONException ex) {
-                    result.postValue(Result.error(ex.getMessage(), ex));
+                    callback.onError(ex.getMessage(), ex);
                 }
             }
         });
-        
-        return result;
     }
     
     /**
      * 标记作品进度
      */
-    public LiveData<Result<Boolean>> markWorkProgress(int workId, @Api.Filter String progress) {
-        MutableLiveData<Result<Boolean>> result = new MutableLiveData<>();
-        result.setValue(Result.loading());
-        
+    public void markWorkProgress(int workId, @Api.Filter String progress, ResultCallback<Boolean> callback) {
         Api.doPutReview(workId, progress, new AsyncHttpClient.JSONObjectCallback() {
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse response, JSONObject jsonObject) {
                 if (e != null) {
-                    result.postValue(Result.error(e.getMessage(), e));
+                    callback.onError(e.getMessage(), e);
                     return;
                 }
                 if (response != null && response.code() == 200) {
-                    result.postValue(Result.success(true));
+                    callback.onSuccess(true);
                 } else {
                     String msg = jsonObject != null ? jsonObject.optString("message", "Failed") : "Failed";
-                    result.postValue(Result.error(msg, false));
+                    callback.onError(msg, null);
                 }
             }
         });
-        
-        return result;
     }
     
     // 处理作品列表响应
     private void handleWorksResponse(Exception e, AsyncHttpResponse response, 
                                      JSONObject jsonObject, 
-                                     MutableLiveData<Result<WorksResponse>> result) {
+                                     ResultCallback<WorksResponse> callback) {
         if (e != null) {
-            result.postValue(Result.error(e.getMessage(), e));
+            callback.onError(e.getMessage(), e);
             return;
         }
         if (response == null || response.code() != 200) {
@@ -232,20 +205,24 @@ public class WorkRepository {
                 // 本地缓存数据
                 try {
                     WorksResponse data = parseWorksResponse(jsonObject);
-                    result.postValue(Result.success(data));
+                    callback.onSuccess(data);
                 } catch (JSONException ex) {
-                    result.postValue(Result.error(ex.getMessage(), ex));
+                    callback.onError(ex.getMessage(), ex);
                 }
             } else {
-                result.postValue(Result.error("Request failed"));
+                String errorMsg = "Request failed";
+                if (jsonObject != null) {
+                    errorMsg = jsonObject.optString("message", jsonObject.optString("error", "Request failed"));
+                }
+                callback.onError(errorMsg, null);
             }
             return;
         }
         try {
             WorksResponse data = parseWorksResponse(jsonObject);
-            result.postValue(Result.success(data));
+            callback.onSuccess(data);
         } catch (JSONException ex) {
-            result.postValue(Result.error(ex.getMessage(), ex));
+            callback.onError(ex.getMessage(), ex);
         }
     }
     
@@ -263,6 +240,12 @@ public class WorkRepository {
             pagination.setTotalCount(paginationObj.optInt("totalCount", 0));
             pagination.setTotalPage(paginationObj.optInt("totalPage", 1));
             response.setPagination(pagination);
+            android.util.Log.d("WorkRepository", "Parsed pagination: " + 
+                "currentPage=" + pagination.getCurrentPage() + 
+                ", totalPage=" + pagination.getTotalPage() +
+                ", totalCount=" + pagination.getTotalCount());
+        } else {
+            android.util.Log.w("WorkRepository", "No pagination in response");
         }
         
         // 解析作品列表
@@ -378,5 +361,11 @@ public class WorkRepository {
         }
         
         return track;
+    }
+    
+    // 结果回调接口
+    public interface ResultCallback<T> {
+        void onSuccess(T data);
+        void onError(String message, Throwable error);
     }
 }

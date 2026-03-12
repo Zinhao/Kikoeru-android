@@ -59,6 +59,9 @@ public class Work {
     // 本地缓存标记
     private boolean isLocalWork;
     
+    // 本地作品来源服务器
+    private String host;
+    
     public Work() {
     }
     
@@ -197,6 +200,14 @@ public class Work {
     
     public void setLocalWork(boolean localWork) {
         isLocalWork = localWork;
+    }
+    
+    public String getHost() {
+        return host;
+    }
+    
+    public void setHost(String host) {
+        this.host = host;
     }
     
     /**

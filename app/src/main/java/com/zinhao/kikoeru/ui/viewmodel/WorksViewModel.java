@@ -1,14 +1,10 @@
 package com.zinhao.kikoeru.ui.viewmodel;
 
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 
 import com.zinhao.kikoeru.Api;
-import com.zinhao.kikoeru.data.model.Result;
 import com.zinhao.kikoeru.data.model.Work;
 import com.zinhao.kikoeru.data.model.WorksResponse;
 import com.zinhao.kikoeru.data.repository.WorkRepository;
@@ -34,6 +30,7 @@ public class WorksViewModel extends ViewModel {
     public static final int TYPE_TAG_WORK = 497;
     public static final int TYPE_LOCAL_WORK = 498;
     public static final int TYPE_VA_WORK = 499;
+    public static final int TYPE_CIRCLES_WORK = 500;
     
     // 查询参数
     private final MutableLiveData<Integer> workType = new MutableLiveData<>(TYPE_ALL_WORK);
@@ -41,6 +38,8 @@ public class WorksViewModel extends ViewModel {
     private final MutableLiveData<String> order = new MutableLiveData<>("id");
     private final MutableLiveData<Integer> tagId = new MutableLiveData<>(-1);
     private final MutableLiveData<String> vaId = new MutableLiveData<>("");
+    private final MutableLiveData<Long> circlesId = new MutableLiveData<>(-1L);
+    private final MutableLiveData<String> circlesName = new MutableLiveData<>("");
     private final MutableLiveData<String> searchKeyword = new MutableLiveData<>("");
     
     // 数据
@@ -48,7 +47,7 @@ public class WorksViewModel extends ViewModel {
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
     private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
     private final MutableLiveData<Integer> totalCount = new MutableLiveData<>(0);
-    private final MutableLiveData<Boolean> hasMore = new MutableLiveData<>(false);
+    private final MutableLiveData<Boolean> hasMore = new MutableLiveData<>(true);
     
     // 事件
     private final SingleLiveEvent<Work> navigateToDetail = new SingleLiveEvent<>();
@@ -86,6 +85,10 @@ public class WorksViewModel extends ViewModel {
         return navigateToDetail;
     }
     
+    public LiveData<String> getCirclesName() {
+        return circlesName;
+    }
+    
     // Setters
     public void setWorkType(int type) {
         if (workType.getValue() != null && workType.getValue() == type) {
@@ -107,6 +110,13 @@ public class WorksViewModel extends ViewModel {
         resetAndLoad();
     }
     
+    public void setCirclesId(long id, String name) {
+        circlesId.setValue(id);
+        circlesName.setValue(name);
+        workType.setValue(TYPE_CIRCLES_WORK);
+        resetAndLoad();
+    }
+    
     public void setSearchKeyword(String keyword) {
         searchKeyword.setValue(keyword);
         resetAndLoad();
@@ -123,6 +133,9 @@ public class WorksViewModel extends ViewModel {
     private void resetAndLoad() {
         currentPage.setValue(1);
         works.setValue(new ArrayList<>());
+        totalCount.setValue(0);  // 重置总数
+        hasMore.setValue(true);  // 重置为 true，允许加载更多
+        android.util.Log.d("WorksViewModel", "resetAndLoad: page=1, hasMore=true");
         loadWorks();
     }
     
@@ -137,107 +150,131 @@ public class WorksViewModel extends ViewModel {
         int type = workType.getValue() != null ? workType.getValue() : TYPE_ALL_WORK;
         int page = currentPage.getValue() != null ? currentPage.getValue() : 1;
         String sortOrder = makeSort();
+        Boolean currentHasMore = hasMore.getValue();
+        
+        android.util.Log.d("WorksViewModel", "loadWorks START: type=" + type + ", page=" + page + ", hasMore=" + currentHasMore);
+        
+        // 本地作品不需要分页
+        if (type == TYPE_LOCAL_WORK) {
+            hasMore.setValue(false);
+        }
         
         isLoading.setValue(true);
         errorMessage.setValue(null);
         
-        LiveData<Result<WorksResponse>> source;
+        WorkRepository.ResultCallback<WorksResponse> callback = new WorkRepository.ResultCallback<WorksResponse>() {
+            @Override
+            public void onSuccess(WorksResponse response) {
+                android.util.Log.d("WorksViewModel", "onSuccess: " + (response.getWorks() != null ? response.getWorks().size() : 0) + " works");
+                isLoading.postValue(false);
+                
+                if (response != null) {
+                    List<Work> currentList = works.getValue();
+                    if (currentList == null) {
+                        currentList = new ArrayList<>();
+                    }
+                    
+                    // 第一页清空，否则追加
+                    int currentPageValue = currentPage.getValue() != null ? currentPage.getValue() : 1;
+                    if (currentPageValue == 1) {
+                        currentList.clear();
+                    }
+                    
+                    if (response.getWorks() != null) {
+                        currentList.addAll(response.getWorks());
+                    }
+                    works.postValue(currentList);
+                    
+                    // 更新分页信息
+                    if (response.getPagination() != null) {
+                        int currentPageNum = response.getPagination().getCurrentPage();
+                        int pageSize = response.getPagination().getPageSize() > 0 ? response.getPagination().getPageSize() : 20;
+                        int total = response.getPagination().getTotalCount();
+                        
+                        // 自己计算是否有更多页（不依赖服务器返回的totalPage）
+                        boolean more = currentList.size() < total;
+                        
+                        android.util.Log.d("WorksViewModel", "Pagination: current=" + currentPageNum + 
+                            ", loaded=" + currentList.size() + ", total=" + total + 
+                            ", pageSize=" + pageSize + ", hasMore=" + more);
+                        
+                        totalCount.postValue(total);
+                        hasMore.postValue(more);
+                    } else {
+                        // 如果没有分页信息，使用当前列表大小作为总数
+                        android.util.Log.d("WorksViewModel", "No pagination, using list size");
+                        totalCount.postValue(currentList.size());
+                        hasMore.postValue(false);
+                    }
+                }
+            }
+            
+            @Override
+            public void onError(String message, Throwable error) {
+                android.util.Log.e("WorksViewModel", "onError: " + message);
+                isLoading.postValue(false);
+                errorMessage.postValue(message);
+            }
+        };
         
         switch (type) {
             case TYPE_TAG_WORK:
                 int tid = tagId.getValue() != null ? tagId.getValue() : -1;
-                source = workRepository.getWorksByTag(page, tid);
+                workRepository.getWorksByTag(page, tid, callback);
                 break;
             case TYPE_VA_WORK:
                 String vid = vaId.getValue() != null ? vaId.getValue() : "";
-                source = workRepository.getWorksByVa(page, vid);
+                workRepository.getWorksByVa(page, vid, callback);
+                break;
+            case TYPE_CIRCLES_WORK:
+                Long cid = circlesId.getValue();
+                if (cid != null && cid != -1) {
+                    workRepository.getWorksByCircles(page, cid, callback);
+                } else {
+                    workRepository.getWorks(page, order.getValue(), sortOrder, 1, callback);
+                }
                 break;
             case TYPE_SELF_LISTENING:
-                source = workRepository.getWorksByProgress(Api.FILTER_LISTENING, page);
+                workRepository.getWorksByProgress(Api.FILTER_LISTENING, page, callback);
                 break;
             case TYPE_SELF_LISTENED:
-                source = workRepository.getWorksByProgress(Api.FILTER_LISTENED, page);
+                workRepository.getWorksByProgress(Api.FILTER_LISTENED, page, callback);
                 break;
             case TYPE_SELF_MARKED:
-                source = workRepository.getWorksByProgress(Api.FILTER_MARKED, page);
+                workRepository.getWorksByProgress(Api.FILTER_MARKED, page, callback);
                 break;
             case TYPE_SELF_REPLAY:
-                source = workRepository.getWorksByProgress(Api.FILTER_REPLAY, page);
+                workRepository.getWorksByProgress(Api.FILTER_REPLAY, page, callback);
                 break;
             case TYPE_SELF_POSTPONED:
-                source = workRepository.getWorksByProgress(Api.FILTER_POSTPONED, page);
+                workRepository.getWorksByProgress(Api.FILTER_POSTPONED, page, callback);
                 break;
             case TYPE_LOCAL_WORK:
                 loadLocalWorks();
                 return;
             default:
-                source = workRepository.getWorks(page, order.getValue(), sortOrder, 1);
+                workRepository.getWorks(page, order.getValue(), sortOrder, 1, callback);
                 break;
         }
-        
-        observeWorksResult(source);
     }
     
     /**
      * 加载本地作品
      */
     private void loadLocalWorks() {
-        LiveData<Result<List<Work>>> source = workRepository.getLocalWorks();
-        source.observeForever(new Observer<Result<List<Work>>>() {
+        workRepository.getLocalWorks(new WorkRepository.ResultCallback<List<Work>>() {
             @Override
-            public void onChanged(Result<List<Work>> result) {
-                source.removeObserver(this);
-                isLoading.setValue(false);
-                
-                if (result.isSuccess()) {
-                    works.setValue(result.getData());
-                    totalCount.setValue(result.getData() != null ? result.getData().size() : 0);
-                    hasMore.setValue(false);
-                } else {
-                    errorMessage.setValue(result.getMessage());
-                }
+            public void onSuccess(List<Work> result) {
+                isLoading.postValue(false);
+                works.postValue(result != null ? result : new ArrayList<>());
+                totalCount.postValue(result != null ? result.size() : 0);
+                hasMore.postValue(false);
             }
-        });
-    }
-    
-    /**
-     * 观察作品列表结果
-     */
-    private void observeWorksResult(LiveData<Result<WorksResponse>> source) {
-        source.observeForever(new Observer<Result<WorksResponse>>() {
+            
             @Override
-            public void onChanged(Result<WorksResponse> result) {
-                source.removeObserver(this);
-                isLoading.setValue(false);
-                
-                if (result.isSuccess()) {
-                    WorksResponse response = result.getData();
-                    if (response != null) {
-                        List<Work> currentList = works.getValue();
-                        if (currentList == null) {
-                            currentList = new ArrayList<>();
-                        }
-                        
-                        // 第一页清空，否则追加
-                        int currentPageValue = currentPage.getValue() != null ? currentPage.getValue() : 1;
-                        if (currentPageValue == 1) {
-                            currentList.clear();
-                        }
-                        
-                        if (response.getWorks() != null) {
-                            currentList.addAll(response.getWorks());
-                        }
-                        works.setValue(currentList);
-                        
-                        // 更新分页信息
-                        if (response.getPagination() != null) {
-                            totalCount.setValue(response.getPagination().getTotalCount());
-                            hasMore.setValue(response.getPagination().hasNextPage());
-                        }
-                    }
-                } else {
-                    errorMessage.setValue(result.getMessage());
-                }
+            public void onError(String message, Throwable error) {
+                isLoading.postValue(false);
+                errorMessage.postValue(message);
             }
         });
     }
@@ -247,12 +284,16 @@ public class WorksViewModel extends ViewModel {
      */
     public void loadNextPage() {
         if (Boolean.TRUE.equals(isLoading.getValue())) {
+            android.util.Log.d("WorksViewModel", "loadNextPage: already loading");
             return;
         }
-        if (Boolean.FALSE.equals(hasMore.getValue())) {
+        Boolean more = hasMore.getValue();
+        if (more != null && !more) {
+            android.util.Log.d("WorksViewModel", "loadNextPage: no more data");
             return;
         }
         int page = currentPage.getValue() != null ? currentPage.getValue() : 1;
+        android.util.Log.d("WorksViewModel", "loadNextPage: loading page " + (page + 1));
         currentPage.setValue(page + 1);
         loadWorks();
     }
@@ -278,6 +319,39 @@ public class WorksViewModel extends ViewModel {
         Api.setOrder(order.getValue());
         String newOrder = order.getValue();
         resetAndLoad();
+    }
+    
+    /**
+     * 获取当前标题
+     */
+    public String getCurrentTitle() {
+        int type = workType.getValue() != null ? workType.getValue() : TYPE_ALL_WORK;
+        switch (type) {
+            case TYPE_SELF_LISTENING:
+                return "listening";
+            case TYPE_SELF_LISTENED:
+                return "listened";
+            case TYPE_SELF_MARKED:
+                return "marked";
+            case TYPE_SELF_REPLAY:
+                return "replay";
+            case TYPE_SELF_POSTPONED:
+                return "postponed";
+            case TYPE_TAG_WORK:
+                return "tag";
+            case TYPE_VA_WORK:
+                return vaId.getValue() != null ? vaId.getValue() : "";
+            case TYPE_CIRCLES_WORK:
+                return circlesName.getValue() != null ? circlesName.getValue() : "";
+            case TYPE_LOCAL_WORK:
+                return "local";
+            default:
+                return "all";
+        }
+    }
+    
+    public int getCurrentPage() {
+        return currentPage.getValue() != null ? currentPage.getValue() : 1;
     }
     
     private String makeSort() {

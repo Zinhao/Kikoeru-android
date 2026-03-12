@@ -15,15 +15,22 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.*;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.ListPopupWindow;
 import androidx.core.app.ActivityCompat;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.*;
+
 import com.bumptech.glide.Glide;
-import com.koushikdutta.async.http.AsyncHttpClient;
-import com.koushikdutta.async.http.AsyncHttpResponse;
-import org.json.JSONArray;
+import com.zinhao.kikoeru.data.model.Tag;
+import com.zinhao.kikoeru.data.model.Va;
+import com.zinhao.kikoeru.data.model.Work;
+import com.zinhao.kikoeru.ui.adapter.WorksAdapter;
+import com.zinhao.kikoeru.ui.viewmodel.WorksViewModel;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -33,20 +40,25 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class WorksActivity extends BaseActivity implements MusicChangeListener, ServiceConnection, TagsView.TagClickListener<JSONObject> {
-    private static final String TAG = "MainActivity";
+/**
+ * 作品列表页面 - MVVM 重构版
+ */
+public class WorksActivity extends BaseActivity implements MusicChangeListener, ServiceConnection, TagsView.TagClickListener<Tag> {
+    private static final String TAG = "WorksActivity";
     private static final String CONFIG_TYPE = "last_type";
     private static final String CONFIG_PAGE = "last_page";
     private static final String CONFIG_PARAM_INT = "last_param_int";
     private static final String CONFIG_PARAM_STR = "last_param_str";
+    
+    // ViewModel
+    private WorksViewModel viewModel;
+    
+    // Views
     private RecyclerView recyclerView;
-    private WorkAdapter workAdapter;
-    private List<JSONObject> works;
+    private WorksAdapter worksAdapter;
     private RecyclerView.OnScrollListener scrollListener;
-    private int page = 1;
-    private int currentPage = 0;
-    private int totalCount = 0;
-
+    
+    // Bottom player
     private View bottomLayout;
     private Animation outAnim;
     private Animation inAnim;
@@ -56,38 +68,43 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
     private TextView tvWorkTitle;
     private ImageButton ibStatus;
     private ImageButton ibFloatLrcWindow;
-    private int tagId = -1;
-    private String tagStr = "";
-    private String vaId = "";
-    private String vaName = "";
-    private String circlesName = "";
-    private long circlesId = -1;
-
-    private static final int TYPE_ALL_WORK = 491;
-    private static final int TYPE_SELF_LISTENING = 492;
-    private static final int TYPE_SELF_LISTENED = 493;
-    private static final int TYPE_SELF_MARKED = 494;
-    private static final int TYPE_SELF_REPLAY = 495;
-    private static final int TYPE_SELF_POSTPONED = 496;
-    private static final int TYPE_TAG_WORK = 497;
-    private static final int TYPE_LOCAL_WORK = 498;
-    private static final int TYPE_VA_WORK = 499;
-    private static final int TYPE_CIRCLES_WORK = 500;
-
-    private int type = TYPE_ALL_WORK;
-    private AudioService.CtrlBinder ctrlBinder;
-    private static final int TAG_SELECT_RESULT = 14;
-    private static final int VA_SELECT_RESULT = 15;
-    private static final int CIRCLES_SELECT_RESULT = 16;
-
+    
+    // Popup menus
     private ListPopupWindow progressMenu;
     private ListPopupWindow moreMenu;
     private RecyclerView.ItemDecoration itemDecoration;
+    
+    // Audio service
+    private AudioService.CtrlBinder ctrlBinder;
+    
+    // Request codes
+    private static final int TAG_SELECT_RESULT = 14;
+    private static final int VA_SELECT_RESULT = 15;
+    private static final int CIRCLES_SELECT_RESULT = 16;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        
+        // Initialize ViewModel
+        viewModel = new ViewModelProvider(this).get(WorksViewModel.class);
+        
+        initViews();
+        initBottomPlayer();
+        initViewModelObservers();
+        initPopupMenus();
+        initListeners();
+        
+        // Start audio service
+        startForegroundService(new Intent(this, AudioService.class));
+        bindService(new Intent(this, AudioService.class), this, BIND_AUTO_CREATE);
+        
+        // Load initial data
+        viewModel.loadWorks();
+    }
+    
+    private void initViews() {
         recyclerView = findViewById(R.id.recyclerView);
         bottomLayout = findViewById(R.id.bottomLayout);
         ivCover = bottomLayout.findViewById(R.id.imageView);
@@ -95,45 +112,98 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         tvWorkTitle = bottomLayout.findViewById(R.id.textView2);
         ibStatus = bottomLayout.findViewById(R.id.button);
         ibFloatLrcWindow = bottomLayout.findViewById(R.id.imageButton);
-        ImageButton bt1 = findViewById(R.id.bt1);
-        ImageButton bt2 = findViewById(R.id.bt2);
-        ImageButton bt3 = findViewById(R.id.bt3);
-        startForegroundService(new Intent(this, AudioService.class));
-        bindService(new Intent(this, AudioService.class), this, BIND_AUTO_CREATE);
-        itemDecoration = new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
+        
+        itemDecoration = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
         outAnim = AnimationUtils.loadAnimation(this, R.anim.move_bottom_out);
         inAnim = AnimationUtils.loadAnimation(this, R.anim.move_bottom_in);
+        
+        // RecyclerView scroll listener for pagination
         scrollListener = new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-                if (works.size() >= totalCount) {
-                    return;
-                }
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    if (!recyclerView.canScrollVertically(1)) {
-                        reloadRecycleView();
+                    boolean canScrollDown = recyclerView.canScrollVertically(1);
+                    Log.d(TAG, "Scroll state idle, canScrollDown=" + canScrollDown);
+                    if (!canScrollDown) {
+                        Log.d(TAG, "Reached bottom, loading next page...");
+                        viewModel.loadNextPage();
                     }
                 }
             }
-
-            @Override
-            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-            }
         };
-        works = new ArrayList<>();
-        type = (int) App.getInstance().getValue(CONFIG_TYPE,TYPE_ALL_WORK);
-        page = (int) App.getInstance().getValue(CONFIG_PAGE,1);
-        vaId = App.getInstance().getValue(CONFIG_PARAM_STR,"");
-        tagId = (int) App.getInstance().getValue(CONFIG_PARAM_INT,-1);
-        reloadRecycleView();
-
-        bt1.setOnClickListener(v -> {
-            type = TYPE_ALL_WORK;
-            clearWork();
-            reloadRecycleView();
+    }
+    
+    private void initBottomPlayer() {
+        ibFloatLrcWindow.setOnClickListener(v -> {
+            if (ctrlBinder != null) {
+                if (ctrlBinder.isLrcWindowShow()) {
+                    ctrlBinder.hideLrcFloatWindow();
+                } else {
+                    ctrlBinder.showLrcFloatWindow();
+                }
+            }
         });
+    }
+    
+    private void initViewModelObservers() {
+        // Observe works data
+        viewModel.getWorks().observe(this, works -> {
+            Log.d(TAG, "===== Works data changed: " + (works != null ? works.size() : 0) + " items =====");
+            if (worksAdapter == null) {
+                initLayout((int) App.getInstance().getValue(App.CONFIG_LAYOUT_TYPE, WorkAdapter.LAYOUT_SMALL_GRID));
+                recyclerView.addOnScrollListener(scrollListener);
+            }
+            // 确保数据设置到适配器
+            if (works != null) {
+                Log.d(TAG, "Setting data to adapter: " + works.size() + " items");
+                worksAdapter.setData(works);
+            }
+        });
+        
+        // Observe total count for title
+        viewModel.getTotalCount().observe(this, count -> {
+            Log.d(TAG, "Total count changed: " + count);
+            updateTitle();
+        });
+        
+        // Observe work type change for title
+        viewModel.getWorkType().observe(this, type -> {
+            Log.d(TAG, "Work type changed: " + type);
+            updateTitle();
+        });
+        
+        // Observe loading state
+        viewModel.getIsLoading().observe(this, isLoading -> {
+            // Show/hide loading indicator if needed
+        });
+        
+        // Observe error messages
+        viewModel.getErrorMessage().observe(this, errorMsg -> {
+            if (errorMsg != null && !errorMsg.isEmpty()) {
+                showToast(errorMsg);
+            }
+        });
+        
+        // Observe navigation to detail
+        viewModel.getNavigateToDetail().observe(this, work -> {
+            if (work != null) {
+                openWorkDetail(work);
+            }
+        });
+    }
+    
+    private void initPopupMenus() {
+        ImageButton bt1 = findViewById(R.id.bt1);
+        ImageButton bt2 = findViewById(R.id.bt2);
+        ImageButton bt3 = findViewById(R.id.bt3);
+        
+        // All works
+        bt1.setOnClickListener(v -> {
+            viewModel.setWorkType(WorksViewModel.TYPE_ALL_WORK);
+        });
+        
+        // Progress menu
         progressMenu = new ListPopupWindow(this);
         progressMenu.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,
                 Arrays.asList(getString(R.string.marked),
@@ -147,30 +217,29 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
             progressMenu.dismiss();
             switch (position) {
                 case 0:
-                    type = TYPE_SELF_MARKED;
+                    viewModel.setWorkType(WorksViewModel.TYPE_SELF_MARKED);
                     break;
                 case 1:
-                    type = TYPE_SELF_LISTENING;
+                    viewModel.setWorkType(WorksViewModel.TYPE_SELF_LISTENING);
                     break;
                 case 2:
-                    type = TYPE_SELF_LISTENED;
+                    viewModel.setWorkType(WorksViewModel.TYPE_SELF_LISTENED);
                     break;
                 case 3:
-                    type = TYPE_SELF_REPLAY;
+                    viewModel.setWorkType(WorksViewModel.TYPE_SELF_REPLAY);
                     break;
                 case 4:
-                    type = TYPE_SELF_POSTPONED;
+                    viewModel.setWorkType(WorksViewModel.TYPE_SELF_POSTPONED);
                     break;
             }
-            clearWork();
-            reloadRecycleView();
         });
         bt2.setOnClickListener(v -> progressMenu.show());
-
+        
+        // More menu
         moreMenu = new ListPopupWindow(this);
-        moreMenu.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
+        moreMenu.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,
                 Arrays.asList(getString(R.string.va_voicer),
-                        getString(R.string.tag),"Circles",
+                        getString(R.string.tag), "Circles",
                         getString(R.string.local_works))));
         moreMenu.setModal(true);
         moreMenu.setAnchorView(bt3);
@@ -178,106 +247,168 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
             moreMenu.dismiss();
             switch (position) {
                 case 0:
-                    startActivityForResult(new Intent(view.getContext(), VasActivity.class), VA_SELECT_RESULT);
+                    startActivityForResult(new Intent(this, VasActivity.class), VA_SELECT_RESULT);
                     break;
                 case 1:
-                    startActivityForResult(new Intent(view.getContext(), TagsActivity.class), TAG_SELECT_RESULT);
+                    startActivityForResult(new Intent(this, TagsActivity.class), TAG_SELECT_RESULT);
                     break;
                 case 2:
-                    startActivityForResult(new Intent(view.getContext(), CirclesActivity.class), CIRCLES_SELECT_RESULT);
+                    startActivityForResult(new Intent(this, CirclesActivity.class), CIRCLES_SELECT_RESULT);
                     break;
                 case 3:
-                    type = TYPE_LOCAL_WORK;
-                    clearWork();
-                    reloadRecycleView();
+                    viewModel.setWorkType(WorksViewModel.TYPE_LOCAL_WORK);
                     break;
             }
         });
         bt3.setOnClickListener(v -> moreMenu.show());
-        ibFloatLrcWindow.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(ctrlBinder.isLrcWindowShow()){
-                    ctrlBinder.hideLrcFloatWindow();
-                }else{
-                    ctrlBinder.showLrcFloatWindow();
-                }
-            }
-        });
     }
-
+    
+    private void initListeners() {
+        // Already set in initBottomPlayer and initPopupMenus
+    }
+    
+    private void initLayout(int layoutType) {
+        RecyclerView.LayoutManager layoutManager = null;
+        recyclerView.removeItemDecoration(itemDecoration);
+        
+        if (layoutType == WorkAdapter.LAYOUT_LIST) {
+            layoutManager = new LinearLayoutManager(this);
+            recyclerView.addItemDecoration(itemDecoration);
+        } else if (layoutType == WorkAdapter.LAYOUT_SMALL_GRID) {
+            int col = Math.max(getResources().getDisplayMetrics().widthPixels / 395, 3);
+            layoutManager = new GridLayoutManager(this, col);
+        } else if (layoutType == WorkAdapter.LAYOUT_BIG_GRID) {
+            int col = Math.max(getResources().getDisplayMetrics().widthPixels / 395, 2);
+            layoutManager = new GridLayoutManager(this, col);
+        } else if (layoutType == WorkAdapter.LAYOUT_STAGGERED) {
+            int col = Math.max(getResources().getDisplayMetrics().widthPixels / 395, 2);
+            layoutManager = new StaggeredGridLayoutManager(col, StaggeredGridLayoutManager.VERTICAL);
+        }
+        
+        // 创建空列表，数据将通过 LiveData 观察者更新
+        worksAdapter = new WorksAdapter(new ArrayList<>(), layoutType);
+        worksAdapter.setTagClickListener(this);
+        worksAdapter.setVaClickListener(vaClickListener);
+        worksAdapter.setCirclesClickListener(circlesClickListener);
+        worksAdapter.setOnItemClickListener((v, position, work) -> {
+            viewModel.onWorkClick(work);
+        });
+        worksAdapter.setOnItemLongClickListener((v, position, work) -> {
+            if (viewModel.getWorkType().getValue() != null && 
+                viewModel.getWorkType().getValue() == WorksViewModel.TYPE_LOCAL_WORK) {
+                showDeleteLocalWorkDialog(position, work);
+                return true;
+            }
+            return false;
+        });
+        
+        recyclerView.setLayoutManager(layoutManager);
+        recyclerView.setAdapter(worksAdapter);
+        
+        // 如果有当前数据，立即更新
+        List<Work> currentWorks = viewModel.getWorks().getValue();
+        if (currentWorks != null && !currentWorks.isEmpty()) {
+            worksAdapter.setData(currentWorks);
+        }
+    }
+    
+    private void openWorkDetail(Work work) {
+        try {
+            JSONObject workJson = new JSONObject();
+            workJson.put("id", work.getId());
+            workJson.put("title", work.getTitle());
+            if (work.isLocalWork()) {
+                workJson.put(JSONConst.Work.IS_LOCAL_WORK, true);
+                workJson.put(JSONConst.Work.HOST, work.getHost());
+            }
+            
+            Intent intent = new Intent(this, WorkTreeActivity.class);
+            intent.putExtra("work_json_str", workJson.toString());
+            ActivityCompat.startActivity(this, intent, null);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            alertException(e);
+        }
+    }
+    
+    private void showDeleteLocalWorkDialog(int position, Work work) {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.delete_cache)
+                .setMessage(work.getTitle())
+                .setPositiveButton(R.string.delete, (dialog, which) -> {
+                    LocalFileCache.getInstance().removeWork(work.getId());
+                    worksAdapter.remove(position);
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+    
+    private void updateTitle() {
+        Integer totalCount = viewModel.getTotalCount().getValue();
+        String title = getCurrentTitle();
+        if (totalCount != null && totalCount > 0) {
+            setTitle(String.format("%s (%d)", title, totalCount));
+        } else {
+            setTitle(title);
+        }
+    }
+    
+    private String getCurrentTitle() {
+        Integer type = viewModel.getWorkType().getValue();
+        if (type == null) type = WorksViewModel.TYPE_ALL_WORK;
+        
+        switch (type) {
+            case WorksViewModel.TYPE_ALL_WORK:
+                return getString(R.string.app_name);
+            case WorksViewModel.TYPE_SELF_LISTENING:
+                return getString(R.string.listening);
+            case WorksViewModel.TYPE_SELF_LISTENED:
+                return getString(R.string.listened);
+            case WorksViewModel.TYPE_SELF_MARKED:
+                return getString(R.string.marked);
+            case WorksViewModel.TYPE_SELF_REPLAY:
+                return getString(R.string.replay);
+            case WorksViewModel.TYPE_SELF_POSTPONED:
+                return getString(R.string.postponed);
+            case WorksViewModel.TYPE_TAG_WORK:
+                return "Tag";
+            case WorksViewModel.TYPE_VA_WORK:
+                return "VA";
+            case WorksViewModel.TYPE_CIRCLES_WORK:
+                String name = viewModel.getCirclesName().getValue();
+                return name != null ? name : "Circles";
+            case WorksViewModel.TYPE_LOCAL_WORK:
+                return getString(R.string.local_works);
+            default:
+                return getString(R.string.app_name);
+        }
+    }
+    
     private void toggleBottom() {
         if (shouldShowAnim && bottomLayout.getVisibility() == View.VISIBLE) {
             shouldShowAnim = false;
             bottomLayout.startAnimation(outAnim);
-            bottomLayout.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    bottomLayout.setVisibility(View.GONE);
-                    shouldShowAnim = true;
-                }
+            bottomLayout.postDelayed(() -> {
+                bottomLayout.setVisibility(View.GONE);
+                shouldShowAnim = true;
             }, outAnim.getDuration());
         } else if (shouldShowAnim && bottomLayout.getVisibility() == View.GONE) {
             shouldShowAnim = false;
             bottomLayout.setVisibility(View.VISIBLE);
             bottomLayout.startAnimation(inAnim);
-            bottomLayout.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    shouldShowAnim = true;
-                }
-            }, inAnim.getDuration());
+            bottomLayout.postDelayed(() -> shouldShowAnim = true, inAnim.getDuration());
         }
     }
-
-    public void reloadRecycleView() {
-        if (type == TYPE_ALL_WORK) {
-            setTitle(getString(R.string.app_name));
-            Api.doGetWorks(page, apisCallback);
-        } else if (type == TYPE_SELF_LISTENING) {
-            setTitle(R.string.listening);
-            Api.doGetReview(Api.FILTER_LISTENING, page, apisCallback);
-        } else if (type == TYPE_SELF_LISTENED) {
-            setTitle(R.string.listened);
-            Api.doGetReview(Api.FILTER_LISTENED, page, apisCallback);
-        } else if (type == TYPE_SELF_MARKED) {
-            setTitle(R.string.marked);
-            Api.doGetReview(Api.FILTER_MARKED, page, apisCallback);
-        } else if (type == TYPE_SELF_REPLAY) {
-            setTitle(R.string.replay);
-            Api.doGetReview(Api.FILTER_REPLAY, page, apisCallback);
-        } else if (type == TYPE_SELF_POSTPONED) {
-            setTitle(R.string.postponed);
-            Api.doGetReview(Api.FILTER_POSTPONED, page, apisCallback);
-        } else if (type == TYPE_TAG_WORK) {
-            setTitle(tagStr);
-            Api.doGetWorksByTag(page, tagId, apisCallback);
-        } else if (type == TYPE_VA_WORK) {
-            setTitle(vaName);
-            Api.doGetWorkByVa(page, vaId, apisCallback);
-        } else if (type == TYPE_CIRCLES_WORK) {
-            setTitle(circlesName);
-            Api.doGetWorkByCircles(page, circlesId, apisCallback);
-        }else if (type == TYPE_LOCAL_WORK) {
-            setTitle(String.format("%s", App.getInstance().isSaveExternal() ? "外部公共目录" : "内部私有目录"));
-            try {
-                LocalFileCache.getInstance().readLocalWorks(this, apisCallback);
-            } catch (JSONException e) {
-                e.printStackTrace();
-                alertException(e);
-            }
-        }
-    }
-
-    @SuppressLint("DefaultLocale")
+    
     @Override
     public void onAlbumChange(int rjNumber) {
         if (rjNumber != 0 && bottomLayout.getVisibility() == View.GONE) {
             toggleBottom();
         }
-        Glide.with(this).load(App.getInstance().currentUser().getHost() + String.format("/api/cover/%d?type=sam", rjNumber)).into(ivCover);
+        Glide.with(this).load(App.getInstance().currentUser().getHost() + 
+                String.format("/api/cover/%d?type=sam", rjNumber)).into(ivCover);
     }
-
+    
     @Override
     public void onAudioChange(JSONObject audio) {
         try {
@@ -285,10 +416,9 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
             tvWorkTitle.setText(audio.getString("workTitle"));
         } catch (JSONException e) {
             e.printStackTrace();
-            alertException(e);
         }
     }
-
+    
     @Override
     public void onStatusChange(int status) {
         if (status == 0) {
@@ -297,50 +427,43 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
             ibStatus.setImageResource(R.drawable.ic_baseline_pause_white_24);
         }
     }
-
+    
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         ctrlBinder = (AudioService.CtrlBinder) service;
-        ibStatus.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (ctrlBinder.getController().getPlaybackState() == null) {
-                    ctrlBinder.getController().getTransportControls().play();
-                    return;
-                }
-                if (ctrlBinder.getController().getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING) {
-                    ctrlBinder.getController().getTransportControls().pause();
-                } else {
-                    ctrlBinder.getController().getTransportControls().play();
-                }
+        ibStatus.setOnClickListener(v -> {
+            if (ctrlBinder.getController().getPlaybackState() == null) {
+                ctrlBinder.getController().getTransportControls().play();
+                return;
+            }
+            if (ctrlBinder.getController().getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING) {
+                ctrlBinder.getController().getTransportControls().pause();
+            } else {
+                ctrlBinder.getController().getTransportControls().play();
             }
         });
-        bottomLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    if (ctrlBinder.getCurrentTitle().endsWith("mp4")) {
-                        startActivity(new Intent(WorksActivity.this, VideoPlayerActivity.class));
-                    } else {
-                        startActivity(new Intent(WorksActivity.this, AudioPlayerActivity.class));
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    alertException(e);
+        bottomLayout.setOnClickListener(v -> {
+            try {
+                if (ctrlBinder.getCurrentTitle().endsWith("mp4")) {
+                    startActivity(new Intent(WorksActivity.this, VideoPlayerActivity.class));
+                } else {
+                    startActivity(new Intent(WorksActivity.this, AudioPlayerActivity.class));
                 }
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
         });
         ctrlBinder.addMusicChangeListener(this);
     }
-
+    
     @Override
     public void onServiceDisconnected(ComponentName name) {
     }
-
+    
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.add(0, 0, 0, "切换账号");
-
+        
         SubMenu layoutMenu = menu.addSubMenu(0, 9, 9, R.string.works_layout);
         layoutMenu.setIcon(R.drawable.ic_baseline_view_column_24);
         layoutMenu.add(2, 10, 10, R.string.list_layout);
@@ -348,22 +471,22 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         layoutMenu.add(2, 12, 12, R.string.detail_layout);
         layoutMenu.add(2, 13, 13, "staggered");
         layoutMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-
+        
         menu.add(0, 15, 15, R.string.more);
-
+        
         SubMenu sortMenu = menu.addSubMenu(0, 16, 16, R.string.sort);
         sortMenu.add(3, 17, 17, R.string.release_date);
         sortMenu.add(3, 18, 18, R.string.rj_number);
         sortMenu.add(3, 19, 19, R.string.prize);
         sortMenu.add(3, 20, 20, R.string.last_in_lib);
-
+        
         menu.add(0, 22, 22, R.string.download_mission);
         MenuItem searchMenu = menu.add(0, 23, 23, R.string.search);
         searchMenu.setIcon(R.drawable.ic_baseline_search_24);
         searchMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         return super.onCreateOptionsMenu(menu);
     }
-
+    
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getGroupId() == 2) {
@@ -379,37 +502,26 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
             initLayout(layoutType);
             return super.onOptionsItemSelected(item);
         }
-
+        
         if (item.getGroupId() == 3) {
-            boolean update = false;
             if (item.getItemId() == 17) {
                 Api.setOrder("release");
-                update = true;
             } else if (item.getItemId() == 18) {
                 Api.setOrder("id");
-                update = true;
             } else if (item.getItemId() == 19) {
                 Api.setOrder("price");
-                update = true;
             } else if (item.getItemId() == 20) {
                 Api.setOrder("create_date");
-                update = true;
             }
-            if (update) {
-                clearWork();
-                reloadRecycleView();
-            }
+            viewModel.refresh();
             return true;
         }
-
+        
         if (item.getItemId() == 0) {
             App.getInstance().setValue(App.CONFIG_UPDATE_TIME, 0);
             startActivity(new Intent(this, UserSwitchActivity.class));
-        } else if (item.getItemId() == 1) {
         } else if (item.getItemId() == 15) {
             startActivity(new Intent(this, MoreActivity.class));
-        } else if (item.getItemId() == 21) {
-            startActivityForResult(new Intent(this, VasActivity.class), VA_SELECT_RESULT);
         } else if (item.getItemId() == 22) {
             startActivity(new Intent(this, DownLoadMissionActivity.class));
         } else if (item.getItemId() == 23) {
@@ -417,347 +529,104 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         }
         return super.onOptionsItemSelected(item);
     }
-
+    
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == TAG_SELECT_RESULT || requestCode == VA_SELECT_RESULT) {
-            if (resultCode == RESULT_OK && data != null) {
-                String resultType = data.getStringExtra("resultType");
-                if (resultType == null) {
-                    return;
-                }
-                if (resultType.equals("va")) {
-                    String vaId = data.getStringExtra("id");
-                    type = TYPE_VA_WORK;
-                    if (!vaId.equals(this.vaId)) {
-                        vaName = data.getStringExtra("name");
-                        clearWork();
-                        this.vaId = vaId;
+        if (resultCode == RESULT_OK && data != null) {
+            String resultType = data.getStringExtra("resultType");
+            if (resultType == null) return;
+            
+            switch (requestCode) {
+                case VA_SELECT_RESULT:
+                    if ("va".equals(resultType)) {
+                        String vaId = data.getStringExtra("id");
+                        viewModel.setVaId(vaId);
                     }
-                } else if (resultType.equals("tag")) {
-                    int tagId = data.getIntExtra("id", -1);
-                    type = TYPE_TAG_WORK;
-                    if (tagId != this.tagId) {
-                        tagStr = data.getStringExtra("name");
-                        clearWork();
-                        this.tagId = tagId;
+                    break;
+                case TAG_SELECT_RESULT:
+                    if ("tag".equals(resultType)) {
+                        int tagId = data.getIntExtra("id", -1);
+                        viewModel.setTagId(tagId);
                     }
-                }
-                reloadRecycleView();
-            }
-        }else if(requestCode == CIRCLES_SELECT_RESULT){
-            if (resultCode == RESULT_OK && data != null) {
-                String resultType = data.getStringExtra("resultType");
-                if (resultType == null) {
-                    return;
-                }
-                if (resultType.equals("circles")) {
-                    long circlesId = data.getLongExtra("id",-1);
-                    if (this.circlesId != circlesId && circlesId!=-1) {
-                        type = TYPE_CIRCLES_WORK;
-                        circlesName = data.getStringExtra("name");
-                        clearWork();
-                        this.circlesId = circlesId;
-                        reloadRecycleView();
+                    break;
+                case CIRCLES_SELECT_RESULT:
+                    if ("circles".equals(resultType)) {
+                        long circlesId = data.getLongExtra("id", -1);
+                        String circlesName = data.getStringExtra("name");
+                        viewModel.setCirclesId(circlesId, circlesName);
                     }
-                }
+                    break;
             }
         }
     }
-
-    private void initLayout(int layoutType) {
-        RecyclerView.LayoutManager layoutManager = null;
-        recyclerView.removeItemDecoration(itemDecoration);
-        if (layoutType == WorkAdapter.LAYOUT_LIST) {
-            layoutManager = new LinearLayoutManager(WorksActivity.this);
-            recyclerView.addItemDecoration(itemDecoration);
-        } else if (layoutType == WorkAdapter.LAYOUT_SMALL_GRID) {
-            int col = Math.max(getResources().getDisplayMetrics().widthPixels/395,3);
-            layoutManager = new GridLayoutManager(WorksActivity.this, col);
-        } else if (layoutType == WorkAdapter.LAYOUT_BIG_GRID) {
-            int col = Math.max(getResources().getDisplayMetrics().widthPixels/395,2);
-            layoutManager = new GridLayoutManager(WorksActivity.this, col);
-        }else if(layoutType == WorkAdapter.LAYOUT_STAGGERED){
-            int col = Math.max(getResources().getDisplayMetrics().widthPixels/395,2);
-            layoutManager = new StaggeredGridLayoutManager(col,StaggeredGridLayoutManager.VERTICAL);
-        }
-        workAdapter = new WorkAdapter(works, layoutType);
-        workAdapter.setTagClickListener(this);
-        workAdapter.setVaClickListener(vaClickListener);
-        workAdapter.setCirclesClickListener(circlesClickListener);
-        workAdapter.setItemClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                JSONObject item = (JSONObject) v.getTag();
-                Intent intent = new Intent(v.getContext(), WorkTreeActivity.class);
-                intent.putExtra("work_json_str", item.toString());
-                ActivityCompat.startActivity(WorksActivity.this, intent, null);
-            }
-        });
-        workAdapter.setItemLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                if(type != TYPE_LOCAL_WORK){
-                    return true;
-                }
-                ListPopupWindow listPopupWindow = new ListPopupWindow(v.getContext());
-                listPopupWindow.setModal(true);
-                listPopupWindow.setAnchorView(v);
-                String _str = getString(R.string.delete_cache);
-                listPopupWindow.setAdapter(new ArrayAdapter<String>(v.getContext(), android.R.layout.simple_list_item_1, Collections.singletonList(_str)));
-                listPopupWindow.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        JSONObject item = (JSONObject) v.getTag();
-                        try {
-                            LocalFileCache.getInstance().removeWork(item.getInt("id"));
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            alertException(e);
-                        }
-
-                        int index = works.indexOf(item);
-                        if (index != -1) {
-                            works.remove(index);
-                            workAdapter.notifyItemRemoved(index);
-                        }
-                        listPopupWindow.dismiss();
-                    }
-                });
-                listPopupWindow.show();
-                return true;
-            }
-        });
-        recyclerView.setLayoutManager(layoutManager);
-        recyclerView.setAdapter(workAdapter);
-    }
-
-    private void clearWork() {
-        page = 1;
-        if (workAdapter == null)
-            return;
-        workAdapter.notifyItemRangeRemoved(0, works.size());
-        workAdapter.notifyItemRangeChanged(0, works.size());
-        works.clear();
-    }
-
-    @Override
-    protected void onDestroy() {
-        ctrlBinder.removeMusicChangeListener(this);
-
-        PlaybackStateCompat playbackStateCompat = ctrlBinder.getController().getPlaybackState();
-        if (playbackStateCompat == null) {
-            stopService(new Intent(this, AudioService.class));
-        } else {
-            int state = ctrlBinder.getController().getPlaybackState().getState();
-            if (state == PlaybackStateCompat.STATE_STOPPED || state == PlaybackStateCompat.STATE_PAUSED) {
-                stopService(new Intent(this, AudioService.class));
-            }
-        }
-        unbindService(this);
-        super.onDestroy();
-    }
-
+    
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         String resultType = intent.getStringExtra("resultType");
         if ("va".equals(resultType)) {
             String vaId = intent.getStringExtra("id");
-            if (!vaId.equals(this.vaId) || type != TYPE_VA_WORK) {
-                vaName = intent.getStringExtra("name");
-                clearWork();
-                this.vaId = vaId;
-            }
-            type = TYPE_VA_WORK;
+            viewModel.setVaId(vaId);
         } else if ("tag".equals(resultType)) {
             int tagId = intent.getIntExtra("id", -1);
-            if (tagId != this.tagId || type != TYPE_TAG_WORK) {
-                tagStr = intent.getStringExtra("name");
-                clearWork();
-                this.tagId = tagId;
-            }
-            type = TYPE_TAG_WORK;
+            viewModel.setTagId(tagId);
         } else {
-            type = TYPE_ALL_WORK;
-            clearWork();
+            viewModel.setWorkType(WorksViewModel.TYPE_ALL_WORK);
         }
-        reloadRecycleView();
     }
-
+    
     @Override
-    public void onTagClick(JSONObject jsonObject) {
-        try {
-            int tagId = jsonObject.getInt("id");
-            Log.d(TAG, "onTagClick: " + tagId);
-            if (tagId != this.tagId || type != TYPE_TAG_WORK) {
-                tagStr = jsonObject.getString("name");
-                clearWork();
-                this.tagId = tagId;
-            }
-            type = TYPE_TAG_WORK;
-            reloadRecycleView();
-        } catch (JSONException e) {
-            e.printStackTrace();
-            alertException(e);
-        }
+    public void onTagClick(Tag tag) {
+        viewModel.setTagId(tag.getId());
     }
-
-    private final TagsView.TagClickListener<JSONObject> vaClickListener = new TagsView.TagClickListener<JSONObject>() {
+    
+    private final TagsView.TagClickListener<Va> vaClickListener = new TagsView.TagClickListener<Va>() {
         @Override
-        public void onTagClick(JSONObject jsonObject) {
-            try {
-                String vaId = jsonObject.getString("id");
-                if (!vaId.equals(WorksActivity.this.vaId) || type != TYPE_VA_WORK) {
-                    vaName = jsonObject.getString("name");
-                    clearWork();
-                    WorksActivity.this.vaId = vaId;
-                }
-                type = TYPE_VA_WORK;
-                reloadRecycleView();
-            } catch (JSONException e) {
-                e.printStackTrace();
-                alertException(e);
-            }
+        public void onTagClick(Va va) {
+            viewModel.setVaId(va.getId());
         }
     };
-
+    
     private final TagsView.TagClickListener<String> circlesClickListener = circlesName -> {
-        //todo
-        //http://localhost:8980/api/circles/
-        //http://localhost:8980/api/circles/54978/works?order=release&sort=desc&page=1&seed=59
         long circlesId = App.getInstance().mapCirclesId(circlesName);
-        if(circlesId!=-1){
-            clearWork();
-            WorksActivity.this.circlesName = circlesName;
-            WorksActivity.this.circlesId = circlesId;
-            type = TYPE_CIRCLES_WORK;
-            reloadRecycleView();
-        }
-        Log.d(TAG, "onTagClick: " + circlesName);
-    };
-
-    private AsyncHttpClient.JSONObjectCallback apisCallback = new AsyncHttpClient.JSONObjectCallback() {
-        @Override
-        public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
-            if (e != null) {
-                e.printStackTrace();
-                alertException(e);
-                /**
-                 * why?
-                 * javax.net.ssl.SSLHandshakeException: Read error: ssl=0x798b43bc58: Failure in SSL library, usually a protocol error
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err: error:10000065:SSL routines:OPENSSL_internal:ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT (external/boringssl/src/ssl/tls13_client.cc:385 0x78de42cc60:0x00000000)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.SSLUtils.toSSLHandshakeException(SSLUtils.java:363)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.ConscryptEngine.convertException(ConscryptEngine.java:1134)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:919)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:747)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:712)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.Java8EngineWrapper.unwrap(Java8EngineWrapper.java:237)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncSSLSocketWrapper$6.onDataAvailable(AsyncSSLSocketWrapper.java:296)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.Util.emitAllData(Util.java:23)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncNetworkSocket.onReadable(AsyncNetworkSocket.java:160)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncServer.runLoop(AsyncServer.java:878)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncServer.run(AsyncServer.java:726)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncServer.access$800(AsyncServer.java:46)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncServer$8.run(AsyncServer.java:680)
-                 */
-                return;
-            }
-            if (asyncHttpResponse == null || asyncHttpResponse.code() != 200) {
-                if (jsonObject != null && jsonObject.has("works")) {
-                    Log.d(TAG, "onCompleted: load local cache!");
-                } else {
-                    Log.d(TAG, String.format("onCompleted:failed! "));
-                    if (!isDestroyed()) {
-                        ivCover.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                reloadRecycleView();
-                            }
-                        }, 3000);
-                    }
-                    return;
-                }
-            }
-            try {
-                JSONArray jsonArray = jsonObject.getJSONArray("works");
-                totalCount = jsonObject.getJSONObject("pagination").getInt("totalCount");
-                currentPage = page;
-                page = jsonObject.getJSONObject("pagination").getInt("currentPage") + 1;
-
-                if (jsonArray.length() != 0) {
-                    page = Math.min(page, totalCount / jsonArray.length() + 1);
-                }
-                runOnUiThread(new Runnable() {
-                    @SuppressLint("DefaultLocale")
-                    @Override
-                    public void run() {
-                        setTitle(String.format("%s (%d)", getCurrentTitle(), totalCount));
-                        for (int i = 0; i < jsonArray.length(); i++) {
-                            try {
-                                works.add(jsonArray.getJSONObject(i));
-                            } catch (JSONException jsonException) {
-                                jsonException.printStackTrace();
-                                alertException(jsonException);
-                            }
-                        }
-                        if (workAdapter == null) {
-                            initLayout((int) App.getInstance().getValue(App.CONFIG_LAYOUT_TYPE, WorkAdapter.LAYOUT_SMALL_GRID));
-                            recyclerView.addOnScrollListener(scrollListener);
-                        } else {
-                            workAdapter.notifyItemRangeInserted(Math.max(0, works.size() - jsonArray.length()), jsonArray.length());
-                            workAdapter.notifyItemRangeChanged(Math.max(0, works.size() - jsonArray.length()), jsonArray.length());
-                        }
-                    }
-                });
-            } catch (JSONException jsonException) {
-                jsonException.printStackTrace();
-                alertException(jsonException);
-            }
+        if (circlesId != -1) {
+            viewModel.setCirclesId(circlesId, circlesName);
         }
     };
-
-    private String getCurrentTitle() {
-        if (type == TYPE_ALL_WORK) {
-            return getString(R.string.app_name);
-        } else if (type == TYPE_SELF_LISTENING) {
-            return getString(R.string.listening);
-        } else if (type == TYPE_SELF_LISTENED) {
-            return getString(R.string.listened);
-        } else if (type == TYPE_SELF_MARKED) {
-            return getString(R.string.marked);
-        } else if (type == TYPE_SELF_REPLAY) {
-            return getString(R.string.replay);
-        } else if (type == TYPE_SELF_POSTPONED) {
-            return getString(R.string.postponed);
-        } else if (type == TYPE_TAG_WORK) {
-            return tagStr;
-        } else if (type == TYPE_VA_WORK) {
-            return vaName;
-        } else if (type == TYPE_CIRCLES_WORK) {
-            return circlesName;
-        } else if (type == TYPE_LOCAL_WORK) {
-            return String.format("%s", App.getInstance().isSaveExternal() ? getString(R.string.extra_path) : getString(R.string.private_path));
+    
+    @Override
+    protected void onDestroy() {
+        if (ctrlBinder != null) {
+            ctrlBinder.removeMusicChangeListener(this);
+            
+            PlaybackStateCompat playbackStateCompat = ctrlBinder.getController().getPlaybackState();
+            if (playbackStateCompat == null) {
+                stopService(new Intent(this, AudioService.class));
+            } else {
+                int state = ctrlBinder.getController().getPlaybackState().getState();
+                if (state == PlaybackStateCompat.STATE_STOPPED || state == PlaybackStateCompat.STATE_PAUSED) {
+                    stopService(new Intent(this, AudioService.class));
+                }
+            }
         }
-        return "--";
+        unbindService(this);
+        super.onDestroy();
     }
-
+    
     @Override
     public void onBackPressed() {
         super.onBackPressed();
         try {
-            App.getInstance().setValue(CONFIG_TYPE,type);
-            App.getInstance().setValue(CONFIG_PAGE,currentPage);
-            if(type == TYPE_TAG_WORK){
-                App.getInstance().setValue(CONFIG_PARAM_INT,tagId);
-            }else if(type == TYPE_VA_WORK){
-                App.getInstance().setValue(CONFIG_PARAM_STR,vaId);
-            }
-
+            App.getInstance().setValue(CONFIG_TYPE, viewModel.getWorkType().getValue());
+            App.getInstance().setValue(CONFIG_PAGE, viewModel.getCurrentPage());
             DownloadUtils.getInstance().close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    
+    private void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 }

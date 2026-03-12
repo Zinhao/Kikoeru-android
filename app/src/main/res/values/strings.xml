@@ -66,4 +66,6 @@
     <string name="no_lrc">no lrc</string>
     <string name="stop_delay">stop delay</string>
     <string name="delete_cache">delete cache</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
 </resources>

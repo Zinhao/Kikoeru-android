@@ -125,8 +125,12 @@ public class App extends Application implements Application.ActivityLifecycleCal
 
         getAllUsers();
         User user = App.getInstance().currentUser();
+        android.util.Log.d("App", "currentUser: " + (user != null ? user.getName() : "null"));
         if (user != null) {
             Api.init(user.getToken(), user.getHost());
+            android.util.Log.d("App", "Api initialized with host: " + user.getHost());
+        } else {
+            android.util.Log.w("App", "No current user, Api not initialized");
         }
 
         defaultPic = new RequestOptions().placeholder(R.drawable.ic_no_cover).apply(RequestOptions.bitmapTransform(new RoundedCorners(10)));

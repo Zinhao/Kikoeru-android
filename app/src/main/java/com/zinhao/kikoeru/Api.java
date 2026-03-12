@@ -65,7 +65,9 @@ public class Api {
 
     public static void doGetWorks(int page, AsyncHttpClient.JSONObjectCallback callback) {
         //subtitle=1 带字幕
-        AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST + String.format("/api/works?order=%s&sort=%s&page=%d&seed=35&subtitle=%d", order, makeSort(), page, subtitle)), "GET");
+        String url = HOST + String.format("/api/works?order=%s&sort=%s&page=%d&seed=35&subtitle=%d", order, makeSort(), page, subtitle);
+        android.util.Log.d(TAG, "doGetWorks: url=" + url + ", auth=" + (authorization != null && !authorization.isEmpty() ? "set" : "empty"));
+        AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(url), "GET");
         request.setTimeout(5000);
         request.addHeader("authorization", authorization);
         AsyncHttpClient.getDefaultInstance().executeJSONObject(request, callback);

@@ -2,11 +2,9 @@ package com.zinhao.kikoeru.ui.viewmodel;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 
 import com.zinhao.kikoeru.Api;
-import com.zinhao.kikoeru.data.model.Result;
 import com.zinhao.kikoeru.data.model.Track;
 import com.zinhao.kikoeru.data.model.Work;
 import com.zinhao.kikoeru.data.repository.WorkRepository;
@@ -83,18 +81,17 @@ public class WorkTreeViewModel extends ViewModel {
         isLoading.setValue(true);
         errorMessage.setValue(null);
         
-        LiveData<Result<List<Track>>> source = workRepository.getWorkTracks(work.getId());
-        source.observeForever(new Observer<Result<List<Track>>>() {
+        workRepository.getWorkTracks(work.getId(), new WorkRepository.ResultCallback<List<Track>>() {
             @Override
-            public void onChanged(Result<List<Track>> result) {
-                source.removeObserver(this);
-                isLoading.setValue(false);
-                
-                if (result.isSuccess()) {
-                    tracks.setValue(result.getData());
-                } else {
-                    errorMessage.setValue(result.getMessage());
-                }
+            public void onSuccess(List<Track> data) {
+                isLoading.postValue(false);
+                tracks.postValue(data);
+            }
+            
+            @Override
+            public void onError(String message, Throwable error) {
+                isLoading.postValue(false);
+                errorMessage.postValue(message);
             }
         });
     }
@@ -108,18 +105,17 @@ public class WorkTreeViewModel extends ViewModel {
         
         isLoading.setValue(true);
         
-        LiveData<Result<Boolean>> source = workRepository.markWorkProgress(work.getId(), progress);
-        source.observeForever(new Observer<Result<Boolean>>() {
+        workRepository.markWorkProgress(work.getId(), progress, new WorkRepository.ResultCallback<Boolean>() {
             @Override
-            public void onChanged(Result<Boolean> result) {
-                source.removeObserver(this);
-                isLoading.setValue(false);
-                
-                if (result.isSuccess() && Boolean.TRUE.equals(result.getData())) {
-                    markSuccess.setValue(true);
-                } else {
-                    errorMessage.setValue(result.getMessage());
-                }
+            public void onSuccess(Boolean data) {
+                isLoading.postValue(false);
+                markSuccess.postValue(true);
+            }
+            
+            @Override
+            public void onError(String message, Throwable error) {
+                isLoading.postValue(false);
+                errorMessage.postValue(message);
             }
         });
     }
