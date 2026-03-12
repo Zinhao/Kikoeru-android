@@ -24,30 +24,30 @@ public class LoginAccountActivity extends BaseActivity {
     private Button btSignIn;
     private Button btGuest;
     private Button btSignUp;
-    
+
     private LoginViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login_account);
-        
+
         // 初始化 ViewModel
         viewModel = new ViewModelProvider(this).get(LoginViewModel.class);
-        
+
         // 初始化视图
         initViews();
-        
+
         // 绑定 ViewModel 观察
         observeViewModel();
-        
+
         // 设置事件监听
         setupListeners();
-        
+
         // 初始化输入框
         initEdit();
     }
-    
+
     private void initViews() {
         tilUser = findViewById(R.id.textInputLayout);
         tilPassword = findViewById(R.id.textInputLayout2);
@@ -56,21 +56,21 @@ public class LoginAccountActivity extends BaseActivity {
         btGuest = findViewById(R.id.button4);
         btSignUp = findViewById(R.id.button3);
     }
-    
+
     private void observeViewModel() {
         // 观察加载状态
         viewModel.getIsLoading().observe(this, isLoading -> {
             btSignIn.setEnabled(!isLoading);
             btGuest.setEnabled(!isLoading);
         });
-        
+
         // 观察错误消息
         viewModel.getErrorMessage().observe(this, error -> {
             if (error != null && !error.isEmpty()) {
                 Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
             }
         });
-        
+
         // 观察登录成功
         viewModel.getLoginSuccess().observe(this, success -> {
             if (success) {
@@ -78,26 +78,26 @@ public class LoginAccountActivity extends BaseActivity {
             }
         });
     }
-    
+
     private void setupListeners() {
         btSignIn.setOnClickListener(v -> {
             // 更新 ViewModel 中的值
             updateViewModelInputs();
             viewModel.login();
         });
-        
+
         btGuest.setOnClickListener(v -> {
             viewModel.loginAsGuest();
         });
     }
-    
+
     private void initEdit() {
         EditText etUser = tilUser.getEditText();
         EditText etPassword = tilPassword.getEditText();
         EditText etServer = tilServer.getEditText();
-        
+
         if (etUser == null || etPassword == null || etServer == null) return;
-        
+
         // 设置默认值
         User currentUser = App.getInstance().currentUser();
         if (currentUser != null) {
@@ -110,12 +110,12 @@ public class LoginAccountActivity extends BaseActivity {
             etServer.setText(Api.REMOTE_HOST);
         }
     }
-    
+
     private void updateViewModelInputs() {
         EditText etUser = tilUser.getEditText();
         EditText etPassword = tilPassword.getEditText();
         EditText etServer = tilServer.getEditText();
-        
+
         if (etUser != null) {
             viewModel.setUsername(etUser.getText().toString().trim());
         }
@@ -126,7 +126,7 @@ public class LoginAccountActivity extends BaseActivity {
             viewModel.setHost(etServer.getText().toString().trim());
         }
     }
-    
+
     private void navigateToMain() {
         startActivity(new Intent(this, WorksActivity.class));
         finish();

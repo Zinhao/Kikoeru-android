@@ -1,12 +1,13 @@
 package com.zinhao.kikoeru;
 
-import org.greenrobot.greendao.annotation.Entity;
-import org.greenrobot.greendao.annotation.Generated;
-import org.greenrobot.greendao.annotation.Id;
 
-@Entity
+import androidx.room.Entity;
+import androidx.room.Ignore;
+import androidx.room.PrimaryKey;
+
+@Entity(tableName = "users")
 public class User {
-    @Id(autoincrement = true)
+    @PrimaryKey(autoGenerate = true)
     private Long id;
     private String name;
     private String password;
@@ -14,7 +15,7 @@ public class User {
     private String token;
     private long lastUpdateTime;
 
-    @Generated(hash = 551446764)
+    @Ignore
     public User(Long id, String name, String password, String host, String token,
                 long lastUpdateTime) {
         this.id = id;
@@ -25,7 +26,6 @@ public class User {
         this.lastUpdateTime = lastUpdateTime;
     }
 
-    @Generated(hash = 586692638)
     public User() {
     }
 
