@@ -24,24 +24,24 @@ import java.util.Collections;
 import java.util.List;
 
 public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    private JSONArray data;
+    private List<WorkTreeItem> data;
     private View.OnClickListener itemClickListener;
     private View.OnClickListener parentDirClickListener;
     private View.OnLongClickListener longClickListener;
     private TagsView.TagClickListener tagClickListener;
     private TagsView.TagClickListener vaClickListener;
     private TagsView.TagClickListener circlesClickListener;
-    private List<JSONArray> parentData;
+    private List<List<WorkTreeItem>> parentData;
     private List<String> pathList;
     private RelativePathChangeListener pathChangeListener;
-    private JSONObject headerInfo;
+    private WorkInfo headerInfo;
     private static final int TYPE_HEADER = 295;
     private static final int TYPE_FILE = 296;
     private static final int TYPE_PARENT_DIR = 297;
     private int unCacheItemBackgroundColor = -1;
     private int cachedItemBackgroundColor = -1;
 
-    public void setHeaderInfo(JSONObject headerInfo) {
+    public void setHeaderInfo(WorkInfo headerInfo) {
         this.headerInfo = headerInfo;
     }
 
@@ -73,11 +73,11 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         this.parentDirClickListener = parentDirClickListener;
     }
 
-    public JSONArray getData() {
+    public List<WorkTreeItem> getData() {
         return data;
     }
 
-    public WorkTreeAdapter(JSONArray data, JSONObject headerInfo) {
+    public WorkTreeAdapter(List<WorkTreeItem> data, WorkInfo headerInfo) {
         this.data = data;
         this.headerInfo = headerInfo;
         this.pathList = new ArrayList<>();
@@ -89,7 +89,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     public int getItemViewType(int position) {
         if (position == 0) {
             return TYPE_HEADER;
-        }else if(position == 1){
+        } else if (position == 1) {
             return TYPE_PARENT_DIR;
         }
         return TYPE_FILE;
@@ -125,11 +125,12 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     }
 
     public void mapFileExistValue() {
-        for (int i = 0; i < data.length(); i++) {
-            JSONObject item = null;
+        for (WorkTreeItem item : data) {
             try {
-                item = data.getJSONObject(i);
-                LocalFileCache.getInstance().mapLocalItemFile(item, headerInfo.getInt("id"), getRelativePath());
+                JSONObject jsonItem = item.toJson();
+                LocalFileCache.getInstance().mapLocalItemFile(jsonItem, headerInfo.getId(), getRelativePath());
+                // 更新 item 的 exists 状态
+                item.setExists(jsonItem.optBoolean(JSONConst.WorkTree.EXISTS, false));
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -140,117 +141,147 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof SimpleViewHolder) {
+            WorkTreeItem item = data.get(position - 2);
+            String itemTitle = item.getTitle();
+            
             try {
-                JSONObject item = data.getJSONObject(position - 2);
-                String itemTitle = item.getString("title");
-                DownloadUtils.Mission mapMission = DownloadUtils.mapMission(item);
-                if(mapMission!=null){
-                    mapMission.setStepCallback(()->{
-                        holder.itemView.post(()->{
-                            notifyItemChanged(position);
-                        });
+                JSONObject jsonItem = item.toJson();
+                DownloadUtils.Mission mapMission = DownloadUtils.mapMission(jsonItem);
+                if (mapMission != null) {
+                    mapMission.setStepCallback(() -> {
+                        holder.itemView.post(() -> notifyItemChanged(position));
                     });
                     int progress = mapMission.getProgress();
                     ((SimpleViewHolder) holder).pb1.setVisibility(View.VISIBLE);
                     ((SimpleViewHolder) holder).pb1.setProgress(progress);
-                    ((SimpleViewHolder) holder).tvCount.setText(progress +"%");
-                }else{
+                    ((SimpleViewHolder) holder).tvCount.setText(progress + "%");
+                } else {
                     ((SimpleViewHolder) holder).pb1.setVisibility(View.GONE);
-                    ((SimpleViewHolder) holder).tvCount.setText(item.getString("type"));
-                }
-                ((SimpleViewHolder) holder).tvTitle.setText(itemTitle);
-                boolean exists = item.getBoolean(JSONConst.WorkTree.EXISTS);
-                if (exists) {
-                    ((SimpleViewHolder) holder).ivCover.setBackgroundColor(cachedItemBackgroundColor);
-                } else {
-                    ((SimpleViewHolder) holder).ivCover.setBackgroundColor(unCacheItemBackgroundColor);
-                }
-
-                if ("folder".equals(item.getString("type"))) {
-                    JSONArray jsonArray = item.getJSONArray("children");
-                    ((SimpleViewHolder) holder).tvCount.setText(String.format("%d 项", jsonArray.length()));
-                    Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_folder_24).into(((SimpleViewHolder) holder).ivCover);
-                } else if ("audio".equals(item.getString("type"))) {
-                    if (itemTitle.endsWith(".mp4")) {
-                        Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_video_library_24).into(((SimpleViewHolder) holder).ivCover);
-                    } else {
-                        Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_audiotrack_24).into(((SimpleViewHolder) holder).ivCover);
-                    }
-                } else if ("image".equals(item.getString("type"))) {
-                    Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_image_24).into(((SimpleViewHolder) holder).ivCover);
-                } else if ("text".equals(item.getString("type"))) {
-                    Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_text_snippet_24).into(((SimpleViewHolder) holder).ivCover);
-                } else {
-                    Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_insert_drive_file_24).into(((SimpleViewHolder) holder).ivCover);
-                }
-
-                if ("folder".equals(item.getString("type"))) {
-                    holder.itemView.setOnClickListener(new View.OnClickListener() {
-                        @SuppressLint("NotifyDataSetChanged")
-                        @Override
-                        public void onClick(View v) {
-                            v.postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        changeDir(item.getString("title"));
-                                        data = item.getJSONArray("children");
-                                        if (pathChangeListener != null) {
-                                            pathChangeListener.onPathChange(getRelativePath());
-                                        }
-                                        mapFileExistValue();
-                                        notifyDataSetChanged();
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
-                                        App.getInstance().alertException(e);
-                                    }
-                                }
-                            }, 300);
-                        }
-                    });
-                    holder.itemView.setOnLongClickListener(null);
-                } else {
-                    holder.itemView.setTag(item);
-                    holder.itemView.setOnClickListener(itemClickListener);
-                    holder.itemView.setOnLongClickListener(longClickListener);
+                    ((SimpleViewHolder) holder).tvCount.setText(item.getType());
                 }
             } catch (JSONException e) {
-                e.printStackTrace();
-                App.getInstance().alertException(e);
+                ((SimpleViewHolder) holder).pb1.setVisibility(View.GONE);
+                ((SimpleViewHolder) holder).tvCount.setText(item.getType());
+            }
+            
+            ((SimpleViewHolder) holder).tvTitle.setText(itemTitle);
+            boolean exists = item.isExists();
+            if (exists) {
+                ((SimpleViewHolder) holder).ivCover.setBackgroundColor(cachedItemBackgroundColor);
+            } else {
+                ((SimpleViewHolder) holder).ivCover.setBackgroundColor(unCacheItemBackgroundColor);
+            }
+
+            if (item.isFolder()) {
+                ((SimpleViewHolder) holder).tvCount.setText(String.format("%d 项", item.getChildrenCount()));
+                Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_folder_24).into(((SimpleViewHolder) holder).ivCover);
+            } else if (item.isAudio()) {
+                if (itemTitle.endsWith(".mp4")) {
+                    Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_video_library_24).into(((SimpleViewHolder) holder).ivCover);
+                } else {
+                    Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_audiotrack_24).into(((SimpleViewHolder) holder).ivCover);
+                }
+            } else if (item.isImage()) {
+                Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_image_24).into(((SimpleViewHolder) holder).ivCover);
+            } else if (item.isText()) {
+                Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_text_snippet_24).into(((SimpleViewHolder) holder).ivCover);
+            } else {
+                Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_insert_drive_file_24).into(((SimpleViewHolder) holder).ivCover);
+            }
+
+            if (item.isFolder()) {
+                holder.itemView.setOnClickListener(new View.OnClickListener() {
+                    @SuppressLint("NotifyDataSetChanged")
+                    @Override
+                    public void onClick(View v) {
+                        v.postDelayed(() -> {
+                            changeDir(item.getTitle());
+                            data = item.getChildren();
+                            if (pathChangeListener != null) {
+                                pathChangeListener.onPathChange(getRelativePath());
+                            }
+                            mapFileExistValue();
+                            notifyDataSetChanged();
+                        }, 300);
+                    }
+                });
+                holder.itemView.setOnLongClickListener(null);
+            } else {
+                try {
+                    holder.itemView.setTag(item.toJson());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                holder.itemView.setOnClickListener(itemClickListener);
+                holder.itemView.setOnLongClickListener(longClickListener);
             }
         } else if (holder instanceof DetailViewHolder) {
             DetailViewHolder girdHolder = (DetailViewHolder) holder;
+            
+            // 优先设置关键字段，避免后续异常导致这些字段无法显示
+            girdHolder.tvRjNumber.setText(String.format("RJ%d", headerInfo.getId()));
+            girdHolder.tvTitle.setText(headerInfo.getTitle());
+            girdHolder.tvCom.setText(headerInfo.getHost());
+            girdHolder.tvDate.setText(headerInfo.getRelease());
+            girdHolder.tvPrice.setText(String.format("%d 日元", headerInfo.getPrice()));
+            girdHolder.tvSaleCount.setText(String.format("售出：%d", headerInfo.getDlCount()));
+
+            Glide.with(holder.itemView.getContext())
+                    .load(App.getInstance().currentUser().getHost() + String.format("/api/cover/%d?token=%s", headerInfo.getId(), Api.token))
+                    .apply(App.getInstance().getDefaultPic())
+                    .into(girdHolder.ivCover);
+
+            // 设置 VA
             try {
-                Glide.with(holder.itemView.getContext()).load(App.getInstance().currentUser().getHost() + String.format("/api/cover/%d?token=%s", headerInfo.getInt("id"), Api.token)).apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
-                girdHolder.tvTitle.setText(headerInfo.getString("title"));
-                girdHolder.tvArt.setTags(App.getVasList(headerInfo), TagsView.JSON_TEXT_GET.setKey("name"));
-                girdHolder.tvArt.setTagClickListener(vaClickListener);
-                girdHolder.tvCom.setText(headerInfo.getString("name"));
-                girdHolder.tvTags.setTags(App.getTagsList(headerInfo), TagsView.JSON_TEXT_GET.setKey("name"));
-                girdHolder.tvTags.setTagClickListener(tagClickListener);
-                girdHolder.tvCircles.setTags(Collections.singletonList(headerInfo.getString("name")),TagsView.STRING_TEXT_GET);
-                girdHolder.tvCircles.setTagClickListener(circlesClickListener);
-                girdHolder.tvRjNumber.setText(String.format("RJ%d", headerInfo.getInt("id")));
-                girdHolder.tvDate.setText(headerInfo.getString("release"));
-                girdHolder.tvPrice.setText(String.format("%d 日元", headerInfo.getInt("price")));
-                girdHolder.tvSaleCount.setText(String.format("售出：%d", headerInfo.getInt("dl_count")));
-                if (headerInfo.has(JSONConst.Work.HOST)) {
-                    girdHolder.tvHost.setVisibility(View.VISIBLE);
-                    girdHolder.tvHost.setText(headerInfo.getString(JSONConst.Work.HOST));
-                } else {
-                    girdHolder.tvHost.setVisibility(View.INVISIBLE);
+                JSONArray vasJson = new JSONArray();
+                for (WorkInfo.VaInfo va : headerInfo.getVas()) {
+                    JSONObject vaJson = new JSONObject();
+                    vaJson.put("id", va.getId());
+                    vaJson.put("name", va.getName());
+                    vasJson.put(vaJson);
                 }
+                girdHolder.tvArt.setTags(vasJson, TagsView.JSON_TEXT_GET.setKey("name"));
+                girdHolder.tvArt.setTagClickListener(vaClickListener);
             } catch (JSONException e) {
-                e.printStackTrace();
-                App.getInstance().alertException(e);
+                girdHolder.tvArt.setTags(new JSONArray(), TagsView.JSON_TEXT_GET.setKey("name"));
             }
-        }else if(holder instanceof ParentDirViewHolder){
+
+            // 设置 Tags
+            try {
+                JSONArray tagsJson = new JSONArray();
+                for (WorkInfo.TagInfo tag : headerInfo.getTags()) {
+                    JSONObject tagJson = new JSONObject();
+                    tagJson.put("id", tag.getId());
+                    tagJson.put("name", tag.getName());
+                    tagsJson.put(tagJson);
+                }
+                girdHolder.tvTags.setTags(tagsJson, TagsView.JSON_TEXT_GET.setKey("name"));
+                girdHolder.tvTags.setTagClickListener(tagClickListener);
+            } catch (JSONException e) {
+                girdHolder.tvTags.setTags(new JSONArray(), TagsView.JSON_TEXT_GET.setKey("name"));
+            }
+
+            // 设置 Circles
+            try {
+                girdHolder.tvCircles.setTags(Collections.singletonList(headerInfo.getName()), TagsView.STRING_TEXT_GET);
+                girdHolder.tvCircles.setTagClickListener(circlesClickListener);
+            } catch (Exception e) {
+                girdHolder.tvCircles.setTags(Collections.emptyList(), TagsView.STRING_TEXT_GET);
+            }
+
+            if (headerInfo.getHost() != null && !headerInfo.getHost().isEmpty()) {
+                girdHolder.tvHost.setVisibility(View.VISIBLE);
+                girdHolder.tvHost.setText(headerInfo.getHost());
+            } else {
+                girdHolder.tvHost.setVisibility(View.INVISIBLE);
+            }
+        } else if (holder instanceof ParentDirViewHolder) {
             holder.itemView.setOnClickListener(parentDirClickListener);
         }
     }
 
     private void changeDir(String title) {
-        parentData.add(data);
+        parentData.add(new ArrayList<>(data));
         pathList.add(title);
     }
 
@@ -279,7 +310,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     @Override
     public int getItemCount() {
-        return data.length() + 2;
+        return data.size() + 2;
     }
 
     public static class SimpleViewHolder extends RecyclerView.ViewHolder {
@@ -327,7 +358,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         }
     }
 
-    public static class ParentDirViewHolder extends RecyclerView.ViewHolder{
+    public static class ParentDirViewHolder extends RecyclerView.ViewHolder {
 
         public ParentDirViewHolder(@NonNull View itemView) {
             super(itemView);

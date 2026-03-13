@@ -31,6 +31,7 @@ import com.zinhao.kikoeru.data.model.Work;
 import com.zinhao.kikoeru.ui.adapter.WorksAdapter;
 import com.zinhao.kikoeru.ui.viewmodel.WorksViewModel;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -317,6 +318,35 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
             JSONObject workJson = new JSONObject();
             workJson.put("id", work.getId());
             workJson.put("title", work.getTitle());
+            workJson.put("name", work.getCircleName());
+            workJson.put("release", work.getReleaseDate());
+            workJson.put("price", work.getPrice());
+            workJson.put("dl_count", work.getDlCount());
+            
+            // 转换 tags 列表为 JSONArray
+            JSONArray tagsArray = new JSONArray();
+            if (work.getTags() != null) {
+                for (Tag tag : work.getTags()) {
+                    JSONObject tagJson = new JSONObject();
+                    tagJson.put("id", tag.getId());
+                    tagJson.put("name", tag.getName());
+                    tagsArray.put(tagJson);
+                }
+            }
+            workJson.put("tags", tagsArray);
+            
+            // 转换 vas 列表为 JSONArray
+            JSONArray vasArray = new JSONArray();
+            if (work.getVas() != null) {
+                for (Va va : work.getVas()) {
+                    JSONObject vaJson = new JSONObject();
+                    vaJson.put("id", va.getId());
+                    vaJson.put("name", va.getName());
+                    vasArray.put(vaJson);
+                }
+            }
+            workJson.put("vas", vasArray);
+            
             if (work.isLocalWork()) {
                 workJson.put(JSONConst.Work.IS_LOCAL_WORK, true);
                 workJson.put(JSONConst.Work.HOST, work.getHost());

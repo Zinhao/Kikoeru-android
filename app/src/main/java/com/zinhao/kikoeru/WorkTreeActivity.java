@@ -55,6 +55,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
 
     private JSONObject work;
     private JSONArray jsonWorkTrees;
+    private WorkInfo workInfo;
 
     private View bottomLayout;
     private ImageView ivCover;
@@ -76,8 +77,10 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
             jsonWorkTrees = jsonArray;
             // TODO 来自不同服务器的同一个作品（RJ号码相同），当用户执行下载操作时，目录树不一致。
             runOnUiThread(() -> {
-                workTreeAdapter = new WorkTreeAdapter(jsonWorkTrees, work);
-                workTreeAdapter.setItemClickListener(WorkTreeActivity.this);
+                try {
+                    List<WorkTreeItem> workTreeItems = WorkTreeItem.listFromJson(jsonWorkTrees);
+                    workTreeAdapter = new WorkTreeAdapter(workTreeItems, workInfo);
+                    workTreeAdapter.setItemClickListener(WorkTreeActivity.this);
                 workTreeAdapter.setParentDirClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -99,6 +102,10 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                 recyclerView.setItemAnimator(null);
                 recyclerView.setLayoutManager(new LinearLayoutManager(WorkTreeActivity.this));
                 recyclerView.setAdapter(workTreeAdapter);
+                } catch (JSONException jsonException) {
+                    jsonException.printStackTrace();
+                    alertException(jsonException);
+                }
             });
         }
     };
@@ -112,6 +119,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         if (workStr != null && !workStr.isEmpty()) {
             try {
                 work = new JSONObject(workStr);
+                workInfo = WorkInfo.fromJson(work);
             } catch (JSONException e) {
                 e.printStackTrace();
                 alertException(e);
@@ -138,6 +146,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         if (workStr != null && !workStr.isEmpty()) {
             try {
                 work = new JSONObject(workStr);
+                workInfo = WorkInfo.fromJson(work);
                 init();
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -256,21 +265,21 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
     private void openImage(JSONObject item) throws JSONException {
         List<String> imageList = new ArrayList<>();
         int index = 0;
-        for (int i = 0; i < workTreeAdapter.getData().length(); i++) {
-            JSONObject _item = workTreeAdapter.getData().getJSONObject(i);
-            if (_item.getString("type").equals("image")) {
+        String itemHash = item.getString(JSONConst.WorkTree.HASH);
+        for (WorkTreeItem _item : workTreeAdapter.getData()) {
+            if (_item.isImage()) {
                 String url;
                 try {
-                    url = _item.getString(JSONConst.WorkTree.MAP_FILE_PATH);
+                    url = _item.getLocalFilePath();
                     if (!new File(url).exists()) {
-                        url = _item.getString(JSONConst.WorkTree.MEDIA_STREAM_URL);
+                        url = _item.getMediaStreamUrl();
                         url = Api.formatGetUrl(url, true);
                     }
                     imageList.add(url);
-                    if (_item.getString(JSONConst.WorkTree.HASH).equals(item.getString(JSONConst.WorkTree.HASH))) {
+                    if (_item.getHash().equals(itemHash)) {
                         index = imageList.size() - 1;
                     }
-                } catch (JSONException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                     alertException(e);
                 }
@@ -303,11 +312,10 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         String itemMediaStreamUrl = item.getString(JSONConst.WorkTree.MEDIA_STREAM_URL);
         List<JSONObject> musicArray = new ArrayList<>();
         int index = 0;
-        for (int i = 0; i < workTreeAdapter.getData().length(); i++) {
-            JSONObject _item = workTreeAdapter.getData().getJSONObject(i);
-            if ("audio".equals(_item.getString("type"))) {
-                musicArray.add(_item);
-                if (_item.getString(JSONConst.WorkTree.HASH).equals(itemHash)) {
+        for (WorkTreeItem _item : workTreeAdapter.getData()) {
+            if (_item.isAudio()) {
+                musicArray.add(_item.toJson());
+                if (_item.getHash().equals(itemHash)) {
                     index = musicArray.size() - 1;
                 }
             }
