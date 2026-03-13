@@ -18,10 +18,10 @@ The app provides features including:
 
 - **Language**: Java
 - **Build System**: Gradle 7.3.3
-- **Android Gradle Plugin**: 7.2.0
-- **Target SDK**: 32 (Android 12L)
-- **Minimum SDK**: 26 (Android 8.0)
-- **Compile SDK**: 32
+- **Android Gradle Plugin**: 7.2.2
+- **Target SDK**: 34 (Android 14)
+- **Minimum SDK**: 30 (Android 11)
+- **Compile SDK**: 34
 
 ## Key Dependencies
 
@@ -31,16 +31,30 @@ The app provides features including:
 - `androidx.media:media:1.5.0` - Media session support
 - `androidx.constraintlayout:constraintlayout:2.0.4` - ConstraintLayout
 - `androidx.exifinterface:exifinterface:1.3.2` - EXIF data handling
+- `androidx.palette:palette:1.0.0` - Color palette extraction
 
-### Third-party Libraries (Bundled in `app/libs/`)
+### Architecture Components
+- `androidx.room:room-runtime:2.5.2` - SQLite ORM (replaced GreenDAO)
+- `androidx.room:room-compiler:2.5.2` - Room annotation processor
+- `androidx.lifecycle:lifecycle-viewmodel:2.5.1` - MVVM ViewModel
+- `androidx.lifecycle:lifecycle-livedata:2.5.1` - LiveData for reactive UI
+- `androidx.lifecycle:lifecycle-common-java8:2.5.1` - Java 8 support
+
+### Third-party Libraries
 - **ExoPlayer 2.16.1** - Media playback engine
   - Core, UI, DASH, Database, Datasource, Decoder, Extractor modules
 - **Glide 4.8.0** - Image loading and caching
   - Includes GIF decoder
 - **AndroidAsync 3.1.0** - Asynchronous HTTP client
 - **Subsampling Scale Image View 3.10.0** - High-resolution image display
-- **GreenDAO 3.3.0** - SQLite ORM for database operations
-- **Guava 27.1** - Google core libraries
+- **Guava 32.0.1-jre** - Google core libraries
+- **Gson 2.8.9** - JSON parsing
+
+### Bundled in `app/libs/`
+- ExoPlayer modules (AAR)
+- Glide (AAR/JAR)
+- AndroidAsync (AAR)
+- Subsampling Scale Image View (AAR)
 
 ## Project Structure
 
@@ -51,16 +65,16 @@ Kikoeru-android/
 │   │   ├── java/com/zinhao/kikoeru/    # Main source code
 │   │   │   ├── App.java                # Application class
 │   │   │   ├── Api.java                # API client for server communication
+│   │   │   ├── AppDatabase.java        # Room database class
 │   │   │   ├── AudioService.java       # Background playback service
 │   │   │   ├── BaseActivity.java       # Base activity with common functionality
-│   │   │   ├── User.java               # User entity (GreenDAO)
+│   │   │   ├── User.java               # User entity (Room)
+│   │   │   ├── UserDao.java            # User DAO (Room)
+│   │   │   ├── Text.java               # Text/lyrics processing
 │   │   │   ├── JSONConst.java          # JSON constants
 │   │   │   ├── *Activity.java          # Various UI activities
 │   │   │   ├── *Adapter.java           # RecyclerView adapters
-│   │   │   └── db/                     # GreenDAO generated classes
-│   │   │       ├── DaoMaster.java
-│   │   │       ├── DaoSession.java
-│   │   │       └── UserDao.java
+│   │   │   └── ...                     # Other utility classes
 │   │   ├── res/                        # Android resources
 │   │   │   ├── layout/                 # XML layouts
 │   │   │   ├── drawable/               # Drawables and vector icons
@@ -96,16 +110,19 @@ Kikoeru-android/
 
 # Install debug build on connected device
 ./gradlew installDebug
+
+# Run unit tests
+./gradlew test
 ```
 
 ## Architecture
 
 ### Application Architecture
-The app follows a traditional Android architecture with:
+The app follows MVVM architecture with:
 
 1. **Application Class** (`App.java`): 
    - Singleton pattern for global state management
-   - GreenDAO database initialization
+   - Room database initialization
    - SharedPreferences wrapper for settings
    - Activity lifecycle tracking
 
@@ -129,17 +146,27 @@ The app follows a traditional Android architecture with:
    - RecyclerView with custom adapters for lists
    - ViewBinding enabled
 
+5. **MVVM Components**:
+   - ViewModel for UI-related data
+   - LiveData for observable data
+   - Room for data persistence
+
 ### Database Schema
 
-Uses GreenDAO ORM with a single entity:
+Uses **Room** ORM with a single entity:
 
-**User Table**:
-- `id` (Long, PK, auto-increment)
+**User Table** (`@Entity(tableName = "users")`):
+- `id` (Long, PK, auto-generate) - User ID
 - `name` (String) - Username
 - `password` (String) - Password
 - `host` (String) - Server host URL
 - `token` (String) - JWT authentication token
 - `lastUpdateTime` (long) - Last sync timestamp
+
+**Database Class** (`AppDatabase.java`):
+- Version: 1
+- Entities: User
+- DAO: UserDao
 
 ### Key Activities
 
@@ -153,6 +180,7 @@ Uses GreenDAO ORM with a single entity:
 | `VideoPlayerActivity` | Video playback UI |
 | `TagsActivity` | Browse by tags |
 | `VasActivity` | Browse by voice actors |
+| `CirclesActivity` | Browse by circles/groups |
 | `SearchActivity` | RJ number search |
 | `DownLoadMissionActivity` | Download management |
 | `UserSwitchActivity` | Multi-account management |
@@ -160,28 +188,43 @@ Uses GreenDAO ORM with a single entity:
 | `AboutActivity` | App information |
 | `LicenseActivity` | Open source licenses |
 | `ImageBrowserActivity` | Image gallery viewer |
+| `TextRowActivity` | Text/lyrics row display |
 | `LrcFloatWindow` | Lyrics floating window permission handler |
+
+### Utility Classes
+
+| Class | Purpose |
+|-------|---------|
+| `Api.java` | Server API communication |
+| `DownloadUtils.java` | File download utilities |
+| `LocalFileCache.java` | Local file caching management |
+| `LocalResponse.java` | Local HTTP response handling |
+| `Text.java` | Text/lyrics parsing and processing |
+| `TimeProgressView.java` | Custom progress view |
+| `TagsView.java` | Custom tag display view |
+| `ImageIndicator.java` | Image page indicator |
 
 ## Configuration
 
 ### App-level Configuration (`gradle.properties`)
 - `android.useAndroidX=true` - Uses AndroidX libraries
 - `android.enableJetifier=true` - Auto-migrates third-party libs to AndroidX
+- `android.defaults.buildfeatures.buildconfig=true` - BuildConfig enabled
 - `org.gradle.jvmargs=-Xmx2048m` - JVM heap size
 
 ### Build Configuration (`app/build.gradle`)
 - **Application ID**: `com.zinhao.kikoeru`
-- **Version Code**: 7
-- **Version Name**: `Release_5.0`
+- **Version Code**: 12
+- **Version Name**: `Release_8.0`
 - **ViewBinding**: Enabled
 - **Java Version**: 1.8
+- **Namespace**: `com.zinhao.kikoeru`
 
-### GreenDAO Configuration
-```gradle
-greendao {
-    schemaVersion 1
-    daoPackage 'com.zinhao.kikoeru.db'
-    targetGenDir 'src/main/java'
+### Room Configuration
+```java
+@Database(entities = {User.class}, version = 1)
+abstract class AppDatabase extends RoomDatabase {
+    abstract UserDao userDao();
 }
 ```
 
@@ -197,6 +240,8 @@ The app supports three languages:
 Required permissions (from `AndroidManifest.xml`):
 - `INTERNET` - Network access
 - `FOREGROUND_SERVICE` - Background playback service
+- `FOREGROUND_SERVICE_MEDIA_PLAYBACK` - Media playback foreground service type (Android 14+)
+- `POST_NOTIFICATIONS` - Notification permission (Android 13+)
 - `SYSTEM_ALERT_WINDOW` - Lyrics floating window
 - `WRITE_EXTERNAL_STORAGE` / `READ_EXTERNAL_STORAGE` - File caching
 - `MANAGE_EXTERNAL_STORAGE` - External storage management (Android 11+)
@@ -226,7 +271,7 @@ Based on existing code:
 
 2. **Package Structure**:
    - Base package: `com.zinhao.kikoeru`
-   - Database: `com.zinhao.kikoeru.db`
+   - All classes in single package
 
 3. **Comments**: Mixed Chinese and English in codebase
 
@@ -234,7 +279,7 @@ Based on existing code:
 
 ## Security Considerations
 
-1. **Token Storage**: JWT tokens stored in SQLite database (GreenDAO)
+1. **Token Storage**: JWT tokens stored in Room database
 2. **Network**: HTTP/HTTPS communication with server
 3. **File Access**: Requests broad storage permissions for caching
 4. **ProGuard**: Disabled in release builds (`minifyEnabled false`)
@@ -242,9 +287,10 @@ Based on existing code:
 ## Development Notes
 
 1. **External Libraries**: Many dependencies are bundled as AAR/JAR files in `app/libs/` rather than fetched from Maven
-2. **Generated Code**: GreenDAO generates `DaoMaster`, `DaoSession`, and `UserDao` - do not manually edit
+2. **Database Migration**: Project migrated from GreenDAO to Room
 3. **API Compatibility**: Designed for Kikoeru-project V0.6.2 API
 4. **Offline Support**: Local caching system allows playback without server connection
+5. **Android 14 Support**: Added `FOREGROUND_SERVICE_MEDIA_PLAYBACK` permission for Android 14+ compatibility
 
 ## License
 
