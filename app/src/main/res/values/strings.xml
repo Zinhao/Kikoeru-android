@@ -1,10 +1,17 @@
 <resources>
     <string name="app_name" translatable="false">Kikoeru</string>
     <string name="project_kikoeru_android_url" translatable="false">https://github.com/Zinhao/Kikoeru-android</string>
-    <string name="project_glide_license" translatable="false">https://github.com/bumptech/glide/blob/master/LICENSE</string>
-    <string name="project_exo_player_license" translatable="false">https://github.com/google/ExoPlayer/blob/release-v2/LICENSE</string>
-    <string name="project_android_async_license" translatable="false">https://github.com/koush/AndroidAsync/blob/master/LICENSE</string>
-    <string name="project_subsampling_scale_image_view_license" translatable="false">https://github.com/davemorrissey/subsampling-scale-image-view/blob/master/LICENSE</string>
+    <string name="project_glide_license" translatable="false">https://github.com/bumptech/glide/blob/master/LICENSE
+    </string>
+    <string name="project_exo_player_license" translatable="false">
+        https://github.com/google/ExoPlayer/blob/release-v2/LICENSE
+    </string>
+    <string name="project_android_async_license" translatable="false">
+        https://github.com/koush/AndroidAsync/blob/master/LICENSE
+    </string>
+    <string name="project_subsampling_scale_image_view_license" translatable="false">
+        https://github.com/davemorrissey/subsampling-scale-image-view/blob/master/LICENSE
+    </string>
     <string name="file_provider" translatable="false">com.zinhao.kikoeru.fileProvider</string>
 
     <string name="channel_description">player control</string>
@@ -66,4 +73,5 @@
     <string name="no_lrc">no lrc</string>
     <string name="stop_delay">stop delay</string>
     <string name="delete_cache">delete cache</string>
+    <string name="local_history">history view</string>
 </resources>

@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class WorksActivity extends BaseActivity implements MusicChangeListener, ServiceConnection, TagsView.TagClickListener<JSONObject> {
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "WorksActivity";
     private static final String CONFIG_TYPE = "last_type";
     private static final String CONFIG_PAGE = "last_page";
     private static final String CONFIG_PARAM_INT = "last_param_int";
@@ -108,10 +108,12 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
                 if (works.size() >= totalCount) {
+                    workAdapter.setLoading(false);
                     return;
                 }
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                     if (!recyclerView.canScrollVertically(1)) {
+                        Log.i(TAG,"work size:"+works.size() + ", total:"+ totalCount);
                         reloadRecycleView();
                     }
                 }
@@ -231,6 +233,9 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
     }
 
     public void reloadRecycleView() {
+        if(workAdapter!=null){
+            workAdapter.setLoading(true);
+        }
         if (type == TYPE_ALL_WORK) {
             setTitle(getString(R.string.app_name));
             Api.doGetWorks(page, apisCallback);
@@ -275,7 +280,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         if (rjNumber != 0 && bottomLayout.getVisibility() == View.GONE) {
             toggleBottom();
         }
-        Glide.with(this).load(App.getInstance().currentUser().getHost() + String.format("/api/cover/%d?type=sam", rjNumber)).into(ivCover);
+        Glide.with(this).load(Api.minCoverImageUrl(rjNumber)).into(ivCover);
     }
 
     @Override
@@ -349,7 +354,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         layoutMenu.add(2, 13, 13, "staggered");
         layoutMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
 
-        menu.add(0, 15, 15, R.string.more);
+
 
         SubMenu sortMenu = menu.addSubMenu(0, 16, 16, R.string.sort);
         sortMenu.add(3, 17, 17, R.string.release_date);
@@ -358,7 +363,11 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         sortMenu.add(3, 20, 20, R.string.last_in_lib);
 
         menu.add(0, 22, 22, R.string.download_mission);
+        menu.add(0, 24, 24, R.string.local_history);
+        menu.add(0, 15, 99, R.string.more);
+
         MenuItem searchMenu = menu.add(0, 23, 23, R.string.search);
+
         searchMenu.setIcon(R.drawable.ic_baseline_search_24);
         searchMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         return super.onCreateOptionsMenu(menu);
@@ -414,6 +423,8 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
             startActivity(new Intent(this, DownLoadMissionActivity.class));
         } else if (item.getItemId() == 23) {
             startActivity(new Intent(this, SearchActivity.class));
+        }else if (item.getItemId() == 24) {
+            startActivity(new Intent(this, LastWatchActivity.class));
         }
         return super.onOptionsItemSelected(item);
     }
@@ -471,7 +482,6 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         recyclerView.removeItemDecoration(itemDecoration);
         if (layoutType == WorkAdapter.LAYOUT_LIST) {
             layoutManager = new LinearLayoutManager(WorksActivity.this);
-            recyclerView.addItemDecoration(itemDecoration);
         } else if (layoutType == WorkAdapter.LAYOUT_SMALL_GRID) {
             int col = Math.max(getResources().getDisplayMetrics().widthPixels/395,3);
             layoutManager = new GridLayoutManager(WorksActivity.this, col);
@@ -641,6 +651,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
     private AsyncHttpClient.JSONObjectCallback apisCallback = new AsyncHttpClient.JSONObjectCallback() {
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
+
             if (e != null) {
                 e.printStackTrace();
                 alertException(e);
@@ -708,6 +719,9 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
                         } else {
                             workAdapter.notifyItemRangeInserted(Math.max(0, works.size() - jsonArray.length()), jsonArray.length());
                             workAdapter.notifyItemRangeChanged(Math.max(0, works.size() - jsonArray.length()), jsonArray.length());
+                            if(works.size() == totalCount){
+                                workAdapter.setLoading(false);
+                            }
                         }
                     }
                 });

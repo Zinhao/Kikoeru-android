@@ -2,6 +2,7 @@ package com.zinhao.kikoeru;
 
 import android.content.Intent;
 import android.os.Bundle;
+import com.zinhao.kikoeru.db.User;
 
 public class LauncherActivity extends BaseActivity {
 

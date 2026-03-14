@@ -60,6 +60,14 @@ dependencies {
     //调色板
     implementation 'androidx.palette:palette:1.0.0'
     implementation 'com.google.guava:guava:32.0.1-jre'
+
+    // MVVM - Lifecycle components
+    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.5.1'
+    implementation 'androidx.lifecycle:lifecycle-livedata:2.5.1'
+    implementation 'androidx.lifecycle:lifecycle-common-java8:2.5.1'
+
+    // Gson for JSON parsing
+    implementation 'com.google.code.gson:gson:2.8.9'
 }
 
 class RoomSchemaArgProvider implements CommandLineArgumentProvider {

@@ -33,6 +33,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
+import com.zinhao.kikoeru.db.LocalWorkHistory;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -119,6 +120,23 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                 return;
             }
         }
+
+        App app = (App)getApplication();
+        try {
+            LocalWorkHistory localWorkHistory = new LocalWorkHistory(
+                    work.getInt("id")
+                    ,System.currentTimeMillis(),"",
+                    work.getString("title"));
+            app.insertLocalHis(localWorkHistory, new Runnable() {
+                @Override
+                public void run() {
+
+                }
+            });
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+
         recyclerView = findViewById(R.id.recyclerView);
         bottomLayout = findViewById(R.id.bottomLayout);
         ivCover = bottomLayout.findViewById(R.id.imageView);
@@ -397,9 +415,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
     }
 
     @Override
-    public void onServiceDisconnected(ComponentName name) {
-
-    }
+    public void onServiceDisconnected(ComponentName name) {}
 
     @Override
     public boolean onLongClick(View v) {

@@ -27,10 +27,28 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private TagsView.TagClickListener circlesClickListener;
     private View.OnClickListener itemClickListener;
     private View.OnLongClickListener itemLongClickListener;
+
     public static final int LAYOUT_LIST = 846;
     public static final int LAYOUT_SMALL_GRID = 847;
     public static final int LAYOUT_BIG_GRID = 848;
     public static final int LAYOUT_STAGGERED = 849;
+
+    private static final int TYPE_ITEM = 0;
+    private static final int TYPE_LOADING = 1;
+
+    private boolean isLoading = false; // 是否正在加载
+
+    // 辅助方法：显示/隐藏加载动画
+    public void setLoading(boolean loading) {
+        if (this.isLoading != loading) {
+            this.isLoading = loading;
+            if (loading) {
+                notifyItemInserted(datas.size());
+            } else {
+                notifyItemRemoved(datas.size());
+            }
+        }
+    }
 
     public void setTagClickListener(TagsView.TagClickListener<?> tagClickListener) {
         this.tagClickListener = tagClickListener;
@@ -75,6 +93,10 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        if (viewType == TYPE_LOADING) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_loading, parent, false);
+            return new LoadingViewHolder(view);
+        }
         if (layoutType == LAYOUT_LIST) {
             View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_1, parent, false);
             return new SimpleViewHolder(v);
@@ -94,6 +116,9 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @SuppressLint("DefaultLocale")
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        if(position == datas.size()){
+            return;
+        }
         JSONObject item = datas.get(position);
         holder.itemView.setTag(item);
         holder.itemView.setOnClickListener(itemClickListener);
@@ -166,8 +191,17 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     @Override
+    public int getItemViewType(int position) {
+        // 如果位置是最后一位且处于加载状态，返回加载布局类型
+        if (position == datas.size()) {
+            return TYPE_LOADING;
+        }
+        return TYPE_ITEM;
+    }
+
+    @Override
     public int getItemCount() {
-        return datas.size();
+        return datas.size() + (isLoading ? 1 : 0);
     }
 
     public static class SimpleViewHolder extends RecyclerView.ViewHolder {
@@ -230,5 +264,9 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             tvDate = itemView.findViewById(R.id.tvDate);
             tvHost = itemView.findViewById(R.id.tvHost);
         }
+    }
+
+    static class LoadingViewHolder extends RecyclerView.ViewHolder {
+        public LoadingViewHolder(View itemView) { super(itemView); }
     }
 }

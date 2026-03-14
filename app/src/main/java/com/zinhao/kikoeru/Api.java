@@ -226,4 +226,9 @@ public class Api {
             }
         }
     }
+
+    public static String minCoverImageUrl(long rjNumber ){
+        return  App.getInstance().currentUser().getHost()
+                + String.format("/api/cover/%d?type=sam&token=%s", rjNumber, Api.token);
+    }
 }

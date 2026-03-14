@@ -265,7 +265,8 @@ public class AudioService extends Service {
                     File audioFile = new File(path);
                     if (!LocalFileCache.getInstance().getLrcText(audioFile, ctrlBinder.lrcCallBack)) {
                         // Local lrc file not exist
-                        Api.checkLrc(ctrlBinder.current.getString(JSONConst.WorkTree.HASH), ctrlBinder.checkLrcCallBack);
+                        String hash = ctrlBinder.current.getString(JSONConst.WorkTree.HASH);
+                        Api.checkLrc(hash, ctrlBinder.checkLrcCallBack);
                     }
                 } catch (JSONException e) {
                     e.printStackTrace(System.err);
@@ -376,7 +377,7 @@ public class AudioService extends Service {
             notificationBuilder.setContentTitle(ctrlBinder.current.getString("title"));
             notificationBuilder.setContentText(ctrlBinder.current.getString("title"));
             notificationBuilder.setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, AudioPlayerActivity.class), PendingIntent.FLAG_IMMUTABLE));
-            Glide.with(this).asBitmap().load(App.getInstance().currentUser().getHost() + String.format("/api/cover/%d?type=sam&token=%s", ctrlBinder.currentAlbumId, Api.token)).into(new SimpleTarget<Bitmap>() {
+            Glide.with(this).asBitmap().load(Api.minCoverImageUrl(ctrlBinder.currentAlbumId)).into(new SimpleTarget<Bitmap>() {
                 @Override
                 public void onResourceReady(@NonNull Bitmap bitmap, @Nullable Transition<? super Bitmap> transition) {
                     notificationBuilder.setLargeIcon(bitmap);
@@ -570,10 +571,13 @@ public class AudioService extends Service {
                     alertException(e);
                     return;
                 }
+
                 if (lrcResult == null) {
                     mLrc = Lrc.NONE;
+                    Log.i(TAG,"LRC RESULT: NULL");
                     return;
                 }
+                Log.i(TAG,"LRC RESULT:"+ lrcResult.toString());
                 try {
                     boolean exist = lrcResult.getBoolean("result");
                     if (exist) {

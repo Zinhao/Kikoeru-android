@@ -7,6 +7,7 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.room.Room;
@@ -14,6 +15,7 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
+import com.zinhao.kikoeru.db.*;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -45,10 +47,12 @@ public class App extends Application implements Application.ActivityLifecycleCal
 
 
     private final List<User> allUsers = new ArrayList<>();
+    private final List<LocalWorkHistory> localWorkHistoryList = new ArrayList<>();
     private long currentUserId;
 
     private RequestOptions defaultPic;
     private UserDao userDao;
+    private LocalWorkHistoryDao historyDao;
 
     private final List<Activity> activities = new ArrayList<>();
     private final HashMap<String,Long> circlesIdMap = new HashMap<>();
@@ -116,14 +120,18 @@ public class App extends Application implements Application.ActivityLifecycleCal
     public void onCreate() {
         super.onCreate();
         instance = this;
-        AppDatabase appDatabase = Room.databaseBuilder(getApplicationContext(), AppDatabase.class,"app.db").build();
+        AppDatabase appDatabase = Room.databaseBuilder(getApplicationContext(), AppDatabase.class,"app.db")
+                .addMigrations(AppDatabase.MIGRATION_1_2)
+                .build();
         userDao = appDatabase.userDao();
+        historyDao = appDatabase.historyDao();
 
         currentUserId = getValue(App.CONFIG_USER_DATABASE_ID, -1);
         appDebug = getValue(App.CONFIG_DEBUG, 0) == 1;
         saveExternal = getValue(App.CONFIG_SAVE_EXTERNAL, 0) == 1;
 
         getAllUsers();
+        loadLocalHis();
         User user = App.getInstance().currentUser();
         if (user != null) {
             Api.init(user.getToken(), user.getHost());
@@ -219,7 +227,35 @@ public class App extends Application implements Application.ActivityLifecycleCal
         return position;
     }
 
-    public void insertUser(User user,Runnable callback) {
+    public void insertLocalHis(LocalWorkHistory history, Runnable callback){
+        LocalFileCache.getInstance().doSomething(()->{
+            historyDao.insertOrReplace(history);
+            boolean sameWorkRj = false;
+            if(!localWorkHistoryList.isEmpty()){
+                if(history.getRjNumber() == localWorkHistoryList.get(0).getRjNumber()){
+                    sameWorkRj = true;
+                }
+            }
+            if(!sameWorkRj){
+                localWorkHistoryList.add(0,history);
+            }
+            callback.run();
+        });
+    }
+
+    public void loadLocalHis(){
+        LocalFileCache.getInstance().doSomething(()->{
+            localWorkHistoryList.clear();
+            localWorkHistoryList.addAll(historyDao.getAllHis());
+            Log.i("App","getLocalWorkHistoryList:" + localWorkHistoryList.size());
+        });
+    }
+
+    public List<LocalWorkHistory> getLocalWorkHistoryList() {
+        return localWorkHistoryList;
+    }
+
+    public void insertUser(User user, Runnable callback) {
         LocalFileCache.getInstance().doSomething(()->{
             currentUserId = userDao.insert(user);
             user.setId(currentUserId);

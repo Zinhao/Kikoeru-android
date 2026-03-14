@@ -10,9 +10,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import com.google.android.material.textfield.TextInputLayout;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
+import com.zinhao.kikoeru.db.User;
+import com.zinhao.kikoeru.ui.viewmodel.LoginViewModel;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -27,159 +31,104 @@ public class LoginAccountActivity extends BaseActivity {
     private Button btSignIn;
     private Button btGuest;
     private Button btSignUp;
-    private User user;
+
+    private LoginViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login_account);
+
+        viewModel = new ViewModelProvider(this).get(LoginViewModel.class);
+        initViews();
+        observeViewModel();
+        setupListeners();
+        initEdit();
+    }
+
+    private void setupListeners() {
+        btSignIn.setOnClickListener(v -> {
+            // 更新 ViewModel 中的值
+            updateViewModelInputs();
+            viewModel.login();
+        });
+
+        btGuest.setOnClickListener(v -> {
+            viewModel.loginAsGuest();
+        });
+    }
+
+    private void observeViewModel() {
+        viewModel.getIsLoading().observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean isLoading) {
+                btSignIn.setEnabled(!isLoading);
+                btGuest.setEnabled(!isLoading);
+            }
+        });
+        // 观察错误消息
+        viewModel.getErrorMessage().observe(this, error -> {
+            if (error != null && !error.isEmpty()) {
+                Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // 观察登录成功
+        viewModel.getLoginSuccess().observe(this, success -> {
+            if (success) {
+                navigateToMain();
+            }
+        });
+    }
+
+    private void initEdit() {
+        EditText etUser = tilUser.getEditText();
+        EditText etPassword = tilPassword.getEditText();
+        EditText etServer = tilServer.getEditText();
+
+        if (etUser == null || etPassword == null || etServer == null) return;
+
+        // 设置默认值
+        User currentUser = App.getInstance().currentUser();
+        if (currentUser != null) {
+            etUser.setText(currentUser.getName());
+            etPassword.setText(currentUser.getPassword());
+            etServer.setText(currentUser.getHost());
+        } else {
+            etUser.setText("guest");
+            etPassword.setText("guest");
+            etServer.setText(Api.REMOTE_HOST);
+        }
+    }
+
+    private void updateViewModelInputs() {
+        EditText etUser = tilUser.getEditText();
+        EditText etPassword = tilPassword.getEditText();
+        EditText etServer = tilServer.getEditText();
+
+        if (etUser != null) {
+            viewModel.setUsername(etUser.getText().toString().trim());
+        }
+        if (etPassword != null) {
+            viewModel.setPassword(etPassword.getText().toString().trim());
+        }
+        if (etServer != null) {
+            viewModel.setHost(etServer.getText().toString().trim());
+        }
+    }
+
+    private void navigateToMain() {
+        startActivity(new Intent(LoginAccountActivity.this, WorksActivity.class));
+        finish();
+    }
+
+    private void initViews(){
         tilUser = findViewById(R.id.textInputLayout);
         tilPassword = findViewById(R.id.textInputLayout2);
         tilServer = findViewById(R.id.textInputLayout3);
         btSignIn = findViewById(R.id.button2);
         btGuest = findViewById(R.id.button4);
         btSignUp = findViewById(R.id.button3);
-
-        user = new User();
-        user.setHost(Api.REMOTE_HOST);
-        user.setName("guest");
-        user.setPassword("guest");
-        User currentUser = App.getInstance().currentUser();
-        if (currentUser != null) {
-            user.setHost(currentUser.getHost());
-            user.setName(currentUser.getName());
-            user.setPassword(currentUser.getPassword());
-        }
-
-        initEdit(user.getName(), user.getPassword());
-
-        btSignIn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                btSignIn.setEnabled(false);
-                btGuest.setEnabled(false);
-                if (signIn()) {
-                    Toast.makeText(view.getContext(), "sign in with input!", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(view.getContext(), "please check input!", Toast.LENGTH_SHORT).show();
-                    btSignIn.setEnabled(true);
-                    btGuest.setEnabled(true);
-                }
-
-            }
-        });
-        btGuest.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                btGuest.setEnabled(false);
-                btSignIn.setEnabled(false);
-                initEdit("guest", "guest");
-                if (signIn()) {
-                    Toast.makeText(view.getContext(), "sign in with input!", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(view.getContext(), "please check input!", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-    }
-
-    private final AsyncHttpClient.JSONObjectCallback signInCallback = new AsyncHttpClient.JSONObjectCallback() {
-        @Override
-        public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    btSignIn.setEnabled(true);
-                    btGuest.setEnabled(true);
-                }
-            });
-            if (asyncHttpResponse == null || jsonObject == null) {
-                Log.d(TAG, "onCompleted: get token err ");
-                return;
-            }
-            if (asyncHttpResponse.code() == 200) {
-                if (jsonObject.has("token")) {
-                    try {
-                        App app = (App) getApplication();
-                        String token = jsonObject.getString("token");
-                        user.setToken(token);
-                        Api.init(token, user.getHost());
-                        app.insertUser(user,()->{
-                            App.getInstance().setValue(App.CONFIG_USER_DATABASE_ID, user.getId());
-                            saveAndNext();
-                        });
-
-                    } catch (JSONException jsonException) {
-                        jsonException.printStackTrace();
-                        alertException(jsonException);
-                    }
-                }
-            } else {
-                StringBuilder stringBuilder = new StringBuilder();
-                try {
-                    if (jsonObject.has("error")) {
-                        stringBuilder.append(jsonObject.getString("error"));
-                    } else if (jsonObject.has("errors")) {
-                        JSONArray errors = jsonObject.getJSONArray("errors");
-                        for (int i = 0; i < errors.length(); i++) {
-                            JSONObject error = errors.getJSONObject(i);
-                            String errorValue = error.getString("msg");
-                            stringBuilder.append(errorValue);
-                        }
-                    }
-                } catch (JSONException e1) {
-                    alertException(e);
-                    return;
-                }
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(LoginAccountActivity.this, String.format(Locale.getDefault(),"%d:%s", asyncHttpResponse.code(), stringBuilder), Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-        }
-    };
-
-    private void initEdit(String userName, String password) {
-        EditText etUser = tilUser.getEditText();
-        if (etUser == null)
-            return;
-        EditText etPassword = tilPassword.getEditText();
-        if (etPassword == null)
-            return;
-        EditText etServer = tilServer.getEditText();
-        if (etServer == null)
-            return;
-        etUser.setText(userName);
-        etPassword.setText(password);
-        etServer.setText(user.getHost());
-    }
-
-    private boolean signIn() {
-        EditText etUser = tilUser.getEditText();
-        if (etUser == null)
-            return false;
-        EditText etPassword = tilPassword.getEditText();
-        if (etPassword == null)
-            return false;
-        EditText etServer = tilServer.getEditText();
-        if (etServer == null)
-            return false;
-        String userName = etUser.getText().toString().trim();
-        String password = etPassword.getText().toString().trim();
-        String host = etServer.getText().toString().trim();
-        if (userName.isEmpty() || password.isEmpty() || host.isEmpty()) {
-            return false;
-        }
-        if (!host.startsWith("http")) {
-            host = String.format(Locale.US, "http://%s", host);
-        }
-        user.setName(userName);
-        user.setPassword(password);
-        user.setHost(host);
-        Api.doGetToken(userName, password, host, signInCallback);
-        return true;
     }
 
     @Override
@@ -200,14 +149,4 @@ public class LoginAccountActivity extends BaseActivity {
         return super.onOptionsItemSelected(item);
     }
 
-
-    private void saveAndNext() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                startActivity(new Intent(LoginAccountActivity.this, WorksActivity.class));
-                finish();
-            }
-        });
-    }
 }
