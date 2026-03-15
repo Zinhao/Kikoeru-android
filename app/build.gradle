@@ -12,7 +12,6 @@ android {
         targetSdk 34
         versionCode 12
         versionName "Release_8.0"
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         setProperty("archivesBaseName", applicationId +"-v" + versionCode +"(" + versionName +")")
         javaCompileOptions {
             annotationProcessorOptions {

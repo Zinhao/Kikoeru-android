@@ -19,6 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.ListPopupWindow;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.ActivityOptionsCompat;
 import androidx.recyclerview.widget.*;
 import com.bumptech.glide.Glide;
 import com.koushikdutta.async.http.AsyncHttpClient;
@@ -327,7 +328,12 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
                     if (ctrlBinder.getCurrentTitle().endsWith("mp4")) {
                         startActivity(new Intent(WorksActivity.this, VideoPlayerActivity.class));
                     } else {
-                        startActivity(new Intent(WorksActivity.this, AudioPlayerActivity.class));
+                        Intent intent =new Intent(WorksActivity.this, AudioPlayerActivity.class);
+                        View view = v.findViewById(R.id.imageView);
+                        ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                                WorksActivity.this, view, "hero_bottom" // 这里的字符串必须匹配 transitionName
+                        );
+                        startActivity(intent,options.toBundle());
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -351,7 +357,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         layoutMenu.add(2, 10, 10, R.string.list_layout);
         layoutMenu.add(2, 11, 11, R.string.cover_layout);
         layoutMenu.add(2, 12, 12, R.string.detail_layout);
-        layoutMenu.add(2, 13, 13, "staggered");
+        layoutMenu.add(2, 13, 13, R.string.staggered);
         layoutMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
 
 
@@ -502,7 +508,11 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
                 JSONObject item = (JSONObject) v.getTag();
                 Intent intent = new Intent(v.getContext(), WorkTreeActivity.class);
                 intent.putExtra("work_json_str", item.toString());
-                ActivityCompat.startActivity(WorksActivity.this, intent, null);
+                View heroView = v.findViewById(R.id.ivCover);
+                ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                        WorksActivity.this, heroView, "hero_image" // 这里的字符串必须匹配 transitionName
+                );
+                startActivity(intent,options.toBundle());
             }
         });
         workAdapter.setItemLongClickListener(new View.OnLongClickListener() {
@@ -714,7 +724,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
                             }
                         }
                         if (workAdapter == null) {
-                            initLayout((int) App.getInstance().getValue(App.CONFIG_LAYOUT_TYPE, WorkAdapter.LAYOUT_SMALL_GRID));
+                            initLayout((int) App.getInstance().getValue(App.CONFIG_LAYOUT_TYPE, WorkAdapter.LAYOUT_STAGGERED));
                             recyclerView.addOnScrollListener(scrollListener);
                         } else {
                             workAdapter.notifyItemRangeInserted(Math.max(0, works.size() - jsonArray.length()), jsonArray.length());

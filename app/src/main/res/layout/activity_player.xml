@@ -12,6 +12,7 @@
         android:layout_margin="15dp"
         android:adjustViewBounds="true"
         android:scaleType="centerInside"
+        android:transitionName="hero_bottom"
         android:src="@drawable/ic_no_cover"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

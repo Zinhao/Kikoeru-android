@@ -11,6 +11,7 @@
             android:layout_height="52dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
+
             android:src="@drawable/ic_no_cover"
             app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent"/>
 

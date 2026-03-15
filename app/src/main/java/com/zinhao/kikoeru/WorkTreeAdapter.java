@@ -28,26 +28,17 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private View.OnClickListener itemClickListener;
     private View.OnClickListener parentDirClickListener;
     private View.OnLongClickListener longClickListener;
-    private TagsView.TagClickListener tagClickListener;
-    private TagsView.TagClickListener vaClickListener;
-    private TagsView.TagClickListener circlesClickListener;
+
     private List<JSONArray> parentData;
     private List<String> pathList;
+
     private RelativePathChangeListener pathChangeListener;
-    private JSONObject headerInfo;
+    private final int rjNumber;
     private static final int TYPE_HEADER = 295;
     private static final int TYPE_FILE = 296;
     private static final int TYPE_PARENT_DIR = 297;
     private int unCacheItemBackgroundColor = -1;
     private int cachedItemBackgroundColor = -1;
-
-    public void setHeaderInfo(JSONObject headerInfo) {
-        this.headerInfo = headerInfo;
-    }
-
-    public void setCirclesClickListener(TagsView.TagClickListener circlesClickListener) {
-        this.circlesClickListener = circlesClickListener;
-    }
 
     public void setPathChangeListener(RelativePathChangeListener pathChangeListener) {
         this.pathChangeListener = pathChangeListener;
@@ -57,13 +48,6 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         this.itemClickListener = itemClickListener;
     }
 
-    public void setTagClickListener(TagsView.TagClickListener<?> tagClickListener) {
-        this.tagClickListener = tagClickListener;
-    }
-
-    public void setVaClickListener(TagsView.TagClickListener<?> vaClickListener) {
-        this.vaClickListener = vaClickListener;
-    }
 
     public void setItemLongClickListener(View.OnLongClickListener longClickListener) {
         this.longClickListener = longClickListener;
@@ -77,9 +61,9 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         return data;
     }
 
-    public WorkTreeAdapter(JSONArray data, JSONObject headerInfo) {
+    public WorkTreeAdapter(JSONArray data,int rjNumber) {
+        this.rjNumber = rjNumber;
         this.data = data;
-        this.headerInfo = headerInfo;
         this.pathList = new ArrayList<>();
         parentData = new ArrayList<>();
         mapFileExistValue();
@@ -87,9 +71,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     @Override
     public int getItemViewType(int position) {
-        if (position == 0) {
-            return TYPE_HEADER;
-        }else if(position == 1){
+        if(position == 0){
             return TYPE_PARENT_DIR;
         }
         return TYPE_FILE;
@@ -112,9 +94,6 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         if (viewType == TYPE_FILE) {
             v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_tree_1, parent, false);
             return new SimpleViewHolder(v);
-        } else if (viewType == TYPE_HEADER) {
-            v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_header, parent, false);
-            return new DetailViewHolder(v);
         } else if (viewType == TYPE_PARENT_DIR) {
             v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_tree_2, parent, false);
             return new ParentDirViewHolder(v);
@@ -129,7 +108,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             JSONObject item = null;
             try {
                 item = data.getJSONObject(i);
-                LocalFileCache.getInstance().mapLocalItemFile(item, headerInfo.getInt("id"), getRelativePath());
+                LocalFileCache.getInstance().mapLocalItemFile(item, rjNumber, getRelativePath());
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -141,7 +120,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof SimpleViewHolder) {
             try {
-                JSONObject item = data.getJSONObject(position - 2);
+                JSONObject item = data.getJSONObject(position - 1);
                 String itemTitle = item.getString("title");
                 DownloadUtils.Mission mapMission = DownloadUtils.mapMission(item);
                 if(mapMission!=null){
@@ -218,33 +197,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 e.printStackTrace();
                 App.getInstance().alertException(e);
             }
-        } else if (holder instanceof DetailViewHolder) {
-            DetailViewHolder girdHolder = (DetailViewHolder) holder;
-            try {
-                Glide.with(holder.itemView.getContext()).load(App.getInstance().currentUser().getHost() + String.format("/api/cover/%d?token=%s", headerInfo.getInt("id"), Api.token)).apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
-                girdHolder.tvTitle.setText(headerInfo.getString("title"));
-                girdHolder.tvArt.setTags(App.getVasList(headerInfo), TagsView.JSON_TEXT_GET.setKey("name"));
-                girdHolder.tvArt.setTagClickListener(vaClickListener);
-                girdHolder.tvCom.setText(headerInfo.getString("name"));
-                girdHolder.tvTags.setTags(App.getTagsList(headerInfo), TagsView.JSON_TEXT_GET.setKey("name"));
-                girdHolder.tvTags.setTagClickListener(tagClickListener);
-                girdHolder.tvCircles.setTags(Collections.singletonList(headerInfo.getString("name")),TagsView.STRING_TEXT_GET);
-                girdHolder.tvCircles.setTagClickListener(circlesClickListener);
-                girdHolder.tvRjNumber.setText(String.format("RJ%d", headerInfo.getInt("id")));
-                girdHolder.tvDate.setText(headerInfo.getString("release"));
-                girdHolder.tvPrice.setText(String.format("%d 日元", headerInfo.getInt("price")));
-                girdHolder.tvSaleCount.setText(String.format("售出：%d", headerInfo.getInt("dl_count")));
-                if (headerInfo.has(JSONConst.Work.HOST)) {
-                    girdHolder.tvHost.setVisibility(View.VISIBLE);
-                    girdHolder.tvHost.setText(headerInfo.getString(JSONConst.Work.HOST));
-                } else {
-                    girdHolder.tvHost.setVisibility(View.INVISIBLE);
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-                App.getInstance().alertException(e);
-            }
-        }else if(holder instanceof ParentDirViewHolder){
+        } else if(holder instanceof ParentDirViewHolder){
             holder.itemView.setOnClickListener(parentDirClickListener);
         }
     }
@@ -279,7 +232,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     @Override
     public int getItemCount() {
-        return data.length() + 2;
+        return data.length() + 1;
     }
 
     public static class SimpleViewHolder extends RecyclerView.ViewHolder {
@@ -298,34 +251,6 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         }
     }
 
-    public static class DetailViewHolder extends RecyclerView.ViewHolder {
-        private ImageView ivCover;
-        private TextView tvTitle;
-        private TextView tvCom;
-        private TagsView<JSONArray> tvArt;
-        private TagsView<JSONArray> tvTags;
-        private TextView tvRjNumber;
-        private TextView tvDate;
-        private TextView tvPrice;
-        private TextView tvSaleCount;
-        private final TextView tvHost;
-        private final TagsView<List<String>> tvCircles;
-
-        public DetailViewHolder(@NonNull View itemView) {
-            super(itemView);
-            ivCover = itemView.findViewById(R.id.ivCover);
-            tvTitle = itemView.findViewById(R.id.tvTitle);
-            tvCom = itemView.findViewById(R.id.tvCom);
-            tvArt = itemView.findViewById(R.id.tvArt);
-            tvTags = itemView.findViewById(R.id.tvTags);
-            tvRjNumber = itemView.findViewById(R.id.tvRjNumber);
-            tvDate = itemView.findViewById(R.id.tvDate);
-            tvPrice = itemView.findViewById(R.id.tvPrice);
-            tvSaleCount = itemView.findViewById(R.id.tvSaleCount);
-            tvHost = itemView.findViewById(R.id.tvHost);
-            tvCircles = itemView.findViewById(R.id.tvCircles);
-        }
-    }
 
     public static class ParentDirViewHolder extends RecyclerView.ViewHolder{
 

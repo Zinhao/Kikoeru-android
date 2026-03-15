@@ -153,7 +153,15 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 girdHolder.tvCircles.setTagClickListener(circlesClickListener);
                 girdHolder.tvTags.setTagClickListener(tagClickListener);
                 girdHolder.tvRjNumber.setText(String.format("RJ%d", item.getInt("id")));
-                girdHolder.tvDate.setText(item.getString("release"));
+
+                String dateStr = item.optString("release");
+                if(dateStr.isEmpty()){
+                    girdHolder.tvDate.setVisibility(View.GONE);
+                }else{
+                    girdHolder.tvDate.setVisibility(View.VISIBLE);
+                    girdHolder.tvDate.setText(dateStr);
+                }
+
                 girdHolder.tvPrice.setText(String.format("%d 日元", item.getInt("price")));
                 girdHolder.tvSaleCount.setText(String.format("售出：%d", item.getInt("dl_count")));
                 if (item.has(JSONConst.Work.HOST)) {

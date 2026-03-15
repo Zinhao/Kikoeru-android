@@ -18,6 +18,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -25,6 +27,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -40,6 +43,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -64,6 +68,49 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
     private ImageButton ibStatus;
     private ImageButton ibFloatLrc;
 
+    private HeaderViewCompat headerViewCompat;
+
+    private class HeaderViewCompat{
+        private TagsView.TagClickListener tagClickListener;
+        private TagsView.TagClickListener vaClickListener;
+        private TagsView.TagClickListener circlesClickListener;
+        private ImageView ivCover;
+        private TextView tvTitle;
+        private TagsView<JSONArray> tvArt;
+        private TagsView<JSONArray> tvTags;
+        private TextView tvDate;
+        private TextView tvPrice;
+        private TextView tvSaleCount;
+        private TextView tvHost;
+        private TagsView<List<String>> tvCircles;
+
+        public void setCirclesClickListener(TagsView.TagClickListener circlesClickListener) {
+            this.circlesClickListener = circlesClickListener;
+            tvCircles.setTagClickListener(circlesClickListener);
+
+        }
+        public void setTagClickListener(TagsView.TagClickListener<?> tagClickListener) {
+            this.tagClickListener = tagClickListener;
+            tvTags.setTagClickListener(tagClickListener);
+        }
+        public void setVaClickListener(TagsView.TagClickListener<?> vaClickListener) {
+            this.vaClickListener = vaClickListener;
+            tvArt.setTagClickListener(vaClickListener);
+        }
+
+        public HeaderViewCompat(@NonNull View itemView) {
+            ivCover = itemView.findViewById(R.id.ivCover);
+            tvTitle = itemView.findViewById(R.id.tvTitle);
+            tvArt = itemView.findViewById(R.id.tvArt);
+            tvTags = itemView.findViewById(R.id.tvTags);
+            tvDate = itemView.findViewById(R.id.tvDate);
+            tvPrice = itemView.findViewById(R.id.tvPrice);
+            tvSaleCount = itemView.findViewById(R.id.tvSaleCount);
+            tvHost = itemView.findViewById(R.id.tvHost);
+            tvCircles = itemView.findViewById(R.id.tvCircles);
+        }
+    }
+
     private final AsyncHttpClient.JSONArrayCallback docTreeCallback = new AsyncHttpClient.JSONArrayCallback() {
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONArray jsonArray) {
@@ -77,7 +124,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
             jsonWorkTrees = jsonArray;
             // TODO 来自不同服务器的同一个作品（RJ号码相同），当用户执行下载操作时，目录树不一致。
             runOnUiThread(() -> {
-                workTreeAdapter = new WorkTreeAdapter(jsonWorkTrees, work);
+                workTreeAdapter = new WorkTreeAdapter(jsonWorkTrees,work.optInt("id"));
                 workTreeAdapter.setItemClickListener(WorkTreeActivity.this);
                 workTreeAdapter.setParentDirClickListener(new View.OnClickListener() {
                     @Override
@@ -90,9 +137,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                         }
                     }
                 });
-                workTreeAdapter.setTagClickListener(WorkTreeActivity.this);
-                workTreeAdapter.setVaClickListener(vaClickListener);
-                workTreeAdapter.setCirclesClickListener(circlesClickListener);
+
                 workTreeAdapter.setItemLongClickListener(WorkTreeActivity.this);
                 workTreeAdapter.setPathChangeListener(WorkTreeActivity.this);
                 RecyclerView.ItemDecoration itemDecoration = new DividerItemDecoration(WorkTreeActivity.this, DividerItemDecoration.VERTICAL);
@@ -136,7 +181,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
-
+        inAnim = AnimationUtils.loadAnimation(this, R.anim.move_bottom_in);
         recyclerView = findViewById(R.id.recyclerView);
         bottomLayout = findViewById(R.id.bottomLayout);
         ivCover = bottomLayout.findViewById(R.id.imageView);
@@ -144,8 +189,47 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         tvWorkTitle = bottomLayout.findViewById(R.id.textView2);
         ibStatus = bottomLayout.findViewById(R.id.button);
         ibFloatLrc = bottomLayout.findViewById(R.id.imageButton);
+
+        View header = findViewById(R.id.header_info);
+        headerViewCompat = new HeaderViewCompat(header);
+        headerViewCompat.setTagClickListener(WorkTreeActivity.this);
+        headerViewCompat.setVaClickListener(vaClickListener);
+        headerViewCompat.setCirclesClickListener(circlesClickListener);
+        initHeader();
+
         bindService(new Intent(this, AudioService.class), this, BIND_AUTO_CREATE);
         init();
+    }
+
+    private void initHeader(){
+        try {
+            Glide.with(this).load(
+                    App.getInstance().currentUser().getHost() + String.format("/api/cover/%d?token=%s", work.getInt("id"), Api.token))
+                    .apply(App.getInstance().getDefaultPic())
+                    .into(headerViewCompat.ivCover);
+            headerViewCompat.tvTitle.setText(work.getString("title"));
+            headerViewCompat.tvArt.setTags(App.getVasList(work), TagsView.JSON_TEXT_GET.setKey("name"));
+            headerViewCompat.tvTags.setTags(App.getTagsList(work), TagsView.JSON_TEXT_GET.setKey("name"));
+            headerViewCompat.tvCircles.setTags(Collections.singletonList(work.getString("name")),TagsView.STRING_TEXT_GET);
+            String dateStr = work.optString("release");
+            if(dateStr.isEmpty()){
+                headerViewCompat.tvDate.setVisibility(View.GONE);
+            }else{
+                headerViewCompat.tvDate.setVisibility(View.VISIBLE);
+                headerViewCompat.tvDate.setText(dateStr);
+            }
+            headerViewCompat.tvPrice.setText(String.format("%d 日元", work.getInt("price")));
+            headerViewCompat.tvSaleCount.setText(String.format("售出：%d", work.getInt("dl_count")));
+            if (work.has(JSONConst.Work.HOST)) {
+                headerViewCompat.tvHost.setVisibility(View.VISIBLE);
+                headerViewCompat.tvHost.setText(work.getString(JSONConst.Work.HOST));
+            } else {
+                headerViewCompat.tvHost.setVisibility(View.INVISIBLE);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+            App.getInstance().alertException(e);
+        }
     }
 
     @Override
@@ -362,8 +446,26 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         if (status == 0) {
             ibStatus.setImageResource(R.drawable.ic_baseline_play_arrow_24);
         } else {
-            bottomLayout.setVisibility(View.VISIBLE);
+            if(bottomLayout.getVisibility() == View.GONE){
+                showBottomLayout();
+            }
             ibStatus.setImageResource(R.drawable.ic_baseline_pause_24);
+        }
+    }
+
+    private boolean shouldShowAnim = true;
+    private Animation inAnim;
+    private void showBottomLayout() {
+        if(shouldShowAnim){
+            shouldShowAnim = false;
+            bottomLayout.setVisibility(View.VISIBLE);
+            bottomLayout.startAnimation(inAnim);
+            bottomLayout.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    shouldShowAnim = true;
+                }
+            }, inAnim.getDuration());
         }
     }
 
@@ -404,7 +506,12 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                 if (ctrlBinder.getCurrentTitle().endsWith("mp4")) {
                     startActivity(new Intent(WorkTreeActivity.this, VideoPlayerActivity.class));
                 } else {
-                    startActivity(new Intent(WorkTreeActivity.this, AudioPlayerActivity.class));
+                    Intent intent =new Intent(v.getContext(), AudioPlayerActivity.class);
+                    View view = v.findViewById(R.id.imageView);
+                    ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                            WorkTreeActivity.this, view, "hero_bottom" // 这里的字符串必须匹配 transitionName
+                    );
+                    startActivity(intent,options.toBundle());
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
