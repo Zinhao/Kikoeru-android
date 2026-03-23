@@ -37,7 +37,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
-import androidx.core.content.ContextCompat;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
@@ -263,10 +262,16 @@ public class AudioService extends Service {
                 try {
                     String path = ctrlBinder.current.getString(JSONConst.WorkTree.MAP_FILE_PATH);
                     File audioFile = new File(path);
+
                     if (!LocalFileCache.getInstance().getLrcText(audioFile, ctrlBinder.lrcCallBack)) {
                         // Local lrc file not exist
-                        String hash = ctrlBinder.current.getString(JSONConst.WorkTree.HASH);
-                        Api.checkLrc(hash, ctrlBinder.checkLrcCallBack);
+                        if(ctrlBinder.current.has("lrc_info")){
+                            JSONObject lrcInfo = ctrlBinder.current.getJSONObject(JSONConst.WorkTree.LRC_INFO);
+                            Api.doGetMediaString(lrcInfo.getString(JSONConst.WorkTree.HASH),ctrlBinder.lrcCallBack);
+                        }else{
+                            String hash = ctrlBinder.current.getString(JSONConst.WorkTree.HASH);
+                            Api.checkLrc(hash, ctrlBinder.checkLrcCallBack);
+                        }
                     }
                 } catch (JSONException e) {
                     e.printStackTrace(System.err);
@@ -451,6 +456,7 @@ public class AudioService extends Service {
         private WindowManager windowManager;
         private boolean lrcWindowShow = false;
         private View lrcView;
+        private Lrc.LrcRow currentLrcRow = null;
         private Runnable stopTask;
         private Runnable updateLrcTask;
         private AsyncHttpClient.JSONObjectCallback lastPlayListCallback = new AsyncHttpClient.JSONObjectCallback() {
@@ -506,21 +512,26 @@ public class AudioService extends Service {
                 public void run() {
                     mHandler.post(updateLrcTask);
                 }
-            }, 0, 100);
+            }, 0, 200);
             updateLrcTask = new Runnable() {
                 @Override
                 public void run() {
-                    if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+                    if (mediaPlayer != null && mediaPlayer.getPlaybackState() == Player.STATE_READY) {
                         ctrlBinder.mLrc.update(mediaPlayer.getCurrentPosition());
-                        if (lrcView instanceof TextView) {
-                            ((TextView) lrcView).setText(mLrc.getCurrent().content);
-                        }
-                        lrcRowChangeListeners.forEach(new Consumer<LrcRowChangeListener>() {
-                            @Override
-                            public void accept(LrcRowChangeListener listener) {
-                                listener.onChange(mLrc.getCurrent());
+                        Lrc.LrcRow lrcRow = mLrc.getCurrent();
+                        if (currentLrcRow != lrcRow) {
+                            currentLrcRow = lrcRow;
+                            if (lrcView instanceof TextView) {
+                                ((TextView) lrcView).setText(currentLrcRow.content);
                             }
-                        });
+                            lrcRowChangeListeners.forEach(new Consumer<LrcRowChangeListener>() {
+                                @Override
+                                public void accept(LrcRowChangeListener listener) {
+                                    listener.onChange(currentLrcRow);
+                                }
+                            });
+                        }
+
                     }
                 }
             };
@@ -533,7 +544,6 @@ public class AudioService extends Service {
                     MediaControllerCompat.TransportControls transportControls = controllerCompat.getTransportControls();
                     if (transportControls == null)
                         return;
-                    Log.d(TAG, "run: is time to Stop!");
                     transportControls.stop();
                 }
             };

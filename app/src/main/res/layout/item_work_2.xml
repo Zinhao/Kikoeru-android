@@ -27,18 +27,12 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:maxLines="2"
+            android:fontFamily="sans-serif-medium"
+            android:textStyle="bold"
             android:text="ドン引きしながらもご奉仕してくれる押しに弱いえちえちカノジョ【フォーリ"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/ivCover" app:layout_constraintStart_toStartOf="parent"
-            android:layout_marginStart="8dp"/>
-
-    <TextView
-        android:id="@+id/tvCom"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="EXcute"
-        app:layout_constraintStart_toStartOf="@+id/tvTitle"
-        app:layout_constraintTop_toBottomOf="@+id/tvTitle" />
+            android:layout_marginStart="8dp" android:layout_marginTop="8dp"/>
 
     <TextView
         android:id="@+id/tvRjNumber"
@@ -73,25 +67,26 @@
         app:layout_constraintEnd_toEndOf="@+id/ivCover" />
 
     <TextView
-        android:id="@+id/tvPrice"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="1210 日元"
-        android:textColor="@android:color/holo_red_dark"
-        app:layout_constraintStart_toStartOf="@+id/tvCom"
-        app:layout_constraintTop_toBottomOf="@+id/tvCom" />
+            android:id="@+id/tvPrice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1210 日元"
+            android:visibility="gone"
+            android:textColor="@android:color/holo_red_dark"
+            app:layout_constraintStart_toStartOf="@+id/tvTitle"
+            app:layout_constraintTop_toBottomOf="@+id/tvTitle" android:layout_marginTop="8dp"/>
 
     <com.zinhao.kikoeru.TagsView
-        android:id="@+id/tvTags"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="10dp"
-        android:padding="4dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/tvPrice"
-        app:layout_constraintTop_toBottomOf="@+id/tvPrice"
-        app:tagBackground="@drawable/card_bg_tag"
-        app:tags="健全 青春" />
+            android:id="@+id/tvTags"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:padding="4dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/tvPrice"
+            app:layout_constraintTop_toBottomOf="@+id/tvPrice"
+            app:tagBackground="@drawable/card_bg_tag"
+            app:tags="健全 青春" android:layout_marginTop="8dp"/>
 
     <com.zinhao.kikoeru.TagsView
             android:id="@+id/tvCircles"
@@ -103,7 +98,7 @@
             app:layout_constraintStart_toStartOf="@+id/tvTags"
             app:layout_constraintTop_toBottomOf="@+id/tvTags"
             app:tagBackground="@drawable/card_bg_circles"
-            app:tags="アゲハ蝶" />
+            app:tags="アゲハ蝶" android:layout_marginTop="4dp"/>
 
     <com.zinhao.kikoeru.TagsView
             android:id="@+id/tvArt"
@@ -118,17 +113,18 @@
             app:layout_constraintStart_toStartOf="@+id/tvCircles"
             app:layout_constraintTop_toBottomOf="@+id/tvCircles"
             app:tagBackground="@drawable/card_bg_va"
-            app:tags="こやまはる Kikoeru " app:layout_constraintEnd_toEndOf="parent"/>
+            app:tags="こやまはる Kikoeru " app:layout_constraintEnd_toEndOf="parent" android:layout_marginTop="4dp"/>
 
     <TextView
-        android:id="@+id/tvSaleCount"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="售出数: 2247"
-        android:textSize="12sp"
-        app:layout_constraintBottom_toBottomOf="@+id/tvPrice"
-        app:layout_constraintStart_toEndOf="@+id/tvPrice" />
+            android:id="@+id/tvSaleCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="售出数: 2247"
+            android:textSize="12sp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@+id/tvPrice"
+            app:layout_constraintStart_toEndOf="@+id/tvPrice"/>
     <TextView
             android:text="https://api.asmr.net"
             android:layout_width="wrap_content"

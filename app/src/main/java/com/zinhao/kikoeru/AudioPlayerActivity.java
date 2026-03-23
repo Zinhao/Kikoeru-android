@@ -9,6 +9,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
@@ -205,8 +206,12 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
     public void onServiceDisconnected(ComponentName name) {
     }
 
+
+
     @Override
-    public void onChange(Lrc.LrcRow currentRow) {
+    public void onChange(Lrc.LrcRow lrcRow) {
+        Log.i("LRC","change to:"+ lrcRow.content);
+        final Lrc.LrcRow currentRow = lrcRow;
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -218,7 +223,6 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
                     tvNextLrc.setText(String.format("%s %s",currentRow.getNextRow().strTime,currentRow.getNextRow().content));
                 }
                 tvLrc.setText(String.format("%s %s",currentRow.strTime,currentRow.content));
-
             }
         });
     }

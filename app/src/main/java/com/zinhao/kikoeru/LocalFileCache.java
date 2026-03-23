@@ -95,10 +95,15 @@ public class LocalFileCache implements Runnable, Closeable {
     public boolean getLrcText(File audioFile, AsyncHttpClient.StringCallback callback) {
         File dir = audioFile.getParentFile();
         String name = audioFile.getName();
-        String beforeName = name.substring(0, name.lastIndexOf("."));
-        File lrcFile = new File(dir, beforeName + ".lrc");
+        String audioContentName = name.substring(0, name.lastIndexOf("."));
+
+        File lrcFile = new File(dir, audioContentName + ".lrc");
+
         if(!lrcFile.exists()){
-            lrcFile = new File(dir,name + ".vtt");
+            lrcFile = new File(dir,audioContentName + ".vtt");
+            if(!lrcFile.exists()){
+                lrcFile = new File(dir,name + ".vtt");
+            }
         }
         if(!lrcFile.exists()){
             return false;

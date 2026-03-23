@@ -4,6 +4,7 @@ public class JSONConst {
     static class Work {
         public static final String IS_LOCAL_WORK = "is_local_work";
         public static final String HOST = "host";
+
     }
 
     static class WorkTree {
@@ -13,6 +14,7 @@ public class JSONConst {
         public static final String WORK_ID = "workId";
         public static final String HASH = "hash";
         public static final String TITLE = "title";
+        public static final String LRC_INFO = "lrc_info";
     }
 
     static class LastPlayList {

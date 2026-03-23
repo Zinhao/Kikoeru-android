@@ -231,4 +231,9 @@ public class Api {
         return  App.getInstance().currentUser().getHost()
                 + String.format("/api/cover/%d?type=sam&token=%s", rjNumber, Api.token);
     }
+
+    public static String fullCoverImageUrl(long rjNumber ){
+        return  App.getInstance().currentUser().getHost()
+                + String.format("/api/cover/%d?token=%s", rjNumber, Api.token);
+    }
 }

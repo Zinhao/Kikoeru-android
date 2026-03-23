@@ -404,16 +404,30 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         String itemTitle = item.getString("title");
         String itemMediaStreamUrl = item.getString(JSONConst.WorkTree.MEDIA_STREAM_URL);
         List<JSONObject> musicArray = new ArrayList<>();
-        int index = 0;
+        List<JSONObject> lrcArray = new ArrayList<>();
+        int clickItemIndex = 0;
         for (int i = 0; i < workTreeAdapter.getData().length(); i++) {
-            JSONObject _item = workTreeAdapter.getData().getJSONObject(i);
-            if ("audio".equals(_item.getString("type"))) {
-                musicArray.add(_item);
-                if (_item.getString(JSONConst.WorkTree.HASH).equals(itemHash)) {
-                    index = musicArray.size() - 1;
+            JSONObject seekItem = workTreeAdapter.getData().getJSONObject(i);
+            String fileType = seekItem.getString("type");
+            if ("audio".equals(fileType)) {
+                musicArray.add(seekItem);
+                if (seekItem.getString(JSONConst.WorkTree.HASH).equals(itemHash)) {
+                    clickItemIndex = musicArray.size() - 1;
                 }
             }
+            if("text".equals(fileType)){
+                lrcArray.add(seekItem);
+            }
         }
+        if(!item.has(JSONConst.WorkTree.LRC_INFO)){
+            try {
+                findLrcInfo(musicArray,lrcArray);
+            }catch (JSONException e){
+                e.printStackTrace(System.err);
+                alertException(e);
+            }
+        }
+
         if (ctrlBinder.getCurrent() != null && ctrlBinder.getCurrent().getString(JSONConst.WorkTree.MEDIA_STREAM_URL).equals(itemMediaStreamUrl)) {
             if (itemTitle.toLowerCase(Locale.ROOT).endsWith(".mp4")) {
                 startActivity(new Intent(WorkTreeActivity.this, VideoPlayerActivity.class));
@@ -421,7 +435,34 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                 startActivity(new Intent(WorkTreeActivity.this, AudioPlayerActivity.class));
             }
         } else {
-            ctrlBinder.play(musicArray, index);
+            ctrlBinder.play(musicArray, clickItemIndex);
+        }
+    }
+
+    public void findLrcInfo(List<JSONObject> musicArray,List<JSONObject> lrcArray) throws JSONException {
+        for (JSONObject audioItem : musicArray) {
+            for (JSONObject lrcItem : lrcArray) {
+                String audioTitle = audioItem.optString("title");
+                String lrcTitle = lrcItem.optString("title");
+                if (audioTitle.isEmpty() || lrcTitle.isEmpty()) {
+                    break;
+                }
+                if (lrcTitle.contains(audioTitle)) {
+                    // audio_title.mp3 -> audio_title.mp3.lrc
+                    audioItem.put("lrc_info", lrcItem);
+                    break;
+                } else {
+                    // audio_title.mp3 -> audio_title.lrc
+                    if (audioTitle.contains(".") && lrcTitle.contains(".")) {
+                        int lastPoint = audioTitle.lastIndexOf(".");
+                        String audioTitleContent = audioTitle.substring(0, lastPoint);
+                        if (lrcTitle.contains(audioTitleContent)) {
+                            audioItem.put("lrc_info", lrcItem);
+                            break;
+                        }
+                    }
+                }
+            }
         }
     }
 

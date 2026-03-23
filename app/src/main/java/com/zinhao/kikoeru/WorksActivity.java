@@ -486,17 +486,32 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
     private void initLayout(int layoutType) {
         RecyclerView.LayoutManager layoutManager = null;
         recyclerView.removeItemDecoration(itemDecoration);
+        final int col;
         if (layoutType == WorkAdapter.LAYOUT_LIST) {
             layoutManager = new LinearLayoutManager(WorksActivity.this);
+            col = 1;
         } else if (layoutType == WorkAdapter.LAYOUT_SMALL_GRID) {
-            int col = Math.max(getResources().getDisplayMetrics().widthPixels/395,3);
+            col = Math.max(getResources().getDisplayMetrics().widthPixels/395,3);
             layoutManager = new GridLayoutManager(WorksActivity.this, col);
         } else if (layoutType == WorkAdapter.LAYOUT_BIG_GRID) {
-            int col = Math.max(getResources().getDisplayMetrics().widthPixels/395,2);
+            col = Math.max(getResources().getDisplayMetrics().widthPixels/395,2);
             layoutManager = new GridLayoutManager(WorksActivity.this, col);
         }else if(layoutType == WorkAdapter.LAYOUT_STAGGERED){
-            int col = Math.max(getResources().getDisplayMetrics().widthPixels/395,2);
+            col = Math.max(getResources().getDisplayMetrics().widthPixels/395,2);
             layoutManager = new StaggeredGridLayoutManager(col,StaggeredGridLayoutManager.VERTICAL);
+        } else {
+            col = 1;
+        }
+        if(layoutManager instanceof GridLayoutManager){
+            ((GridLayoutManager)layoutManager).setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+                @Override
+                public int getSpanSize(int position) {
+                    if(position == works.size()){
+                        return col;
+                    }
+                    return 1;
+                }
+            });
         }
         workAdapter = new WorkAdapter(works, layoutType);
         workAdapter.setTagClickListener(this);

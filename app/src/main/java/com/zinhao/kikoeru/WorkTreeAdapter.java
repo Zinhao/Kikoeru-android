@@ -20,7 +20,6 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -37,8 +36,8 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private static final int TYPE_HEADER = 295;
     private static final int TYPE_FILE = 296;
     private static final int TYPE_PARENT_DIR = 297;
-    private int unCacheItemBackgroundColor = -1;
-    private int cachedItemBackgroundColor = -1;
+    private int unCacheColor = Color.TRANSPARENT;
+    private int cachedColor = -1;
 
     public void setPathChangeListener(RelativePathChangeListener pathChangeListener) {
         this.pathChangeListener = pathChangeListener;
@@ -80,14 +79,14 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        if (unCacheItemBackgroundColor == -1 || cachedItemBackgroundColor == -1) {
+        if (unCacheColor == -1 || cachedColor == -1) {
             Context context = parent.getContext();
             TypedValue typedValue = new TypedValue();
             context.getTheme().resolveAttribute(android.R.attr.textAppearanceLarge, typedValue, true);
-            int[] attribute = new int[]{R.attr.colorOnPrimary, R.attr.colorOnSecondary};
+            int[] attribute = new int[]{android.R.attr.textColor, android.R.attr.colorPrimary};
             TypedArray array = context.obtainStyledAttributes(typedValue.resourceId, attribute);
-            unCacheItemBackgroundColor = array.getColor(0, Color.WHITE);
-            cachedItemBackgroundColor = array.getColor(1, Color.WHITE);
+            unCacheColor = array.getColor(0, Color.GRAY);
+            cachedColor = array.getColor(1, Color.GREEN);
             array.recycle();
         }
         View v;
@@ -140,9 +139,9 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 ((SimpleViewHolder) holder).tvTitle.setText(itemTitle);
                 boolean exists = item.getBoolean(JSONConst.WorkTree.EXISTS);
                 if (exists) {
-                    ((SimpleViewHolder) holder).ivCover.setBackgroundColor(cachedItemBackgroundColor);
+                    ((SimpleViewHolder) holder).tvTitle.setTextColor(cachedColor);
                 } else {
-                    ((SimpleViewHolder) holder).ivCover.setBackgroundColor(unCacheItemBackgroundColor);
+                    ((SimpleViewHolder) holder).tvTitle.setTextColor(unCacheColor);
                 }
 
                 if ("folder".equals(item.getString("type"))) {

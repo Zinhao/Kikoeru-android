@@ -142,12 +142,11 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if (holder instanceof GirdViewHolder) {
             GirdViewHolder girdHolder = (GirdViewHolder) holder;
             try {
-                Glide.with(holder.itemView.getContext()).load(App.getInstance().currentUser().getHost() + String.format("/api/cover/%d?token=%s", item.getInt("id"), Api.token))
+                Glide.with(holder.itemView.getContext()).load(Api.fullCoverImageUrl(item.optInt("id")))
                         .apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
                 girdHolder.tvTitle.setText(item.getString("title"));
                 girdHolder.tvArt.setTags(App.getVasList(item), TagsView.JSON_TEXT_GET.setKey("name"));
                 girdHolder.tvArt.setTagClickListener(vaClickListener);
-                girdHolder.tvCom.setText(item.getString("name"));
                 girdHolder.tvTags.setTags(App.getTagsList(item), textGet);
                 girdHolder.tvCircles.setTags(Collections.singletonList(item.getString("name")),TagsView.STRING_TEXT_GET);
                 girdHolder.tvCircles.setTagClickListener(circlesClickListener);
@@ -180,7 +179,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if (holder instanceof SmallGirdViewHolder) {
             SmallGirdViewHolder girdHolder = (SmallGirdViewHolder) holder;
             try {
-                Glide.with(holder.itemView.getContext()).load(App.getInstance().currentUser().getHost() + String.format("/api/cover/%d?token=%s", item.getInt("id"), Api.token))
+                Glide.with(holder.itemView.getContext()).load(Api.fullCoverImageUrl(item.optInt("id")))
                         .apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
                 girdHolder.tvRjNumber.setText(String.format("RJ%d", item.getInt("id")));
                 girdHolder.tvDate.setText(item.getString("release"));
@@ -233,7 +232,6 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public static class GirdViewHolder extends RecyclerView.ViewHolder {
         private final ImageView ivCover;
         private final TextView tvTitle;
-        private final TextView tvCom;
         private final TagsView<JSONArray> tvArt;
         private final TagsView<JSONArray> tvTags;
         private final TagsView<List<String>> tvCircles;
@@ -247,7 +245,6 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             super(itemView);
             ivCover = itemView.findViewById(R.id.ivCover);
             tvTitle = itemView.findViewById(R.id.tvTitle);
-            tvCom = itemView.findViewById(R.id.tvCom);
             tvArt = itemView.findViewById(R.id.tvArt);
             tvTags = itemView.findViewById(R.id.tvTags);
             tvRjNumber = itemView.findViewById(R.id.tvRjNumber);

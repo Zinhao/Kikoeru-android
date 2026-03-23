@@ -43,7 +43,7 @@
     <string name="opensource_license">开源代码许可</string>
     <string name="user_name">帐号</string>
     <string name="user_password">密码</string>
-    <string name="user_guest">来宾</string>
+    <string name="user_guest">访客</string>
     <string name="user_sigin_in">登录</string>
     <string name="user_sign_up">注册</string>
     <string name="cover_image">封面图片</string>

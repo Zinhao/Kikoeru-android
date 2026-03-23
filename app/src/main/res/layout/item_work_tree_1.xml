@@ -16,14 +16,15 @@
             android:src="@drawable/ic_baseline_folder_24"/>
 
     <TextView
-        android:id="@+id/tvTitle"
-        android:layout_width="match_parent"
-        android:layout_height="20dp"
-        android:layout_alignTop="@+id/ivCover"
-        android:layout_marginStart="0dp"
-        android:layout_marginTop="0dp"
-        android:layout_toEndOf="@+id/ivCover"
-        android:text="title" />
+            android:id="@+id/tvTitle"
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:layout_alignTop="@+id/ivCover"
+            android:layout_marginStart="0dp"
+            android:layout_marginTop="0dp"
+            android:fontFamily="sans-serif-medium"
+            android:layout_toEndOf="@+id/ivCover"
+            android:text="title"/>
 
 
     <TextView

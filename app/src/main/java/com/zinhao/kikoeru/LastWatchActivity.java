@@ -1,6 +1,7 @@
 package com.zinhao.kikoeru;
 
 import android.os.Bundle;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import com.zinhao.kikoeru.databinding.ActivityLocalHistoryBinding;
 import com.zinhao.kikoeru.db.LocalWorkHistory;
@@ -31,20 +32,22 @@ public class LastWatchActivity extends BaseActivity {
             public void bindData(SuperRecyclerAdapter.SuperVHolder  holder, int position) {
                 LocalWorkHistory item = localWorkHistoryList.get(position);
 
-                String coverUrl = Api.minCoverImageUrl(item.getRjNumber());
+                String coverUrl = Api.fullCoverImageUrl(item.getRjNumber());
                 holder.setImage(coverUrl,R.id.ivCover);
 
-                holder.setText(""+item.getRjNumber() +item.getTitle(),R.id.tvTitle);
+//                holder.setText(""+item.getRjNumber() +item.getTitle(),R.id.tvTitle);
 
             }
 
             @Override
             public int setLayout(int viewType) {
-                return R.layout.item_work_1;
+                return R.layout.item_work_3;
             }
 
         });
-        viewBinding.mainRecycler.setLayoutManager(new LinearLayoutManager(this));
+        int col = Math.max(getResources().getDisplayMetrics().widthPixels/395,3);
+        GridLayoutManager layoutManager = new GridLayoutManager(LastWatchActivity.this, col);
+        viewBinding.mainRecycler.setLayoutManager(layoutManager);
 
 
 
