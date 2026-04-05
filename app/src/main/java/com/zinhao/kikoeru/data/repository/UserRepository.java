@@ -90,6 +90,8 @@ public class UserRepository {
                         public void run() {
                             Log.i("UserRepository", "Login success, userId=" + user.getId());
                             Api.init(loginResponse.getToken(), host);
+                            App.getInstance().setValue(App.CONFIG_USER_DATABASE_ID, user.getId());
+                            App.getInstance().setCurrentUserId(user.getId());
                         }
                     });
 
