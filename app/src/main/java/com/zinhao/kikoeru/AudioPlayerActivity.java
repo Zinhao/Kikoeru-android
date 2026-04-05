@@ -3,9 +3,13 @@ package com.zinhao.kikoeru;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Bitmap;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
@@ -16,11 +20,15 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.palette.graphics.Palette;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.CustomViewTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.google.android.exoplayer2.Player;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
@@ -37,7 +45,7 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
     private ImageButton ibPrevious;
     private ImageButton ibPause;
     private ImageButton ibNext;
-    private ImageButton ibWork;
+    private ImageButton ibLrc;
     private ImageButton ibLoop;
     private TextView tvLrc;
     private TextView tvUpLrc;
@@ -50,12 +58,18 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
         imageView = findViewById(R.id.ivCover);
+        imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Api.doGetWork(String.valueOf(ctrlBinder.getCurrentAlbumId()), 1, searchWorkCallback);
+            }
+        });
         RoundedCorners roundedCorners = new RoundedCorners(20);
         options = RequestOptions.bitmapTransform(roundedCorners);
         ibPrevious = findViewById(R.id.ib1);
         ibPause = findViewById(R.id.ib2);
         ibNext = findViewById(R.id.ib3);
-        ibWork = findViewById(R.id.imageButton2);
+        ibLrc = findViewById(R.id.imageButton2);
         ibLoop = findViewById(R.id.ibLoop);
         tvLrc = findViewById(R.id.tvLrc);
         tvUpLrc = findViewById(R.id.tvUpLrc);
@@ -169,13 +183,22 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
             ctrlBinder.hideLrcFloatWindow();
         }
         updateLoopIcon();
-        ibWork.setOnClickListener(new View.OnClickListener() {
+        ibLrc.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Api.doGetWork(String.valueOf(ctrlBinder.getCurrentAlbumId()), 1, searchWorkCallback);
+                if(ctrlBinder.isLrcWindowShow()){
+                    ctrlBinder.hideLrcFloatWindow();
+                }else{
+                    ctrlBinder.showLrcFloatWindow();
+                }
             }
         });
         timeProgressView.setMax((int) ctrlBinder.getExoPlayer().getDuration());
+        if (ctrlBinder != null && ctrlBinder.getExoPlayer() != null && ctrlBinder.getExoPlayer().isPlaying()) {
+            long current = ctrlBinder.getExoPlayer().getCurrentPosition();
+            long buffer = ctrlBinder.getExoPlayer().getBufferedPosition();
+            timeProgressView.setProgress((int) current, (int)buffer);
+        }
         updateSeek();
     }
 
@@ -183,21 +206,63 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
     public void onServiceDisconnected(ComponentName name) {
     }
 
+
+
     @Override
-    public void onChange(Lrc.LrcRow currentRow) {
+    public void onChange(Lrc.LrcRow lrcRow) {
+        Log.i("LRC","change to:"+ lrcRow.content);
+        final Lrc.LrcRow currentRow = lrcRow;
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                tvUpLrc.setText(currentRow.getUpRow().content);
-                tvLrc.setText(currentRow.content);
-                tvNextLrc.setText(currentRow.getNextRow().content);
+                if(currentRow == Lrc.LrcRow.NONE){
+                    tvUpLrc.setText("");
+                    tvNextLrc.setText("");
+                }else{
+                    tvUpLrc.setText(String.format("%s %s",currentRow.getUpRow().strTime,currentRow.getUpRow().content));
+                    tvNextLrc.setText(String.format("%s %s",currentRow.getNextRow().strTime,currentRow.getNextRow().content));
+                }
+                tvLrc.setText(String.format("%s %s",currentRow.strTime,currentRow.content));
             }
         });
     }
 
     @Override
     public void onAlbumChange(int rjNumber) {
-        Glide.with(this).load(Api.formatGetUrl(String.format(Locale.US, "/api/cover/%d", rjNumber), true)).apply(options).into(imageView);
+        Glide.with(this).asBitmap().load(Api.formatGetUrl(String.format(Locale.US, "/api/cover/%d", rjNumber), true)).apply(options).into(new CustomViewTarget<ImageView, Bitmap>(imageView) {
+
+            @Override
+            public void onLoadFailed(@Nullable Drawable drawable) {
+
+            }
+
+            @Override
+            public void onResourceReady(@NonNull Bitmap bitmap, @Nullable Transition<? super Bitmap> transition) {
+                imageView.setImageBitmap(bitmap);
+                Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
+                    @Override
+                    public void onGenerated(@Nullable Palette palette) {
+                        View bg = (View) imageView.getParent();
+                        if(bg!=null&& palette!=null){
+                            int mainColor = palette.getDarkMutedColor(ActivityCompat.getColor(AudioPlayerActivity.this,R.color.main_color));
+                            bg.setBackgroundColor(mainColor);
+                            getWindow().setNavigationBarColor(mainColor);
+                            getWindow().setStatusBarColor(mainColor);
+                            ActionBar actionBar = getSupportActionBar();
+                            if(actionBar!=null)
+                                actionBar.setBackgroundDrawable(new ColorDrawable(mainColor));
+
+                        }
+
+                    }
+                });
+            }
+
+            @Override
+            protected void onResourceCleared(@Nullable Drawable drawable) {
+
+            }
+        });
     }
 
     @Override
@@ -232,7 +297,8 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
             public void run() {
                 if (ctrlBinder != null && ctrlBinder.getExoPlayer() != null && ctrlBinder.getExoPlayer().isPlaying()) {
                     long current = ctrlBinder.getExoPlayer().getCurrentPosition();
-                    timeProgressView.setProgress((int) current);
+                    long buffer = ctrlBinder.getExoPlayer().getBufferedPosition();
+                    timeProgressView.setProgress((int) current, (int)buffer);
                 }
                 if (!isDestroyed())
                     updateSeek();
@@ -261,7 +327,7 @@ public class AudioPlayerActivity extends BaseActivity implements ServiceConnecti
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        SubMenu subMenu = menu.addSubMenu(0, 0, 0, "stop after");
+        SubMenu subMenu = menu.addSubMenu(0, 0, 0, R.string.stop_delay);
         subMenu.add(1, 1, 1, "30 minutes");
         subMenu.add(1, 2, 2, "60 minutes");
         subMenu.add(1, 3, 3, "90 minutes");

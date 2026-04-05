@@ -14,10 +14,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.Locale;
 
 public class Api {
-    private static String HOST = "localhost:8888";
+    private static String HOST = "http://localhost:8888";
     private static final String TAG = "Api";
     public static final String REMOTE_HOST = "https://api.asmr.one";
-    public static final String LOCAL_HOST = "localhost:8888";
+    public static final String LOCAL_HOST = "http://localhost:8888";
     public static String authorization = "";
     public static String token = "";
     private static int subtitle = 1;
@@ -81,6 +81,14 @@ public class Api {
     public static void doGetWorkByVa(int page, String vaId, AsyncHttpClient.JSONObjectCallback callback) {
 //        http://localhost:8888/api/vas/2b5e7ab5-d994-5491-a53c-f1b6ae562d0e/works?order=price&sort=desc&page=1&seed=68
         AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST + String.format("/api/vas/%s/works?order=%s&sort=%s&page=%d&seed=21&subtitle=%d", vaId, order, makeSort(), page, subtitle)), "GET");
+        request.setTimeout(5000);
+        request.addHeader("authorization", authorization);
+        AsyncHttpClient.getDefaultInstance().executeJSONObject(request, callback);
+    }
+
+    public static void doGetWorkByCircles(int page, long circlesId, AsyncHttpClient.JSONObjectCallback callback) {
+        //    http://localhost:8980/api/circles/54978/works?order=release&sort=desc&page=1&seed=59
+        AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST + String.format("/api/circles/%d/works?order=%s&sort=%s&page=%d&seed=21&subtitle=%d", circlesId, order, makeSort(), page, subtitle)), "GET");
         request.setTimeout(5000);
         request.addHeader("authorization", authorization);
         AsyncHttpClient.getDefaultInstance().executeJSONObject(request, callback);
@@ -169,6 +177,17 @@ public class Api {
         AsyncHttpClient.getDefaultInstance().executeJSONObject(request, callback);
     }
 
+    /***
+     * http://localhost:8980/api/circles/
+     * @param callback
+     */
+    public static void doGetCirclesList(AsyncHttpClient.JSONArrayCallback callback) {
+        AsyncHttpRequest request = new AsyncHttpRequest(Uri.parse(HOST + "/api/circles/"), "GET");
+        request.setTimeout(5000);
+        request.addHeader("authorization", authorization);
+        AsyncHttpClient.getDefaultInstance().executeJSONArray(request, callback);
+    }
+
     /**
      * PUT
      * 标记在听 <a href="https://api.asmr.one/api/review?starOnly=false&progressOnly=true">...</a>
@@ -206,5 +225,15 @@ public class Api {
                 return String.format("%s%s", HOST, path);
             }
         }
+    }
+
+    public static String minCoverImageUrl(long rjNumber ){
+        return  App.getInstance().currentUser().getHost()
+                + String.format("/api/cover/%d?type=sam&token=%s", rjNumber, Api.token);
+    }
+
+    public static String fullCoverImageUrl(long rjNumber ){
+        return  App.getInstance().currentUser().getHost()
+                + String.format("/api/cover/%d?token=%s", rjNumber, Api.token);
     }
 }

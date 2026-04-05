@@ -104,8 +104,8 @@ public class TagsView<T> extends View {
 
     public TagsView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        MIN_WIDTH = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 300, context.getResources().getDisplayMetrics());
-        MIN_HEIGHT = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 300, context.getResources().getDisplayMetrics());
+        MIN_WIDTH = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, context.getResources().getDisplayMetrics());
+        MIN_HEIGHT = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, context.getResources().getDisplayMetrics());
         textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         textPaint.setTextAlign(Paint.Align.CENTER);
         setTextSize(12);
@@ -158,13 +158,10 @@ public class TagsView<T> extends View {
             }
 
             @Override
-            public void onLongPress(MotionEvent e) {
-                Log.d(TAG, "onLongPress: ");
-            }
+            public void onLongPress(MotionEvent e) {}
 
             @Override
             public boolean onDown(MotionEvent e) {
-                Log.d(TAG, "onDown: ");
                 if (tagClickListener == null)
                     return false;
                 for (int i = 0; i < tagsRectFs.size(); i++) {
@@ -308,7 +305,7 @@ public class TagsView<T> extends View {
             float rectH = rectFH + textPadding;
 
             if (x + rectW > w) {
-                y += rectH + getPaddingTop() + getPaddingBottom();
+                y += rectH+getPaddingBottom();
                 x = 0;
             }
             tagsRectFs.get(i).set(x, y, x + rectW, y + rectH);

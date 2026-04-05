@@ -1,13 +1,20 @@
 <resources>
     <string name="app_name" translatable="false">Kikoeru</string>
     <string name="project_kikoeru_android_url" translatable="false">https://github.com/Zinhao/Kikoeru-android</string>
-    <string name="project_glide_license" translatable="false">https://github.com/bumptech/glide/blob/master/LICENSE</string>
-    <string name="project_exo_player_license" translatable="false">https://github.com/google/ExoPlayer/blob/release-v2/LICENSE</string>
-    <string name="project_android_async_license" translatable="false">https://github.com/koush/AndroidAsync/blob/master/LICENSE</string>
-    <string name="project_subsampling_scale_image_view_license" translatable="false">https://github.com/davemorrissey/subsampling-scale-image-view/blob/master/LICENSE</string>
+    <string name="project_glide_license" translatable="false">https://github.com/bumptech/glide/blob/master/LICENSE
+    </string>
+    <string name="project_exo_player_license" translatable="false">
+        https://github.com/google/ExoPlayer/blob/release-v2/LICENSE
+    </string>
+    <string name="project_android_async_license" translatable="false">
+        https://github.com/koush/AndroidAsync/blob/master/LICENSE
+    </string>
+    <string name="project_subsampling_scale_image_view_license" translatable="false">
+        https://github.com/davemorrissey/subsampling-scale-image-view/blob/master/LICENSE
+    </string>
     <string name="file_provider" translatable="false">com.zinhao.kikoeru.fileProvider</string>
 
-    <string name="channel_description">play control</string>
+    <string name="channel_description">player control</string>
     <string name="action_settings">Settings</string>
     <string name="sign_out">sign out</string>
     <string name="my_progress">self progress</string>
@@ -58,9 +65,14 @@
     <string name="_2022_01_02" translatable="false">2022-01-02</string>
     <string name="https_api_asmr_net" translatable="false">https://api.asmr.net</string>
     <string name="external_storage_tip">
-        存储到自定义外部目录，即使应用被删除，你缓存的内容也不会被删除，检测到权限未打开，需要权限。
+        存储到自定义外部目录，即使应用被删除，你下载的内容也不会被删除，检测到权限未打开，需要权限。
     </string>
     <string name="tip">Tip</string>
-
-
+    <string name="extra_path">public dir</string>
+    <string name="private_path">private dir</string>
+    <string name="no_lrc">no lrc</string>
+    <string name="stop_delay">stop delay</string>
+    <string name="delete_cache">delete cache</string>
+    <string name="local_history">history view</string>
+    <string name="staggered">staggered</string>
 </resources>

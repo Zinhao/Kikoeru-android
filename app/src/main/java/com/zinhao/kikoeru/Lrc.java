@@ -17,6 +17,37 @@ public class Lrc {
     public Lrc(String text) {
         this.text = text;
         lrcRows = new ArrayList<>();
+        if(text.startsWith("WEBVTT")){
+            initVtt(text);
+        }else{
+            initLrc(text);
+        }
+    }
+
+    private void initVtt(String text){
+        String[] rows = text.split("\n");
+        int r = 0;
+        while (r < rows.length) {
+            if ("WEBVTT".equals(rows[r])) {
+                r++;
+                continue;
+            }
+            if (rows[r].isEmpty()) {
+                LrcRow l = paserRow(rows, r + 1);
+                System.out.println(String.format("[%s] %s", l.strTime, l.content));
+                lrcRows.add(l);
+            }
+            r += 4;
+        }
+        for (int i = 0; i < lrcRows.size() - 1; i++) {
+            LrcRow lrcRow = lrcRows.get(i);
+            if(i!=0)
+                lrcRow.upRow = lrcRows.get(i - 1);
+            lrcRow.nextRow = lrcRows.get(i + 1);
+        }
+    }
+
+    private void initLrc(String text){
         String[] rows = text.split("\n");
         for (int i = 0; i < rows.length; i++) {
             // [00:02.92]欢迎回来
@@ -34,7 +65,6 @@ public class Lrc {
                     }
                 } catch (Exception e) {
                     Log.e(TAG, "Lrc: err lrc row:" + timeStr);
-                    continue;
                 }
             }
         }
@@ -56,13 +86,6 @@ public class Lrc {
         return current;
     }
 
-    private static long transToLong(String timeStr) {
-        String m = timeStr.substring(0, timeStr.indexOf(':'));
-        String s = timeStr.substring(timeStr.indexOf(':') + 1, timeStr.indexOf('.'));
-        String ms = timeStr.substring(timeStr.indexOf(".") + 1);
-        return Long.parseLong(m) * 60 * 1000 + Long.parseLong(s) * 1000 + Long.parseLong(ms);
-    }
-
     public LrcRow update(long seek) {
         if (currentIndex == lrcRows.size() - 1)
             return current;
@@ -70,26 +93,23 @@ public class Lrc {
         if (current == null) {
             current = lrcRows.get(0);
             currentIndex = 0;
+            return current;
         }
 
         if (current.time <= seek) {
-            for (int i = currentIndex + 1; i < lrcRows.size() - 1; i++) {
-                LrcRow lrcRow = lrcRows.get(i);
-                if (lrcRow.time > seek && current.time <= seek) {
-                    break;
-                } else {
-                    currentIndex = i;
-                    current = lrcRow;
-                }
+            LrcRow nextLrcRow = lrcRows.get(currentIndex+1);
+            if (nextLrcRow.time - seek < 300) {
+                currentIndex++;
+                current = nextLrcRow;
             }
         } else {
+            // user scroll seek
             for (int i = currentIndex; i > 0; i--) {
-                LrcRow lrcRow = lrcRows.get(i);
-                if (lrcRow.time > seek && current.time < seek) {
+                current = lrcRows.get(i);
+                currentIndex = i;
+                if(current.getUpRow().time < seek &&
+                        current.time > seek){
                     break;
-                } else {
-                    currentIndex = i;
-                    current = lrcRow;
                 }
             }
         }
@@ -104,8 +124,65 @@ public class Lrc {
         return lrcRows;
     }
 
+    public static LrcRow paserRow(String[] text, int offset) {
+        int position = Integer.parseInt(text[offset]);
+        String timeStr = text[offset + 1];
+        if (!timeStr.contains("-->")) {
+            System.out.println("time str err");
+            return LrcRow.NONE;
+        }
+        String[] times = timeStr.split("-->");
+        String startTimeStr = times[0].trim();
+        String endTimeStr = times[1].trim();
+
+        long startTime = transToLong(startTimeStr);
+        long endTime = transToLong(endTimeStr);
+
+        String content = text[offset + 2];
+        return new LrcRow(startTimeStr, startTime, content);
+    }
+
+    /**
+     * @param timeStr 00:00:04.980
+     * @return 4980
+     */
+    private static long transToLong(String timeStr) {
+        if(!timeStr.contains(":")){
+            return Math.round(Float.parseFloat(timeStr));
+        }
+        String[] strings = timeStr.split(":");
+        String h = "0";
+        String m = "0";
+        String s = "0";
+        String ms = "0";
+        if (strings.length == 3) {
+            h = strings[0];
+            m = strings[1];
+            if (strings[2].contains(".")) {
+                String[] sWithMs = strings[2].split("\\.");
+                s = sWithMs[0];
+                ms = sWithMs[1];
+            } else {
+                s = strings[2];
+            }
+        } else if (strings.length == 2) {
+            m = strings[0];
+            if (strings[1].contains(".")) {
+                String[] sWithMs = strings[1].split("\\.");
+                s = sWithMs[0];
+                ms = sWithMs[1];
+            } else {
+                s = strings[1];
+            }
+        }
+        return Long.parseLong(h) * 60 * 1000 * 60 +
+                Long.parseLong(m) * 60 * 1000 +
+                Long.parseLong(s) * 1000 +
+                Long.parseLong(ms);
+    }
+
     public static class LrcRow {
-        public static final LrcRow NONE = new LrcRow("00:00", 0, "");
+        public static final LrcRow NONE = new LrcRow("无歌词", 0, "");
         public LrcRow upRow = NONE;
         public LrcRow nextRow = NONE;
         public String strTime;

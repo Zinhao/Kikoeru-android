@@ -18,25 +18,32 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
+import com.zinhao.kikoeru.db.LocalWorkHistory;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -59,6 +66,50 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
     private TextView tvTitle;
     private TextView tvWorkTitle;
     private ImageButton ibStatus;
+    private ImageButton ibFloatLrc;
+
+    private HeaderViewCompat headerViewCompat;
+
+    private class HeaderViewCompat{
+        private TagsView.TagClickListener tagClickListener;
+        private TagsView.TagClickListener vaClickListener;
+        private TagsView.TagClickListener circlesClickListener;
+        private ImageView ivCover;
+        private TextView tvTitle;
+        private TagsView<JSONArray> tvArt;
+        private TagsView<JSONArray> tvTags;
+        private TextView tvDate;
+        private TextView tvPrice;
+        private TextView tvSaleCount;
+        private TextView tvHost;
+        private TagsView<List<String>> tvCircles;
+
+        public void setCirclesClickListener(TagsView.TagClickListener circlesClickListener) {
+            this.circlesClickListener = circlesClickListener;
+            tvCircles.setTagClickListener(circlesClickListener);
+
+        }
+        public void setTagClickListener(TagsView.TagClickListener<?> tagClickListener) {
+            this.tagClickListener = tagClickListener;
+            tvTags.setTagClickListener(tagClickListener);
+        }
+        public void setVaClickListener(TagsView.TagClickListener<?> vaClickListener) {
+            this.vaClickListener = vaClickListener;
+            tvArt.setTagClickListener(vaClickListener);
+        }
+
+        public HeaderViewCompat(@NonNull View itemView) {
+            ivCover = itemView.findViewById(R.id.ivCover);
+            tvTitle = itemView.findViewById(R.id.tvTitle);
+            tvArt = itemView.findViewById(R.id.tvArt);
+            tvTags = itemView.findViewById(R.id.tvTags);
+            tvDate = itemView.findViewById(R.id.tvDate);
+            tvPrice = itemView.findViewById(R.id.tvPrice);
+            tvSaleCount = itemView.findViewById(R.id.tvSaleCount);
+            tvHost = itemView.findViewById(R.id.tvHost);
+            tvCircles = itemView.findViewById(R.id.tvCircles);
+        }
+    }
 
     private final AsyncHttpClient.JSONArrayCallback docTreeCallback = new AsyncHttpClient.JSONArrayCallback() {
         @Override
@@ -73,14 +124,25 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
             jsonWorkTrees = jsonArray;
             // TODO 来自不同服务器的同一个作品（RJ号码相同），当用户执行下载操作时，目录树不一致。
             runOnUiThread(() -> {
-                workTreeAdapter = new WorkTreeAdapter(jsonWorkTrees, work);
+                workTreeAdapter = new WorkTreeAdapter(jsonWorkTrees,work.optInt("id"));
                 workTreeAdapter.setItemClickListener(WorkTreeActivity.this);
-                workTreeAdapter.setTagClickListener(WorkTreeActivity.this);
-                workTreeAdapter.setVaClickListener(vaClickListener);
+                workTreeAdapter.setParentDirClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (workTreeAdapter != null) {
+                            boolean r = workTreeAdapter.parentDir();
+                            if(r){
+                                finish();
+                            }
+                        }
+                    }
+                });
+
                 workTreeAdapter.setItemLongClickListener(WorkTreeActivity.this);
                 workTreeAdapter.setPathChangeListener(WorkTreeActivity.this);
                 RecyclerView.ItemDecoration itemDecoration = new DividerItemDecoration(WorkTreeActivity.this, DividerItemDecoration.VERTICAL);
                 recyclerView.addItemDecoration(itemDecoration);
+                recyclerView.setItemAnimator(null);
                 recyclerView.setLayoutManager(new LinearLayoutManager(WorkTreeActivity.this));
                 recyclerView.setAdapter(workTreeAdapter);
             });
@@ -103,14 +165,71 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                 return;
             }
         }
+
+        App app = (App)getApplication();
+        try {
+            LocalWorkHistory localWorkHistory = new LocalWorkHistory(
+                    work.getInt("id")
+                    ,System.currentTimeMillis(),"",
+                    work.getString("title"));
+            app.insertLocalHis(localWorkHistory, new Runnable() {
+                @Override
+                public void run() {
+
+                }
+            });
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+        inAnim = AnimationUtils.loadAnimation(this, R.anim.move_bottom_in);
         recyclerView = findViewById(R.id.recyclerView);
         bottomLayout = findViewById(R.id.bottomLayout);
         ivCover = bottomLayout.findViewById(R.id.imageView);
         tvTitle = bottomLayout.findViewById(R.id.textView);
         tvWorkTitle = bottomLayout.findViewById(R.id.textView2);
         ibStatus = bottomLayout.findViewById(R.id.button);
+        ibFloatLrc = bottomLayout.findViewById(R.id.imageButton);
+
+        View header = findViewById(R.id.header_info);
+        headerViewCompat = new HeaderViewCompat(header);
+        headerViewCompat.setTagClickListener(WorkTreeActivity.this);
+        headerViewCompat.setVaClickListener(vaClickListener);
+        headerViewCompat.setCirclesClickListener(circlesClickListener);
+        initHeader();
+
         bindService(new Intent(this, AudioService.class), this, BIND_AUTO_CREATE);
         init();
+    }
+
+    private void initHeader(){
+        try {
+            Glide.with(this).load(
+                    App.getInstance().currentUser().getHost() + String.format("/api/cover/%d?token=%s", work.getInt("id"), Api.token))
+                    .apply(App.getInstance().getDefaultPic())
+                    .into(headerViewCompat.ivCover);
+            headerViewCompat.tvTitle.setText(work.getString("title"));
+            headerViewCompat.tvArt.setTags(App.getVasList(work), TagsView.JSON_TEXT_GET.setKey("name"));
+            headerViewCompat.tvTags.setTags(App.getTagsList(work), TagsView.JSON_TEXT_GET.setKey("name"));
+            headerViewCompat.tvCircles.setTags(Collections.singletonList(work.getString("name")),TagsView.STRING_TEXT_GET);
+            String dateStr = work.optString("release");
+            if(dateStr.isEmpty()){
+                headerViewCompat.tvDate.setVisibility(View.GONE);
+            }else{
+                headerViewCompat.tvDate.setVisibility(View.VISIBLE);
+                headerViewCompat.tvDate.setText(dateStr);
+            }
+            headerViewCompat.tvPrice.setText(String.format("%d 日元", work.getInt("price")));
+            headerViewCompat.tvSaleCount.setText(String.format("售出：%d", work.getInt("dl_count")));
+            if (work.has(JSONConst.Work.HOST)) {
+                headerViewCompat.tvHost.setVisibility(View.VISIBLE);
+                headerViewCompat.tvHost.setText(work.getString(JSONConst.Work.HOST));
+            } else {
+                headerViewCompat.tvHost.setVisibility(View.INVISIBLE);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+            App.getInstance().alertException(e);
+        }
     }
 
     @Override
@@ -147,9 +266,19 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
 
     @Override
     public void onBackPressed() {
-        if (workTreeAdapter == null || workTreeAdapter.parentDir()) {
+        if(recyclerView.getAdapter() == workAdapter){
+            RecyclerView.ItemDecoration itemDecoration = new DividerItemDecoration(WorkTreeActivity.this, DividerItemDecoration.VERTICAL);
+            recyclerView.addItemDecoration(itemDecoration);
+            recyclerView.setLayoutManager(new LinearLayoutManager(WorkTreeActivity.this));
+            recyclerView.setAdapter(workTreeAdapter);
+            workAdapter = null;
+            if(workTreeAdapter == null){
+                super.onBackPressed();
+            }
+        }else{
             super.onBackPressed();
         }
+
     }
 
     @Override
@@ -275,16 +404,30 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         String itemTitle = item.getString("title");
         String itemMediaStreamUrl = item.getString(JSONConst.WorkTree.MEDIA_STREAM_URL);
         List<JSONObject> musicArray = new ArrayList<>();
-        int index = 0;
+        List<JSONObject> lrcArray = new ArrayList<>();
+        int clickItemIndex = 0;
         for (int i = 0; i < workTreeAdapter.getData().length(); i++) {
-            JSONObject _item = workTreeAdapter.getData().getJSONObject(i);
-            if ("audio".equals(_item.getString("type"))) {
-                musicArray.add(_item);
-                if (_item.getString(JSONConst.WorkTree.HASH).equals(itemHash)) {
-                    index = musicArray.size() - 1;
+            JSONObject seekItem = workTreeAdapter.getData().getJSONObject(i);
+            String fileType = seekItem.getString("type");
+            if ("audio".equals(fileType)) {
+                musicArray.add(seekItem);
+                if (seekItem.getString(JSONConst.WorkTree.HASH).equals(itemHash)) {
+                    clickItemIndex = musicArray.size() - 1;
                 }
             }
+            if("text".equals(fileType)){
+                lrcArray.add(seekItem);
+            }
         }
+        if(!item.has(JSONConst.WorkTree.LRC_INFO)){
+            try {
+                findLrcInfo(musicArray,lrcArray);
+            }catch (JSONException e){
+                e.printStackTrace(System.err);
+                alertException(e);
+            }
+        }
+
         if (ctrlBinder.getCurrent() != null && ctrlBinder.getCurrent().getString(JSONConst.WorkTree.MEDIA_STREAM_URL).equals(itemMediaStreamUrl)) {
             if (itemTitle.toLowerCase(Locale.ROOT).endsWith(".mp4")) {
                 startActivity(new Intent(WorkTreeActivity.this, VideoPlayerActivity.class));
@@ -292,7 +435,34 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                 startActivity(new Intent(WorkTreeActivity.this, AudioPlayerActivity.class));
             }
         } else {
-            ctrlBinder.play(musicArray, index);
+            ctrlBinder.play(musicArray, clickItemIndex);
+        }
+    }
+
+    public void findLrcInfo(List<JSONObject> musicArray,List<JSONObject> lrcArray) throws JSONException {
+        for (JSONObject audioItem : musicArray) {
+            for (JSONObject lrcItem : lrcArray) {
+                String audioTitle = audioItem.optString("title");
+                String lrcTitle = lrcItem.optString("title");
+                if (audioTitle.isEmpty() || lrcTitle.isEmpty()) {
+                    break;
+                }
+                if (lrcTitle.contains(audioTitle)) {
+                    // audio_title.mp3 -> audio_title.mp3.lrc
+                    audioItem.put("lrc_info", lrcItem);
+                    break;
+                } else {
+                    // audio_title.mp3 -> audio_title.lrc
+                    if (audioTitle.contains(".") && lrcTitle.contains(".")) {
+                        int lastPoint = audioTitle.lastIndexOf(".");
+                        String audioTitleContent = audioTitle.substring(0, lastPoint);
+                        if (lrcTitle.contains(audioTitleContent)) {
+                            audioItem.put("lrc_info", lrcItem);
+                            break;
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -317,8 +487,26 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         if (status == 0) {
             ibStatus.setImageResource(R.drawable.ic_baseline_play_arrow_24);
         } else {
-            bottomLayout.setVisibility(View.VISIBLE);
+            if(bottomLayout.getVisibility() == View.GONE){
+                showBottomLayout();
+            }
             ibStatus.setImageResource(R.drawable.ic_baseline_pause_24);
+        }
+    }
+
+    private boolean shouldShowAnim = true;
+    private Animation inAnim;
+    private void showBottomLayout() {
+        if(shouldShowAnim){
+            shouldShowAnim = false;
+            bottomLayout.setVisibility(View.VISIBLE);
+            bottomLayout.startAnimation(inAnim);
+            bottomLayout.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    shouldShowAnim = true;
+                }
+            }, inAnim.getDuration());
         }
     }
 
@@ -344,12 +532,27 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                 ctrlBinder.getController().getTransportControls().play();
             }
         });
+        ibFloatLrc.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(ctrlBinder.isLrcWindowShow()){
+                    ctrlBinder.hideLrcFloatWindow();
+                }else{
+                    ctrlBinder.showLrcFloatWindow();
+                }
+            }
+        });
         bottomLayout.setOnClickListener(v -> {
             try {
                 if (ctrlBinder.getCurrentTitle().endsWith("mp4")) {
                     startActivity(new Intent(WorkTreeActivity.this, VideoPlayerActivity.class));
                 } else {
-                    startActivity(new Intent(WorkTreeActivity.this, AudioPlayerActivity.class));
+                    Intent intent =new Intent(v.getContext(), AudioPlayerActivity.class);
+                    View view = v.findViewById(R.id.imageView);
+                    ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                            WorkTreeActivity.this, view, "hero_bottom" // 这里的字符串必须匹配 transitionName
+                    );
+                    startActivity(intent,options.toBundle());
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -360,9 +563,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
     }
 
     @Override
-    public void onServiceDisconnected(ComponentName name) {
-
-    }
+    public void onServiceDisconnected(ComponentName name) {}
 
     @Override
     public boolean onLongClick(View v) {
@@ -441,8 +642,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                     final DownloadUtils.Mission downLoadMission = new DownloadUtils.Mission(item);
                     downLoadMission.setSuccessCallback(() -> runOnUiThread(() -> {
                         if (!isDestroyed()) {
-                            workTreeAdapter.notifyWorkDataSetChanged();
-                            workTreeAdapter.notifyDataSetChanged();
+                            workTreeAdapter.mapFileExistValue();
                         }
                     }));
                     if (App.getInstance().isSaveExternal()) {
@@ -465,9 +665,11 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                     if (havePermission) {
                         saveWorkWithTree();
                         downLoadMission.start();
+                        runOnUiThread(()->{
+                            workTreeAdapter.notifyDataSetChanged();
+                        });
                     }
                     dialog.dismiss();
-
                 });
                 final String itemStreamUrl = item.getString(JSONConst.WorkTree.MEDIA_STREAM_URL);
                 builder.setPositiveButton("open in browser", (dialog, which) -> {
@@ -522,6 +724,55 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         }
     }
 
+    private WorkAdapter workAdapter;
+    private List<JSONObject> works;
+    private int page = 1;
+
+    private final AsyncHttpClient.JSONObjectCallback apisCallback = new AsyncHttpClient.JSONObjectCallback() {
+        @Override
+        public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
+            if (e != null) {
+                e.printStackTrace();
+                alertException(e);
+                return;
+            }
+            if (asyncHttpResponse == null || asyncHttpResponse.code() != 200) {
+                return;
+            }
+            try {
+                JSONArray jsonArray = jsonObject.getJSONArray("works");
+                int totalCount = jsonObject.getJSONObject("pagination").getInt("totalCount");
+                page = jsonObject.getJSONObject("pagination").getInt("currentPage") + 1;
+
+                if (jsonArray.length() != 0) {
+                    page = Math.min(page, totalCount / jsonArray.length() + 1);
+                }
+                runOnUiThread(new Runnable() {
+                    @SuppressLint("DefaultLocale")
+                    @Override
+                    public void run() {
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            try {
+                                if(works == null){
+                                    works = new ArrayList<>();
+                                }
+                                works.add(jsonArray.getJSONObject(i));
+                            } catch (JSONException jsonException) {
+                                jsonException.printStackTrace();
+                                alertException(jsonException);
+                            }
+                        }
+                        initLayout();
+                        workAdapter.notifyItemRangeInserted(Math.max(0, works.size() - jsonArray.length()), jsonArray.length());
+                        workAdapter.notifyItemRangeChanged(Math.max(0, works.size() - jsonArray.length()), jsonArray.length());
+                    }
+                });
+            } catch (JSONException jsonException) {
+                jsonException.printStackTrace();
+                alertException(jsonException);
+            }
+        }
+    };
 
     private final TagsView.TagClickListener<JSONObject> vaClickListener = jsonObject -> {
         try {
@@ -529,16 +780,42 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
             Log.d(TAG, "onTagClick: " + vaId);
             String vaName = jsonObject.getString("name");
             setTitle(vaName);
-            Intent intent = new Intent(WorkTreeActivity.this, WorksActivity.class);
-            intent.putExtra("resultType", "va");
-            intent.putExtra("id", vaId);
-            intent.putExtra("name", vaName);
-            startActivity(intent);
+            Api.doGetWorkByVa(page, vaId, apisCallback);
         } catch (JSONException e) {
             e.printStackTrace();
             alertException(e);
         }
     };
+
+    private final TagsView.TagClickListener<String> circlesClickListener = circlesName -> {
+        //todo
+        //http://localhost:8980/api/circles/
+        //http://localhost:8980/api/circles/54978/works?order=release&sort=desc&page=1&seed=59
+        long circlesId = App.getInstance().mapCirclesId(circlesName);
+        if(circlesId!=-1){
+            Api.doGetWorkByCircles(page,circlesId,apisCallback);
+        }
+        setTitle(circlesName);
+        Log.d(TAG, "onTagClick: " + circlesName);
+    };
+
+    private void initLayout() {
+        RecyclerView.LayoutManager layoutManager = null;
+        int col = Math.max(getResources().getDisplayMetrics().widthPixels/395,3);
+        layoutManager = new GridLayoutManager(this, col);
+        workAdapter = new WorkAdapter(works, WorkAdapter.LAYOUT_SMALL_GRID);
+        workAdapter.setItemClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                JSONObject item = (JSONObject) v.getTag();
+                Intent intent = new Intent(v.getContext(), WorkTreeActivity.class);
+                intent.putExtra("work_json_str", item.toString());
+                ActivityCompat.startActivity(v.getContext(), intent, null);
+            }
+        });
+        recyclerView.setLayoutManager(layoutManager);
+        recyclerView.setAdapter(workAdapter);
+    }
 
     @Override
     public void onPathChange(String path) {

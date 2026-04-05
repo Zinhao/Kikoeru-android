@@ -16,14 +16,15 @@
             android:src="@drawable/ic_baseline_folder_24"/>
 
     <TextView
-        android:id="@+id/tvTitle"
-        android:layout_width="match_parent"
-        android:layout_height="20dp"
-        android:layout_alignTop="@+id/ivCover"
-        android:layout_marginStart="0dp"
-        android:layout_marginTop="0dp"
-        android:layout_toEndOf="@+id/ivCover"
-        android:text="title" />
+            android:id="@+id/tvTitle"
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:layout_alignTop="@+id/ivCover"
+            android:layout_marginStart="0dp"
+            android:layout_marginTop="0dp"
+            android:fontFamily="sans-serif-medium"
+            android:layout_toEndOf="@+id/ivCover"
+            android:text="title"/>
 
 
     <TextView
@@ -34,6 +35,19 @@
             android:layout_alignStart="@+id/tvTitle"
             android:layout_marginStart="0dp"
             android:layout_marginTop="0dp"
-            android:text="tag"/>
+            android:text="10%"/>
+
+    <ProgressBar
+            android:id="@+id/pb1"
+            android:progress="10"
+            android:max="100"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:layout_below="@+id/tvTitle"
+            android:layout_alignStart="@+id/tvTitle"
+            android:layout_marginStart="40dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginTop="0dp"/>
 
 </RelativeLayout>

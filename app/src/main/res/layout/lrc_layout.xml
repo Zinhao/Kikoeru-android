@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:text="初始化"
+    android:text="---"
     android:gravity="center"
     android:padding="10dp"
-    android:textSize="20sp"
-    android:background="@drawable/card_bg_lrc"
+    android:textSize="36sp"
     android:textColor="@color/white"
+          android:background="#57000000"
+          android:shadowRadius="5"
+          android:shadowDy="3"
+          android:shadowDx="3"
+          android:shadowColor="@color/black"
     android:layout_height="wrap_content">
 
 </TextView>

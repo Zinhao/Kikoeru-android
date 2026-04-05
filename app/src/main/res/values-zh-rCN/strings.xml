@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="channel_description">播放控制</string>
+    <string name="channel_description">播放器控制</string>
     <string name="action_settings">设置</string>
     <string name="sign_out">登出</string>
     <string name="my_progress">我的进度</string>
@@ -43,12 +43,19 @@
     <string name="opensource_license">开源代码许可</string>
     <string name="user_name">帐号</string>
     <string name="user_password">密码</string>
-    <string name="user_guest">来宾</string>
+    <string name="user_guest">访客</string>
     <string name="user_sigin_in">登录</string>
     <string name="user_sign_up">注册</string>
-    <string name="cover_image">cover image</string>
+    <string name="cover_image">封面图片</string>
     <string name="external_storage_tip">
         存储到自定义外部目录，即使应用被删除，你缓存的内容也不会被删除，检测到权限未打开，需要权限。
     </string>
-    <string name="tip">Tip</string>
+    <string name="tip">提示</string>
+    <string name="extra_path">公共目录</string>
+    <string name="private_path">私有目录</string>
+    <string name="no_lrc">无歌词</string>
+    <string name="stop_delay">定时停止</string>
+    <string name="delete_cache">删除缓存</string>
+    <string name="local_history">最近</string>
+    <string name="staggered">瀑布流</string>
 </resources>
