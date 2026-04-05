@@ -5,20 +5,17 @@ plugins {
 def generateVersionName() {
     def date = new Date()
     def formattedDate = date.format("yyyyMMdd-HHmmss")
-    return "Release_build" + formattedDate
+    return "build" + formattedDate
 }
 android {
     compileSdk 36
 
     defaultConfig {
         applicationId "com.zinhao.kikoeru"
-        minSdk 30
-        //noinspection OldTargetApi,EditedTargetSdkVersion
+        minSdk 29
         targetSdk 36
         versionCode 13
         versionName generateVersionName()
-//        versionName "Release_9.0"
-//        setProperty("archivesBaseName", applicationId +"-v" + versionCode +"(" + versionName +")")
         javaCompileOptions {
             annotationProcessorOptions {
                 compilerArgumentProviders(
@@ -27,15 +24,35 @@ android {
             }
         }
     }
+    signingConfigs {
+        create("release") {
+            storeFile file("C:/Users/q1521/OneDrive/Jks/kikoeru-android-key")
+            storePassword System.getenv("KEYSTORE_PASSWORD")
+            keyAlias System.getenv("KEY_ALIAS")
+            keyPassword System.getenv("KEY_PASSWORD")
+        }
+    }
 
     buildTypes {
         release {
             minifyEnabled false
+            signingConfig signingConfigs.getByName("release")
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             // 禁用 Lint 检查
             lintOptions {
                 checkReleaseBuilds false  // 关闭 Release 的 Lint 检查
                 abortOnError false        // 即使发现错误也不中断构建
+            }
+            applicationVariants.configureEach { variant ->
+                variant.outputs.configureEach { output ->
+                    // 获取版本号
+                    def versionName = variant.versionName
+                    // 获取构建类型 (debug/release)
+                    def buildType = variant.buildType.name
+                    // 自定义文件名格式: 项目名_v版本号_日期_构建类型.apk
+                    def fileName = "Kikoeru_${versionName}_${buildType}.apk"
+                    outputFileName = fileName
+                }
             }
         }
     }
@@ -47,9 +64,6 @@ android {
         viewBinding true
     }
     namespace 'com.zinhao.kikoeru'
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
 }
 
 dependencies {
