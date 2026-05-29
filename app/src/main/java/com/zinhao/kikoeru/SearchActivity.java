@@ -117,6 +117,8 @@ public class SearchActivity extends BaseActivity implements TagsView.TagClickLis
         }
     };
 
+
+
     private AsyncHttpClient.JSONObjectCallback searchWorkCallback = new AsyncHttpClient.JSONObjectCallback() {
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {

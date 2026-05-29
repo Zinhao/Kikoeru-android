@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
 import com.zinhao.kikoeru.databinding.ActivityUserSwitchBinding;
+import com.zinhao.kikoeru.db.User;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

@@ -1,9 +1,15 @@
 package com.zinhao.kikoeru;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -14,9 +20,9 @@ import org.json.JSONObject;
 
 import java.io.File;
 
-public class TextRowActivity extends BaseActivity {
+public class TextRowActivity extends BaseActivity implements ServiceConnection {
     private static final String TAG = "TextRowActivity";
-
+    private AudioService.CtrlBinder ctrlBinder;
     public static void start(Context context, String jsonStr) {
         Intent starter = new Intent(context, TextRowActivity.class);
         starter.putExtra("jsonText", jsonStr);
@@ -53,6 +59,7 @@ public class TextRowActivity extends BaseActivity {
         setContentView(R.layout.activity_lrc_show);
         mRecyclerView = findViewById(R.id.recyclerView);
         String text = getIntent().getStringExtra("jsonText");
+        bindService(new Intent(this, AudioService.class), this, BIND_AUTO_CREATE);
         if (text == null) {
             finish();
             return;
@@ -75,10 +82,36 @@ public class TextRowActivity extends BaseActivity {
         }
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        menu.add(0, 0, 0, "load as lrc");
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if(item.getItemId() == 0){
+            if(ctrlBinder!=null){
+                ctrlBinder.setmLrc(mText.getText());
+            }
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
     private void init(String s) {
         mText = new Text(s);
         adapter = new TextAdapter(mText);
         mRecyclerView.setAdapter(adapter);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+    }
+
+    @Override
+    public void onServiceConnected(ComponentName name, IBinder service) {
+        ctrlBinder = (AudioService.CtrlBinder) service;
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName name) {
+
     }
 }

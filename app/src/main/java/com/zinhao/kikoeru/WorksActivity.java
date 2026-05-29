@@ -19,6 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.ListPopupWindow;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.ActivityOptionsCompat;
 import androidx.recyclerview.widget.*;
 import com.bumptech.glide.Glide;
 import com.koushikdutta.async.http.AsyncHttpClient;
@@ -34,7 +35,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class WorksActivity extends BaseActivity implements MusicChangeListener, ServiceConnection, TagsView.TagClickListener<JSONObject> {
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "WorksActivity";
     private static final String CONFIG_TYPE = "last_type";
     private static final String CONFIG_PAGE = "last_page";
     private static final String CONFIG_PARAM_INT = "last_param_int";
@@ -60,6 +61,8 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
     private String tagStr = "";
     private String vaId = "";
     private String vaName = "";
+    private String circlesName = "";
+    private long circlesId = -1;
 
     private static final int TYPE_ALL_WORK = 491;
     private static final int TYPE_SELF_LISTENING = 492;
@@ -70,11 +73,13 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
     private static final int TYPE_TAG_WORK = 497;
     private static final int TYPE_LOCAL_WORK = 498;
     private static final int TYPE_VA_WORK = 499;
+    private static final int TYPE_CIRCLES_WORK = 500;
 
     private int type = TYPE_ALL_WORK;
     private AudioService.CtrlBinder ctrlBinder;
     private static final int TAG_SELECT_RESULT = 14;
     private static final int VA_SELECT_RESULT = 15;
+    private static final int CIRCLES_SELECT_RESULT = 16;
 
     private ListPopupWindow progressMenu;
     private ListPopupWindow moreMenu;
@@ -104,10 +109,12 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
                 if (works.size() >= totalCount) {
+                    workAdapter.setLoading(false);
                     return;
                 }
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                     if (!recyclerView.canScrollVertically(1)) {
+                        Log.i(TAG,"work size:"+works.size() + ", total:"+ totalCount);
                         reloadRecycleView();
                     }
                 }
@@ -166,7 +173,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         moreMenu = new ListPopupWindow(this);
         moreMenu.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
                 Arrays.asList(getString(R.string.va_voicer),
-                        getString(R.string.tag),
+                        getString(R.string.tag),"Circles",
                         getString(R.string.local_works))));
         moreMenu.setModal(true);
         moreMenu.setAnchorView(bt3);
@@ -180,6 +187,9 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
                     startActivityForResult(new Intent(view.getContext(), TagsActivity.class), TAG_SELECT_RESULT);
                     break;
                 case 2:
+                    startActivityForResult(new Intent(view.getContext(), CirclesActivity.class), CIRCLES_SELECT_RESULT);
+                    break;
+                case 3:
                     type = TYPE_LOCAL_WORK;
                     clearWork();
                     reloadRecycleView();
@@ -224,6 +234,9 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
     }
 
     public void reloadRecycleView() {
+        if(workAdapter!=null){
+            workAdapter.setLoading(true);
+        }
         if (type == TYPE_ALL_WORK) {
             setTitle(getString(R.string.app_name));
             Api.doGetWorks(page, apisCallback);
@@ -248,7 +261,10 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         } else if (type == TYPE_VA_WORK) {
             setTitle(vaName);
             Api.doGetWorkByVa(page, vaId, apisCallback);
-        } else if (type == TYPE_LOCAL_WORK) {
+        } else if (type == TYPE_CIRCLES_WORK) {
+            setTitle(circlesName);
+            Api.doGetWorkByCircles(page, circlesId, apisCallback);
+        }else if (type == TYPE_LOCAL_WORK) {
             setTitle(String.format("%s", App.getInstance().isSaveExternal() ? "外部公共目录" : "内部私有目录"));
             try {
                 LocalFileCache.getInstance().readLocalWorks(this, apisCallback);
@@ -265,7 +281,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         if (rjNumber != 0 && bottomLayout.getVisibility() == View.GONE) {
             toggleBottom();
         }
-        Glide.with(this).load(App.getInstance().currentUser().getHost() + String.format("/api/cover/%d?type=sam", rjNumber)).into(ivCover);
+        Glide.with(this).load(Api.minCoverImageUrl(rjNumber)).into(ivCover);
     }
 
     @Override
@@ -312,7 +328,12 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
                     if (ctrlBinder.getCurrentTitle().endsWith("mp4")) {
                         startActivity(new Intent(WorksActivity.this, VideoPlayerActivity.class));
                     } else {
-                        startActivity(new Intent(WorksActivity.this, AudioPlayerActivity.class));
+                        Intent intent =new Intent(WorksActivity.this, AudioPlayerActivity.class);
+                        View view = v.findViewById(R.id.imageView);
+                        ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                                WorksActivity.this, view, "hero_bottom" // 这里的字符串必须匹配 transitionName
+                        );
+                        startActivity(intent,options.toBundle());
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -336,10 +357,10 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         layoutMenu.add(2, 10, 10, R.string.list_layout);
         layoutMenu.add(2, 11, 11, R.string.cover_layout);
         layoutMenu.add(2, 12, 12, R.string.detail_layout);
-        layoutMenu.add(2, 13, 13, "staggered");
+        layoutMenu.add(2, 13, 13, R.string.staggered);
         layoutMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
 
-        menu.add(0, 15, 15, R.string.more);
+
 
         SubMenu sortMenu = menu.addSubMenu(0, 16, 16, R.string.sort);
         sortMenu.add(3, 17, 17, R.string.release_date);
@@ -348,7 +369,11 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         sortMenu.add(3, 20, 20, R.string.last_in_lib);
 
         menu.add(0, 22, 22, R.string.download_mission);
+        menu.add(0, 24, 24, R.string.local_history);
+        menu.add(0, 15, 99, R.string.more);
+
         MenuItem searchMenu = menu.add(0, 23, 23, R.string.search);
+
         searchMenu.setIcon(R.drawable.ic_baseline_search_24);
         searchMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         return super.onCreateOptionsMenu(menu);
@@ -404,6 +429,8 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
             startActivity(new Intent(this, DownLoadMissionActivity.class));
         } else if (item.getItemId() == 23) {
             startActivity(new Intent(this, SearchActivity.class));
+        }else if (item.getItemId() == 24) {
+            startActivity(new Intent(this, LastWatchActivity.class));
         }
         return super.onOptionsItemSelected(item);
     }
@@ -436,44 +463,84 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
                 }
                 reloadRecycleView();
             }
+        }else if(requestCode == CIRCLES_SELECT_RESULT){
+            if (resultCode == RESULT_OK && data != null) {
+                String resultType = data.getStringExtra("resultType");
+                if (resultType == null) {
+                    return;
+                }
+                if (resultType.equals("circles")) {
+                    long circlesId = data.getLongExtra("id",-1);
+                    if (this.circlesId != circlesId && circlesId!=-1) {
+                        type = TYPE_CIRCLES_WORK;
+                        circlesName = data.getStringExtra("name");
+                        clearWork();
+                        this.circlesId = circlesId;
+                        reloadRecycleView();
+                    }
+                }
+            }
         }
     }
 
     private void initLayout(int layoutType) {
         RecyclerView.LayoutManager layoutManager = null;
         recyclerView.removeItemDecoration(itemDecoration);
+        final int col;
         if (layoutType == WorkAdapter.LAYOUT_LIST) {
             layoutManager = new LinearLayoutManager(WorksActivity.this);
-            recyclerView.addItemDecoration(itemDecoration);
+            col = 1;
         } else if (layoutType == WorkAdapter.LAYOUT_SMALL_GRID) {
-            int col = Math.max(getResources().getDisplayMetrics().widthPixels/395,3);
+            col = Math.max(getResources().getDisplayMetrics().widthPixels/395,3);
             layoutManager = new GridLayoutManager(WorksActivity.this, col);
         } else if (layoutType == WorkAdapter.LAYOUT_BIG_GRID) {
-            int col = Math.max(getResources().getDisplayMetrics().widthPixels/395,2);
+            col = Math.max(getResources().getDisplayMetrics().widthPixels/395,2);
             layoutManager = new GridLayoutManager(WorksActivity.this, col);
         }else if(layoutType == WorkAdapter.LAYOUT_STAGGERED){
-            int col = Math.max(getResources().getDisplayMetrics().widthPixels/395,2);
+            col = Math.max(getResources().getDisplayMetrics().widthPixels/395,2);
             layoutManager = new StaggeredGridLayoutManager(col,StaggeredGridLayoutManager.VERTICAL);
+        } else {
+            col = 1;
+        }
+        if(layoutManager instanceof GridLayoutManager){
+            ((GridLayoutManager)layoutManager).setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+                @Override
+                public int getSpanSize(int position) {
+                    if(position == works.size()){
+                        return col;
+                    }
+                    return 1;
+                }
+            });
         }
         workAdapter = new WorkAdapter(works, layoutType);
         workAdapter.setTagClickListener(this);
         workAdapter.setVaClickListener(vaClickListener);
+        workAdapter.setCirclesClickListener(circlesClickListener);
         workAdapter.setItemClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 JSONObject item = (JSONObject) v.getTag();
                 Intent intent = new Intent(v.getContext(), WorkTreeActivity.class);
                 intent.putExtra("work_json_str", item.toString());
-                ActivityCompat.startActivity(WorksActivity.this, intent, null);
+                View heroView = v.findViewById(R.id.ivCover);
+                ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                        WorksActivity.this, heroView, "hero_image" // 这里的字符串必须匹配 transitionName
+                );
+                startActivity(intent,options.toBundle());
             }
         });
         workAdapter.setItemLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
+                if(type != TYPE_LOCAL_WORK){
+                    return true;
+                }
                 ListPopupWindow listPopupWindow = new ListPopupWindow(v.getContext());
                 listPopupWindow.setModal(true);
                 listPopupWindow.setAnchorView(v);
-                listPopupWindow.setAdapter(new ArrayAdapter<String>(v.getContext(), android.R.layout.simple_list_item_1, Collections.singletonList("delete")));
+                String _str = getString(R.string.delete_cache);
+                listPopupWindow.setAdapter(new ArrayAdapter<String>(v.getContext(), android.R.layout.simple_list_item_1, Collections.singletonList(_str)));
                 listPopupWindow.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -591,9 +658,25 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         }
     };
 
+    private final TagsView.TagClickListener<String> circlesClickListener = circlesName -> {
+        //todo
+        //http://localhost:8980/api/circles/
+        //http://localhost:8980/api/circles/54978/works?order=release&sort=desc&page=1&seed=59
+        long circlesId = App.getInstance().mapCirclesId(circlesName);
+        if(circlesId!=-1){
+            clearWork();
+            WorksActivity.this.circlesName = circlesName;
+            WorksActivity.this.circlesId = circlesId;
+            type = TYPE_CIRCLES_WORK;
+            reloadRecycleView();
+        }
+        Log.d(TAG, "onTagClick: " + circlesName);
+    };
+
     private AsyncHttpClient.JSONObjectCallback apisCallback = new AsyncHttpClient.JSONObjectCallback() {
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
+
             if (e != null) {
                 e.printStackTrace();
                 alertException(e);
@@ -656,11 +739,14 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
                             }
                         }
                         if (workAdapter == null) {
-                            initLayout((int) App.getInstance().getValue(App.CONFIG_LAYOUT_TYPE, WorkAdapter.LAYOUT_SMALL_GRID));
+                            initLayout((int) App.getInstance().getValue(App.CONFIG_LAYOUT_TYPE, WorkAdapter.LAYOUT_STAGGERED));
                             recyclerView.addOnScrollListener(scrollListener);
                         } else {
                             workAdapter.notifyItemRangeInserted(Math.max(0, works.size() - jsonArray.length()), jsonArray.length());
                             workAdapter.notifyItemRangeChanged(Math.max(0, works.size() - jsonArray.length()), jsonArray.length());
+                            if(works.size() == totalCount){
+                                workAdapter.setLoading(false);
+                            }
                         }
                     }
                 });
@@ -688,6 +774,8 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
             return tagStr;
         } else if (type == TYPE_VA_WORK) {
             return vaName;
+        } else if (type == TYPE_CIRCLES_WORK) {
+            return circlesName;
         } else if (type == TYPE_LOCAL_WORK) {
             return String.format("%s", App.getInstance().isSaveExternal() ? getString(R.string.extra_path) : getString(R.string.private_path));
         }

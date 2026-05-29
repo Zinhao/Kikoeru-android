@@ -13,8 +13,8 @@
 .externalNativeBuild
 .cxx
 local.properties
-app/src/main/java/com/zinhao/kikoeru/db/DaoMaster.java
-app/src/main/java/com/zinhao/kikoeru/db/DaoSession.java
-app/src/main/java/com/zinhao/kikoeru/db/UserDao.java
-/app/src/main/java/com/zinhao/kikoeru/db/
 /signer.py
+/.idea/AndroidProjectSystem.xml
+/.idea/dbnavigator.xml
+/.idea/runConfigurations.xml
+/app/Kikoeru_android_release/

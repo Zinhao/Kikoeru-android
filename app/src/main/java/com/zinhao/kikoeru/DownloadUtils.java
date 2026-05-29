@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
 import androidx.collection.SimpleArrayMap;
+import com.google.android.exoplayer2.util.NalUnitUtil;
 import com.koushikdutta.async.AsyncServer;
 import com.koushikdutta.async.ByteBufferList;
 import com.koushikdutta.async.DataEmitter;
@@ -48,6 +49,7 @@ public class DownloadUtils implements Closeable {
         private String hash;
         private static final int BLOCK_SIZE = 1024 * 1024;
         private Runnable successCallback;
+        private Runnable stepCallback;
         private Exception missionException;
 
         public Exception getMissionException() {
@@ -56,6 +58,10 @@ public class DownloadUtils implements Closeable {
 
         public void setSuccessCallback(Runnable successCallback) {
             this.successCallback = successCallback;
+        }
+
+        public void setStepCallback(Runnable stepCallback) {
+            this.stepCallback = stepCallback;
         }
 
         public Mission(JSONObject jsonObject) {
@@ -266,6 +272,10 @@ public class DownloadUtils implements Closeable {
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, File file) {
             update = true;
             setDownloading(false);
+            if(stepCallback!= null){
+                stepCallback.run();
+                stepCallback = null;
+            }
             completed = true;
             if (e != null) {
                 missionException = e;
@@ -301,12 +311,13 @@ public class DownloadUtils implements Closeable {
         @Override
         public void onProgress(AsyncHttpResponse response, long downloaded, long total) {
             super.onProgress(response, downloaded, total);
-//            Log.d(TAG, String.format("onProgress: %d ,downloaded:%d ,total:%d",getProgress(),downloaded,total));
             String eTag = response.headers().get("etag");
             this.downloaded = downloaded;
             this.total = total;
             this.eTag = eTag;
             this.update = true;
+            if(stepCallback!= null)
+                stepCallback.run();
         }
 
         private JSONObject getJsonObject() {
