@@ -4,6 +4,8 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Lrc {
     public static final Lrc NONE = new Lrc("");
@@ -24,27 +26,104 @@ public class Lrc {
         }
     }
 
-    private void initVtt(String text){
-        String[] rows = text.split("\n");
+    private void initVtt(String text) {
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+
+        // 1. 兼容 \r\n 和 \n 的换行拆分
+        String[] rows = text.split("\\r?\\n");
+
+        // 正则表达式：匹配 VTT 时间戳行，并捕获起始时间，例如 "00:00:01.000 --> 00:00:04.000"
+        // 支持 "00:02.000 --> ..." 或 "00:00:02.000 --> ..." 两种常见标准格式
+        Pattern timePattern = Pattern.compile("^(([0-9]{2}:)?[0-9]{2}:[0-9]{2}\\.[0-9]{3})\\s-->.*");
+
         int r = 0;
         while (r < rows.length) {
-            if ("WEBVTT".equals(rows[r])) {
+            String line = rows[r].trim();
+
+            // 跳过文件头和空行
+            if (line.isEmpty() || "WEBVTT".equals(line)) {
                 r++;
                 continue;
             }
-            if (rows[r].isEmpty()) {
-                LrcRow l = paserRow(rows, r + 1);
-                System.out.println(String.format("[%s] %s", l.strTime, l.content));
+
+            // 匹配到时间戳行
+            Matcher matcher = timePattern.matcher(line);
+            if (matcher.matches()) {
+                // 提取起始时间字符串，例如 "00:00:01.000"
+                String strTime = matcher.group(1);
+                // 将字符串时间转换为 long 型毫秒数
+                long timeMs = parseTimeToMs(strTime);
+
+                StringBuilder contentBuilder = new StringBuilder();
+
+                // 收集接下来的歌词文本，直到遇到空行或下一段的开始
+                r++;
+                while (r < rows.length && !rows[r].trim().isEmpty()) {
+                    if (timePattern.matcher(rows[r].trim()).matches()) {
+                        break; // 异常防御：如果下一行直接又是时间戳，跳出文本收集
+                    }
+                    if (contentBuilder.length() > 0) {
+                        contentBuilder.append("\n"); // 多行歌词换行连接
+                    }
+                    contentBuilder.append(rows[r].trim());
+                    r++;
+                }
+
+                String content = contentBuilder.toString();
+
+                // 使用你的构造函数实例化 LrcRow
+                LrcRow l = new LrcRow(strTime, timeMs, content);
+
+//                System.out.println(String.format("[%s / %dms] %s", l.strTime, l.time, l.content));
                 lrcRows.add(l);
+            } else {
+                // 如果既不是空行也不是时间戳，可能是字幕 ID（如数字 1, 2），直接跳过
+                r++;
             }
-            r += 4;
         }
-        for (int i = 0; i < lrcRows.size() - 1; i++) {
-            LrcRow lrcRow = lrcRows.get(i);
-            if(i!=0)
-                lrcRow.upRow = lrcRows.get(i - 1);
-            lrcRow.nextRow = lrcRows.get(i + 1);
+
+        // 2. 建立双向链表关系（修复了原代码最后一行无法建立 upRow 的 Bug）
+        int size = lrcRows.size();
+        for (int i = 0; i < size; i++) {
+            LrcRow current = lrcRows.get(i);
+            if (i > 0) {
+                current.upRow = lrcRows.get(i - 1);
+            }
+            if (i < size - 1) {
+                current.nextRow = lrcRows.get(i + 1);
+            }
         }
+    }
+
+    /**
+     * 辅助方法：将 WebVTT 时间戳字符串转换为毫秒数
+     * 支持 "MM:SS.mmm" 和 "HH:MM:SS.mmm" 两种格式
+     */
+    private long parseTimeToMs(String timeStr) {
+        try {
+            String[] mainParts = timeStr.split("\\.");
+            String[] timeParts = mainParts[0].split(":");
+
+            long ms = Long.parseLong(mainParts[1]); // 毫秒部分
+
+            if (timeParts.length == 3) {
+                // HH:MM:SS 格式
+                long hours = Long.parseLong(timeParts[0]);
+                long minutes = Long.parseLong(timeParts[1]);
+                long seconds = Long.parseLong(timeParts[2]);
+                return (hours * 3600 + minutes * 60 + seconds) * 1000 + ms;
+            } else if (timeParts.length == 2) {
+                // MM:SS 格式
+                long minutes = Long.parseLong(timeParts[0]);
+                long seconds = Long.parseLong(timeParts[1]);
+                return (minutes * 60 + seconds) * 1000 + ms;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
     private void initLrc(String text){
@@ -122,24 +201,6 @@ public class Lrc {
 
     public List<LrcRow> getLrcRows() {
         return lrcRows;
-    }
-
-    public static LrcRow paserRow(String[] text, int offset) {
-        int position = Integer.parseInt(text[offset]);
-        String timeStr = text[offset + 1];
-        if (!timeStr.contains("-->")) {
-            System.out.println("time str err");
-            return LrcRow.NONE;
-        }
-        String[] times = timeStr.split("-->");
-        String startTimeStr = times[0].trim();
-        String endTimeStr = times[1].trim();
-
-        long startTime = transToLong(startTimeStr);
-        long endTime = transToLong(endTimeStr);
-
-        String content = text[offset + 2];
-        return new LrcRow(startTimeStr, startTime, content);
     }
 
     /**

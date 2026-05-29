@@ -91,7 +91,7 @@ public class TextRowActivity extends BaseActivity implements ServiceConnection {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(item.getItemId() == 0){
-            if(ctrlBinder!=null){
+            if(ctrlBinder!=null && mText != null){
                 ctrlBinder.setmLrc(mText.getText());
             }
         }

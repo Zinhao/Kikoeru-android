@@ -242,7 +242,7 @@ public class AudioService extends Service {
 
             @Override
             public void onMediaMetadataChanged(@NonNull MediaMetadata mediaMetadata) {
-                Log.d(TAG, "onMediaMetadataChanged: " + mediaMetadata.title);
+                Log.d(TAG, "onMediaMetadataChanged: " + mediaMetadata.title + ", play state:"+mediaPlayer.getPlaybackState());
                 ctrlBinder.current = ctrlBinder.playList.get(mediaPlayer.getCurrentMediaItemIndex());
 
                 MediaMetadataCompat metadata = new MediaMetadataCompat.Builder()
@@ -258,7 +258,6 @@ public class AudioService extends Service {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-
                 try {
                     String path = ctrlBinder.current.getString(JSONConst.WorkTree.MAP_FILE_PATH);
                     File audioFile = new File(path);
@@ -527,7 +526,7 @@ public class AudioService extends Service {
                             lrcRowChangeListeners.forEach(new Consumer<LrcRowChangeListener>() {
                                 @Override
                                 public void accept(LrcRowChangeListener listener) {
-                                    listener.onChange(currentLrcRow);
+                                    listener.onSeekChange(currentLrcRow);
                                 }
                             });
                         }
@@ -619,6 +618,12 @@ public class AudioService extends Service {
                     mLrc = Lrc.NONE;
                     Log.e(TAG, "onCompleted: " + asyncHttpResponse.code());
                 }
+                lrcRowChangeListeners.forEach(new Consumer<LrcRowChangeListener>() {
+                    @Override
+                    public void accept(LrcRowChangeListener listener) {
+                        listener.onLrcChange(mLrc);
+                    }
+                });
             }
         };
 
@@ -669,11 +674,11 @@ public class AudioService extends Service {
             musicChangeListeners.remove(listener);
         }
 
-        public void addLrcRowChangeListener(LrcRowChangeListener listener) {
+        public void addLrcChangeListener(LrcRowChangeListener listener) {
             lrcRowChangeListeners.add(listener);
         }
 
-        public void removeLrcRowChangeListener(LrcRowChangeListener listener) {
+        public void removeLrcChangeListener(LrcRowChangeListener listener) {
             lrcRowChangeListeners.remove(listener);
         }
 
