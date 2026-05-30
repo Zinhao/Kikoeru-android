@@ -1,19 +1,9 @@
 package com.zinhao.kikoeru;
 
 import android.content.Context;
-import android.net.Uri;
-import android.util.Log;
 import androidx.collection.SimpleArrayMap;
-import com.google.android.exoplayer2.util.NalUnitUtil;
-import com.koushikdutta.async.AsyncServer;
-import com.koushikdutta.async.ByteBufferList;
-import com.koushikdutta.async.DataEmitter;
-import com.koushikdutta.async.callback.CompletedCallback;
 import com.koushikdutta.async.http.AsyncHttpClient;
-import com.koushikdutta.async.http.AsyncHttpRequest;
 import com.koushikdutta.async.http.AsyncHttpResponse;
-import com.koushikdutta.async.http.callback.HttpConnectCallback;
-import com.koushikdutta.async.stream.OutputStreamDataCallback;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,16 +14,30 @@ import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
 
+
+import okhttp3.*;
+import okio.BufferedSink;
+import okio.BufferedSource;
+import okio.Okio;
+
+import java.io.*;
+import java.util.concurrent.TimeUnit;
+
 public class DownloadUtils implements Closeable {
     private static final String TAG = "DownloadUtils";
     private static DownloadUtils instance = null;
     private static File missionConfigFile;
+    private static final OkHttpClient okHttpClient = new OkHttpClient.Builder()
+            .connectTimeout(5, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build();
 
     public List<Mission> missionList = new ArrayList<>();
     public SimpleArrayMap<String, Mission> hashMissionMap = new SimpleArrayMap<>();
 
-    public static class Mission extends AsyncHttpClient.FileCallback {
-        private AsyncHttpClient downLoadClient;
+    public static class Mission {
+        private Call currentCall;
         private JSONObject jsonObject;
         private File mapFile;
         private int workId;
@@ -45,9 +49,7 @@ public class DownloadUtils implements Closeable {
         private boolean update;
         private boolean downloading = false;
         private boolean completed = false;
-        private AsyncHttpRequest request;
         private String hash;
-        private static final int BLOCK_SIZE = 1024 * 1024;
         private Runnable successCallback;
         private Runnable stepCallback;
         private Exception missionException;
@@ -192,98 +194,108 @@ public class DownloadUtils implements Closeable {
             if (isCompleted()) {
                 return;
             }
-            if (isDownloading())
-                return;
-            request = null;
-            try {
-                request = new AsyncHttpRequest(Uri.parse(getDownLoadUrl()), "GET");
-            } catch (JSONException e) {
-                e.printStackTrace();
-                missionException = e;
-                App.getInstance().alertException(e);
+            if (isDownloading()) {
                 return;
             }
-            request.setTimeout(5000);
-            request.addHeader("authorization", Api.authorization);
-            this.downLoadClient = new AsyncHttpClient(new AsyncServer());
-            if (downloaded != 0 && mapFile.exists()) {
-                continueDownLoad();
-            } else {
-                downLoadClient.executeFile(request, mapFile.getAbsolutePath(), this);
-            }
-            setDownloading(true);
-        }
 
-        private void continueDownLoad() {
-            request.addHeader("range", String.format(Locale.US, "bytes=%d-", downloaded));
-            request.addHeader("if-range", eTag);
-            final BufferedOutputStream fout;
             try {
-                fout = new BufferedOutputStream(new FileOutputStream(mapFile, true), 8192);
-            } catch (FileNotFoundException var8) {
-                missionException = var8;
-                return;
-            }
-            downLoadClient.execute(request, new HttpConnectCallback() {
-                @Override
-                public void onConnectCompleted(Exception e, AsyncHttpResponse response) {
-                    if (e != null) {
-                        missionException = e;
-                        try {
-                            fout.close();
-                        } catch (IOException ignored) {
-                        }
-                    } else {
-                        response.setDataCallback(new OutputStreamDataCallback(fout) {
-                            public void onDataAvailable(DataEmitter emitter, ByteBufferList bb) {
-                                downloaded += bb.remaining();
-                                super.onDataAvailable(emitter, bb);
-                                Mission.this.onProgress(response, downloaded, total);
-                            }
-                        });
-                        response.setEndCallback(new CompletedCallback() {
-                            public void onCompleted(Exception ex) {
-                                missionException = ex;
-                                try {
-                                    fout.close();
-                                } catch (IOException var3) {
-                                    Log.d(TAG, "onCompleted: close failed!");
-                                }
-                                if (ex != null) {
-                                    Mission.this.onCompleted(ex, response, mapFile);
-                                } else {
-                                    Mission.this.onCompleted(null, response, mapFile);
-                                }
-                            }
-                        });
+                String url = getDownLoadUrl();
+                Request.Builder requestBuilder = new Request.Builder()
+                        .url(url)
+                        .addHeader("authorization", Api.authorization);
+
+                // 断点续传
+                if (downloaded > 0 && mapFile.exists()) {
+                    requestBuilder.addHeader("Range", String.format(Locale.US, "bytes=%d-", downloaded));
+                    if (eTag != null && !eTag.isEmpty()) {
+                        requestBuilder.addHeader("If-Range", eTag);
                     }
                 }
-            });
+
+                Request request = requestBuilder.build();
+                currentCall = okHttpClient.newCall(request);
+                currentCall.enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        missionException = e;
+                        setDownloading(false);
+                        App.getInstance().alertException(e);
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        if (!response.isSuccessful()) {
+                            missionException = new IOException("Unexpected code " + response);
+                            setDownloading(false);
+                            return;
+                        }
+
+                        // 获取ETag
+                        String newETag = response.header("ETag");
+                        if (newETag != null) {
+                            eTag = newETag;
+                        }
+
+                        // 获取文件总大小
+                        long contentLength = response.body().contentLength();
+                        if (contentLength > 0) {
+                            total = contentLength + downloaded;
+                        }
+
+                        // 写入文件
+                        BufferedSource source = null;
+                        BufferedSink sink = null;
+                        try {
+                            source = Okio.buffer(response.body().source());
+
+                            // 使用追加模式
+                            FileOutputStream fos = new FileOutputStream(mapFile, downloaded > 0);
+                            sink = Okio.buffer(Okio.sink(fos));
+
+                            byte[] buffer = new byte[8192];
+                            long bytesRead;
+                            while ((bytesRead = source.read(buffer)) != -1) {
+                                sink.write(buffer, 0, (int) bytesRead);
+                                downloaded += bytesRead;
+
+                                // 触发进度回调
+                                if (stepCallback != null) {
+                                    stepCallback.run();
+                                }
+
+                                update = true;
+                            }
+                            sink.flush();
+
+                            // 下载完成
+                            completed = true;
+                            if (successCallback != null) {
+                                successCallback.run();
+                            }
+                        } catch (IOException e) {
+                            missionException = e;
+                            App.getInstance().alertException(e);
+                        } finally {
+                            if (source != null) source.close();
+                            if (sink != null) sink.close();
+                            setDownloading(false);
+                        }
+                    }
+                });
+
+                setDownloading(true);
+            } catch (JSONException e) {
+                missionException = e;
+                e.printStackTrace();
+                App.getInstance().alertException(e);
+            }
         }
 
         public void stop() {
-            if (downLoadClient != null) {
-                downLoadClient.getServer().stop();
+            if (currentCall != null && !currentCall.isCanceled()) {
+                currentCall.cancel();
             }
             setDownloading(false);
-        }
-
-        @Override
-        public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, File file) {
-            update = true;
-            setDownloading(false);
-            if(stepCallback!= null){
-                stepCallback.run();
-                stepCallback = null;
-            }
-            completed = true;
-            if (e != null) {
-                missionException = e;
-                App.getInstance().alertException(e);
-                return;
-            }
-            if (successCallback != null)
-                successCallback.run();
         }
 
         public boolean isDownloading() {
@@ -306,18 +318,6 @@ public class DownloadUtils implements Closeable {
                 return completed;
             }
             return false;
-        }
-
-        @Override
-        public void onProgress(AsyncHttpResponse response, long downloaded, long total) {
-            super.onProgress(response, downloaded, total);
-            String eTag = response.headers().get("etag");
-            this.downloaded = downloaded;
-            this.total = total;
-            this.eTag = eTag;
-            this.update = true;
-            if(stepCallback!= null)
-                stepCallback.run();
         }
 
         private JSONObject getJsonObject() {
@@ -357,8 +357,8 @@ public class DownloadUtils implements Closeable {
     }
 
     public int removeCompleteMission() {
-        for (int i = missionList.size()-1; i >= 0; i--) {
-            if(missionList.get(i).completed){
+        for (int i = missionList.size() - 1; i >= 0; i--) {
+            if (missionList.get(i).completed) {
                 missionList.remove(i);
             }
         }

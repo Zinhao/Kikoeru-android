@@ -70,10 +70,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
 
     private HeaderViewCompat headerViewCompat;
 
-    private class HeaderViewCompat{
-        private TagsView.TagClickListener tagClickListener;
-        private TagsView.TagClickListener vaClickListener;
-        private TagsView.TagClickListener circlesClickListener;
+    private static class HeaderViewCompat{
         private ImageView ivCover;
         private TextView tvTitle;
         private TagsView<JSONArray> tvArt;
@@ -85,16 +82,13 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         private TagsView<List<String>> tvCircles;
 
         public void setCirclesClickListener(TagsView.TagClickListener circlesClickListener) {
-            this.circlesClickListener = circlesClickListener;
             tvCircles.setTagClickListener(circlesClickListener);
 
         }
         public void setTagClickListener(TagsView.TagClickListener<?> tagClickListener) {
-            this.tagClickListener = tagClickListener;
             tvTags.setTagClickListener(tagClickListener);
         }
         public void setVaClickListener(TagsView.TagClickListener<?> vaClickListener) {
-            this.vaClickListener = vaClickListener;
             tvArt.setTagClickListener(vaClickListener);
         }
 
@@ -205,7 +199,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
         try {
             Glide.with(this).load(
                     App.getInstance().currentUser().getHost() + String.format("/api/cover/%d?token=%s", work.getInt("id"), Api.token))
-                    .apply(App.getInstance().getDefaultPic())
+                    .apply(App.getInstance().getRadius15Pic())
                     .into(headerViewCompat.ivCover);
             headerViewCompat.tvTitle.setText(work.getString("title"));
             headerViewCompat.tvArt.setTags(App.getVasList(work), TagsView.JSON_TEXT_GET.setKey("name"));
@@ -468,7 +462,8 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
 
     @Override
     public void onAlbumChange(int rjNumber) {
-        Glide.with(this).load(App.getInstance().currentUser().getHost() + String.format(Locale.US, "/api/cover/%d?type=sam", rjNumber)).into(ivCover);
+        Glide.with(this).load(Api.minCoverImageUrl(rjNumber))
+                .apply(App.getInstance().getRadius5Pic()).into(ivCover);
     }
 
     @Override

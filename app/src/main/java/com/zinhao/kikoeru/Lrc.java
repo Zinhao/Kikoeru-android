@@ -165,36 +165,6 @@ public class Lrc {
         return current;
     }
 
-    public LrcRow update(long seek) {
-        if (currentIndex == lrcRows.size() - 1)
-            return current;
-
-        if (current == null) {
-            current = lrcRows.get(0);
-            currentIndex = 0;
-            return current;
-        }
-
-        if (current.time <= seek) {
-            LrcRow nextLrcRow = lrcRows.get(currentIndex+1);
-            if (nextLrcRow.time - seek < 300) {
-                currentIndex++;
-                current = nextLrcRow;
-            }
-        } else {
-            // user scroll seek
-            for (int i = currentIndex; i > 0; i--) {
-                current = lrcRows.get(i);
-                currentIndex = i;
-                if(current.getUpRow().time < seek &&
-                        current.time > seek){
-                    break;
-                }
-            }
-        }
-        return current;
-    }
-
     public int getCurrentIndex() {
         return currentIndex;
     }
@@ -240,6 +210,29 @@ public class Lrc {
                 Long.parseLong(m) * 60 * 1000 +
                 Long.parseLong(s) * 1000 +
                 Long.parseLong(ms);
+    }
+
+    public LrcRow update(long seek) {
+        if (lrcRows == null || lrcRows.isEmpty()) {
+            return LrcRow.NONE;
+        }
+        // 二分查找找到最后一个时间小于等于 seek 的行
+        int left = 0;
+        int right = lrcRows.size() - 1;
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            long midTime = lrcRows.get(mid).time;
+            if (midTime <= seek) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        // right 是最后一个 <= seek 的索引
+        int index = Math.max(0, right);
+        currentIndex = index;
+        current = lrcRows.get(index);
+        return current;
     }
 
     public static class LrcRow {

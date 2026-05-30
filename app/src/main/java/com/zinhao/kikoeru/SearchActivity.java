@@ -56,7 +56,7 @@ public class SearchActivity extends BaseActivity implements TagsView.TagClickLis
                     workAdapter.notifyItemRangeChanged(0, works.size());
                 }
                 works.clear();
-                if (s.toString().length() == 6) {
+                if (s.toString().length() >= 6) {
                     Api.doGetWork(s.toString(), 1, searchWorkCallback);
                 }
             }

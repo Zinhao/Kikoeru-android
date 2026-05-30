@@ -2,10 +2,7 @@ package com.zinhao.kikoeru;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.RectF;
+import android.graphics.*;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -108,6 +105,7 @@ public class TagsView<T> extends View {
         MIN_HEIGHT = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, context.getResources().getDisplayMetrics());
         textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         textPaint.setTextAlign(Paint.Align.CENTER);
+        textPaint.setTypeface(Typeface.MONOSPACE);
         setTextSize(12);
         textPaint.setColor(Color.WHITE);
         Paint.FontMetrics fontMetrics = textPaint.getFontMetrics();

@@ -58,4 +58,7 @@
     <string name="delete_cache">删除缓存</string>
     <string name="local_history">最近</string>
     <string name="staggered">瀑布流</string>
+    <string name="all_repeat">全部循环</string>
+    <string name="repeat_off">关闭循环</string>
+    <string name="repeat_one">单曲循环</string>
 </resources>

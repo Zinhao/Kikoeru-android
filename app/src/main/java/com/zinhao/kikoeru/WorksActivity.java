@@ -281,7 +281,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         if (rjNumber != 0 && bottomLayout.getVisibility() == View.GONE) {
             toggleBottom();
         }
-        Glide.with(this).load(Api.minCoverImageUrl(rjNumber)).into(ivCover);
+        Glide.with(this).load(Api.minCoverImageUrl(rjNumber)).apply(App.getInstance().getRadius5Pic()).into(ivCover);
     }
 
     @Override

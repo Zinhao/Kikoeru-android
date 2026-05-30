@@ -28,7 +28,7 @@ import java.io.IOException
 
 object Api {
     private var HOST = "http://localhost:8888"
-    private const val TAG = "Api"
+    private const val  TAG = "Api"
     const val REMOTE_HOST: String = "https://api.asmr.one"
     const val LOCAL_HOST: String = "http://localhost:8888"
     @JvmField
@@ -40,11 +40,6 @@ object Api {
     private var order = "id"
 
     private val okHttpClient: OkHttpClient = HttpClientManager.pacEnabledClient
-        .callTimeout(100, TimeUnit.SECONDS)
-        .writeTimeout(100, TimeUnit.SECONDS)
-        .readTimeout(100, TimeUnit.SECONDS)
-        .addInterceptor(LoggingInterceptor())
-        .build()
 
     @JvmStatic
     fun init(tokenStr: String, host: String) {
@@ -94,13 +89,16 @@ object Api {
             .addHeader("authorization", authorization)
             .build()
         okHttpClient.newCall(request).enqueue(object :Callback{
-            override fun onFailure(call: Call, e: IOException) {}
+            override fun onFailure(call: Call, e: IOException) {
+                callback.onCompleted(e, LocalResponse(404), null)
+            }
 
             override fun onResponse(call: Call, response: Response) {
                 if(response.isSuccessful){
-                    response.body?.string()?.let {
-                        callback.onCompleted(null, LocalResponse(response.code), JSONObject(it))
-                    }
+                    val body = response.body?.string()
+                    callback.onCompleted(null, LocalResponse(response.code), JSONObject(body?:""))
+                }else{
+                    callback.onCompleted(null, LocalResponse(response.code), JSONObject("{}"))
                 }
             }
         })
@@ -113,13 +111,16 @@ object Api {
             .addHeader("authorization", authorization)
             .build()
         okHttpClient.newCall(request).enqueue(object :Callback{
-            override fun onFailure(call: Call, e: IOException) {}
+            override fun onFailure(call: Call, e: IOException) {
+                callback.onCompleted(e, LocalResponse(404), null)
+            }
 
             override fun onResponse(call: Call, response: Response) {
                 if(response.isSuccessful){
-                    response.body?.string()?.let {
-                        callback.onCompleted(null, LocalResponse(response.code), JSONObject(it))
-                    }
+                    val body = response.body?.string()
+                    callback.onCompleted(null, LocalResponse(response.code), JSONObject(body?:""))
+                } else{
+                    callback.onCompleted(null, LocalResponse(response.code), JSONObject("{}"))
                 }
             }
         })
@@ -131,13 +132,16 @@ object Api {
             .addHeader("authorization", authorization)
             .build()
         okHttpClient.newCall(request).enqueue(object :Callback{
-            override fun onFailure(call: Call, e: IOException) {}
+            override fun onFailure(call: Call, e: IOException) {
+                callback.onCompleted(e, LocalResponse(404), null)
+            }
 
             override fun onResponse(call: Call, response: Response) {
                 if(response.isSuccessful){
-                    response.body?.string()?.let {
-                        callback.onCompleted(null, LocalResponse(response.code), JSONArray(it))
-                    }
+                    val body = response.body?.string()
+                    callback.onCompleted(null, LocalResponse(response.code), JSONArray(body))
+                }else{
+                    callback.onCompleted(null, LocalResponse(response.code), JSONArray("[]"))
                 }
             }
         })
@@ -149,13 +153,15 @@ object Api {
             .addHeader("authorization", authorization)
             .build()
         okHttpClient.newCall(request).enqueue(object :Callback{
-            override fun onFailure(call: Call, e: IOException) {}
+            override fun onFailure(call: Call, e: IOException) {
+                callback.onCompleted(e, LocalResponse(404), null)
+            }
 
             override fun onResponse(call: Call, response: Response) {
                 if(response.isSuccessful){
-                    response.body?.string()?.let {
-                        callback.onCompleted(null, LocalResponse(response.code), it)
-                    }
+                    callback.onCompleted(null, LocalResponse(response.code), response.body?.string())
+                }else{
+                    callback.onCompleted(null, LocalResponse(response.code), "")
                 }
             }
         })
@@ -220,7 +226,7 @@ object Api {
     @JvmStatic
     fun doGetWork(keyword: String, page: Int, callback: JSONObjectCallback?) {
 //        http://localhost:8888/api/search/RJ381400?order=release&sort=desc&page=1&seed=18
-        val url = "${HOST}/api/search/${keyword}?order=${order}&sort=${makeSort()}&page=${page}&seed=18&subtitle=${subtitle}"
+        val url = "${HOST}/api/search/${keyword}?order=${order}&sort=${makeSort()}&page=${page}&seed=18&subtitle=0"
         callback?.let {
             okhttpGetJsonObject(url,it)
         }
@@ -351,6 +357,7 @@ object Api {
 
     @JvmStatic
     fun minCoverImageUrl(rjNumber: Long): String {
+        //App.getInstance().currentUser().getHost() + String.format(Locale.US, "/api/cover/%d?type=sam", rjNumber
         return (App.getInstance().currentUser().getHost()
                 + String.format("/api/cover/%d?type=sam&token=%s", rjNumber, token))
     }

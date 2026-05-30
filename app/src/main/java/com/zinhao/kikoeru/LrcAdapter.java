@@ -4,6 +4,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -11,6 +12,9 @@ import androidx.recyclerview.widget.RecyclerView;
 public class LrcAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final String TAG = "LrcAdapter";
     private Lrc mLrc;
+    private int oldIndex = -1;
+
+    private View.OnClickListener onToHereClickListener;
 
     public LrcAdapter(Lrc mText) {
         this.mLrc = mText;
@@ -24,14 +28,11 @@ public class LrcAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     public void update(){
         int index = mLrc.getCurrentIndex();
-        Log.i(TAG,"update:"+index);
-        if(index == 0){
-            notifyItemChanged(0);
-        }else if(index < getItemCount()-1){
-            notifyItemRangeChanged(index-1,2);
-        }else{
-            notifyItemRangeChanged(index-1,1);
+        if(oldIndex != -1){
+            notifyItemChanged(oldIndex);
         }
+        notifyItemChanged(index);
+        oldIndex = index;
     }
 
     @Override
@@ -42,9 +43,13 @@ public class LrcAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             if(mLrc.getCurrentIndex() == position){
                 ((TextRowHolder) holder).textView.setTextSize(36);
                 ((TextRowHolder) holder).textView.setAlpha(1.0f);
+                ((TextRowHolder) holder).ivToHere.setVisibility(View.GONE);
             }else{
                 ((TextRowHolder) holder).textView.setTextSize(15);
                 ((TextRowHolder) holder).textView.setAlpha(0.5f);
+                ((TextRowHolder) holder).ivToHere.setVisibility(View.VISIBLE);
+                ((TextRowHolder) holder).ivToHere.setTag(lrcRow);
+                ((TextRowHolder) holder).ivToHere.setOnClickListener(onToHereClickListener);
             }
         }
     }
@@ -54,12 +59,18 @@ public class LrcAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return mLrc.getLrcRows().size();
     }
 
+    public void setOnToHereClickListener(View.OnClickListener onToHereClickListener) {
+        this.onToHereClickListener = onToHereClickListener;
+    }
+
     static class TextRowHolder extends RecyclerView.ViewHolder {
         private TextView textView;
+        private ImageView ivToHere;
 
         public TextRowHolder(@NonNull View itemView) {
             super(itemView);
             textView = itemView.findViewById(R.id.textView3);
+            ivToHere = itemView.findViewById(R.id.toHere);
         }
     }
 }

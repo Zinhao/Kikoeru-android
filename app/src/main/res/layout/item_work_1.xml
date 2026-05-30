@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
@@ -9,6 +9,7 @@
                 android:padding="8dp"
                 android:elevation="10dp"
                 android:background="@drawable/card_bg_work"
+              android:orientation="horizontal"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <ImageView
@@ -23,54 +24,56 @@
             android:layout_marginEnd="0dp"
             android:layout_marginBottom="0dp"/>
 
-    <TextView
-            android:id="@+id/tvTitle"
-            android:layout_width="match_parent"
-            android:layout_height="20dp"
-            android:layout_alignTop="@+id/ivCover"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="2dp"
-            android:layout_toEndOf="@+id/ivCover"
-            android:text="@string/local_works"
-            android:fontFamily="sans-serif-medium"
-    />
+    <LinearLayout android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_marginStart="5dp"
+                  android:orientation="vertical">
+        <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="match_parent"
+                android:layout_height="20dp"
+                android:layout_alignTop="@+id/ivCover"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="2dp"
+                android:layout_toEndOf="@+id/ivCover"
+                android:text="@string/local_works"
+                android:fontFamily="sans-serif-medium"
+        />
 
-    <com.zinhao.kikoeru.TagsView
-            android:id="@+id/tvTags"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/tvTitle"
-            android:layout_alignStart="@+id/tvTitle"
-            android:layout_marginStart="0dp"
-            android:layout_marginTop="0dp"
-            android:visibility="gone"
-            app:tagBackground="@drawable/card_bg_tag"
-            app:tags="健全 纯爱 校园 健全 纯爱 校园 健全 纯爱 校园"/>
+        <com.zinhao.kikoeru.TagsView
+                android:id="@+id/tvTags"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="0dp"
+                android:layout_marginTop="0dp"
+                android:visibility="gone"
+                app:tagBackground="@drawable/card_bg_tag"
+                app:tags="健全 纯爱 校园 健全 纯爱 校园 健全 纯爱 校园"/>
 
-    <com.zinhao.kikoeru.TagsView
-            android:id="@+id/tvCircles"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="10dp"
-            android:padding="4dp"
-            android:visibility="visible"
-            app:tagBackground="@drawable/card_bg_circles"
-            app:tags="アゲハ蝶" android:layout_marginTop="4dp"
-            android:layout_below="@+id/tvComArt"
-            android:layout_marginStart="0dp"
-            android:layout_alignStart="@+id/tvComArt"/>
+        <com.zinhao.kikoeru.TagsView
+                android:id="@+id/tvCircles"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="10dp"
+                android:padding="4dp"
+                android:visibility="visible"
+                app:tagBackground="@drawable/card_bg_circles"
+                app:tags="com"
+                android:layout_marginTop="4dp"
+                android:layout_marginStart="0dp"/>
 
-
-    <com.zinhao.kikoeru.TagsView
-            android:id="@+id/tvComArt"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/tvTags"
-            android:layout_alignStart="@+id/tvTags"
-            android:layout_marginStart="0dp"
-            android:layout_marginTop="4dp"
-            app:tagBackground="@drawable/card_bg_va"
-            app:tags="こやまはる kikoeru"/>
+        <com.zinhao.kikoeru.TagsView
+                android:id="@+id/tvComArt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="0dp"
+                android:layout_marginTop="4dp"
+                app:tagBackground="@drawable/card_bg_va"
+                app:tags="こやまはる kikoeru"/>
+    </LinearLayout>
 
 
-</RelativeLayout>
+
+
+
+</LinearLayout>

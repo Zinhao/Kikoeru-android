@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="main_color">#5DAC81</color>
-
-    <color name="green_40">#5DAC81</color>
-
+    <color name="main_color">#70a5c3</color>
 
     <color name="pure_80">#9B8EC7</color>
     <color name="pure_50">#BDA6CE</color>
@@ -21,4 +18,5 @@
 
     <color name="play_control_icon_color">#FFFFFFFF</color>
     <color name="pine_700">#FF753F</color>
+    <color name="gray_80">#80979795</color>
 </resources>

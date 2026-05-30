@@ -75,4 +75,7 @@
     <string name="delete_cache">delete cache</string>
     <string name="local_history">history view</string>
     <string name="staggered">staggered</string>
+    <string name="all_repeat">All Repeat</string>
+    <string name="repeat_off">Repeat Off</string>
+    <string name="repeat_one">Repeat One</string>
 </resources>

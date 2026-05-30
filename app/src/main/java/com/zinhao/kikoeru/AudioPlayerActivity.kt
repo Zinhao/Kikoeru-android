@@ -16,6 +16,8 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
+import android.widget.TextView
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.palette.graphics.Palette
@@ -23,8 +25,6 @@ import androidx.palette.graphics.Palette.PaletteAsyncListener
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners
-import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.CustomViewTarget
 import com.bumptech.glide.request.transition.Transition
 import com.google.android.exoplayer2.Player
@@ -42,7 +42,7 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
     OnSeekBarChangeListener {
     private var ctrlBinder: CtrlBinder? = null
     private var imageView: ImageView? = null
-    private var options: RequestOptions? = null
+    private lateinit var tvTitle: TextView
     private var ibPrevious: ImageButton? = null
     private var ibPause: ImageButton? = null
     private var ibNext: ImageButton? = null
@@ -59,16 +59,15 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
         imageView = findViewById<ImageView>(R.id.ivCover)
         imageView!!.setOnClickListener(object : View.OnClickListener {
             override fun onClick(v: View?) {
-                doGetWork(ctrlBinder!!.getCurrentAlbumId().toString(), 1, searchWorkCallback)
+                doGetWork(ctrlBinder!!.currentAlbumId.toString(), 1, searchWorkCallback)
             }
         })
-        val roundedCorners = RoundedCorners(20)
-        options = RequestOptions.bitmapTransform(roundedCorners)
         ibPrevious = findViewById<ImageButton>(R.id.ib1)
         ibPause = findViewById<ImageButton>(R.id.ib2)
         ibNext = findViewById<ImageButton>(R.id.ib3)
         ibLrc = findViewById<ImageButton>(R.id.imageButton2)
         ibLoop = findViewById<ImageButton>(R.id.ibLoop)
+        tvTitle = findViewById(R.id.textView13)
 
         timeProgressView = findViewById<TimeProgressView>(R.id.time_view)
         timeProgressView!!.setColor(ContextCompat.getColor(this, R.color.play_control_icon_color))
@@ -110,12 +109,15 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
                 if (ctrlBinder!!.getController() == null || ctrlBinder!!.getController()
                         .getTransportControls() == null
                 ) return
-                if (ctrlBinder!!.getReapMode() == Player.REPEAT_MODE_ONE) {
+                if (ctrlBinder!!.reapMode == Player.REPEAT_MODE_ONE) {
                     ctrlBinder!!.setReapAll()
-                } else if (ctrlBinder!!.getReapMode() == Player.REPEAT_MODE_ALL) {
+                    Toast.makeText(this@AudioPlayerActivity, getString(R.string.all_repeat), Toast.LENGTH_SHORT).show()
+                } else if (ctrlBinder!!.reapMode == Player.REPEAT_MODE_ALL) {
                     ctrlBinder!!.setReapOff()
-                } else if (ctrlBinder!!.getReapMode() == Player.REPEAT_MODE_OFF) {
+                    Toast.makeText(this@AudioPlayerActivity, getString(R.string.repeat_off), Toast.LENGTH_SHORT).show()
+                } else if (ctrlBinder!!.reapMode == Player.REPEAT_MODE_OFF) {
                     ctrlBinder!!.setReapOne()
+                    Toast.makeText(this@AudioPlayerActivity, getString(R.string.repeat_one), Toast.LENGTH_SHORT).show()
                 }
                 updateLoopIcon()
             }
@@ -125,14 +127,23 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
         bindService(Intent(this, AudioService::class.java), this, BIND_AUTO_CREATE)
     }
 
-    var lastScrollIDLE = System.currentTimeMillis()
+    var lastScrollIDLE = 0L
 
     private fun setupLrc() {
         recyclerView = findViewById(R.id.mainRecycler)
         ctrlBinder?.lrc?.let {
             lrcAdapter = LrcAdapter(it)
+            lrcAdapter?.setOnToHereClickListener { v->
+                v?.tag?.let { tag->
+                    if(tag is LrcRow){
+                        ctrlBinder?.controller?.transportControls?.seekTo(tag.time)
+                        lrcAdapter?.notifyDataSetChanged()
+                    }
+                }
+            }
             recyclerView!!.layoutManager = LinearLayoutManager(this)
             recyclerView!!.adapter = lrcAdapter
+            scrollToLrcPosition()
 
             recyclerView!!.addOnScrollListener(object : RecyclerView.OnScrollListener() {
                 override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
@@ -159,7 +170,7 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
                         val item = works.getJSONObject(0)
                         val intent = Intent(this@AudioPlayerActivity, WorkTreeActivity::class.java)
                         intent.putExtra("work_json_str", item.toString())
-                        ActivityCompat.startActivity(this@AudioPlayerActivity, intent, null)
+                        this@AudioPlayerActivity.startActivity(intent, null)
                     }
                 } catch (jsonException: JSONException) {
                     jsonException.printStackTrace()
@@ -198,7 +209,7 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
             }
         })
         timeProgressView!!.setMax(ctrlBinder!!.getExoPlayer().getDuration().toInt())
-        if (ctrlBinder != null && ctrlBinder!!.getExoPlayer() != null && ctrlBinder!!.getExoPlayer().isPlaying()) {
+        if (ctrlBinder != null && ctrlBinder!!.getExoPlayer() != null) {
             val current = ctrlBinder!!.getExoPlayer().getCurrentPosition()
             val buffer = ctrlBinder!!.getExoPlayer().getBufferedPosition()
             timeProgressView!!.setProgress(current.toInt(), buffer.toInt())
@@ -213,14 +224,18 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
     override fun onSeekChange(lrcRow: LrcRow) {
         runOnUiThread {
             lrcAdapter?.update()
-            if(System.currentTimeMillis() - lastScrollIDLE > 5000) {
-                val manger = recyclerView?.layoutManager
-                if(manger is LinearLayoutManager) {
-                    val index = manger.findLastCompletelyVisibleItemPosition()
-                    ctrlBinder?.let {
-                        if(it.lrc.currentIndex != index) {
-                            manger.scrollToPosition(it.lrc.currentIndex)
-                        }
+            scrollToLrcPosition()
+        }
+    }
+
+    private fun scrollToLrcPosition(){
+        if(System.currentTimeMillis() - lastScrollIDLE > 5000) {
+            val manger = recyclerView?.layoutManager
+            if(manger is LinearLayoutManager) {
+                val index = manger.findLastCompletelyVisibleItemPosition()
+                ctrlBinder?.let {
+                    if(it.lrc.currentIndex != index) {
+                        manger.scrollToPosition(it.lrc.currentIndex)
                     }
                 }
             }
@@ -235,7 +250,7 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
 
     override fun onAlbumChange(rjNumber: Int) {
         Glide.with(this).asBitmap().load(formatGetUrl(String.format(Locale.US, "/api/cover/%d", rjNumber), true))
-            .apply(options!!).into(object : CustomViewTarget<ImageView?, Bitmap?>(imageView!!) {
+            .apply(App.getInstance().radius15Pic).into(object : CustomViewTarget<ImageView?, Bitmap?>(imageView!!) {
                 override fun onLoadFailed(drawable: Drawable?) {
                 }
 
@@ -252,8 +267,8 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
                                     )
                                 )
                                 bg.setBackgroundColor(mainColor)
-                                getWindow().setNavigationBarColor(mainColor)
-                                getWindow().setStatusBarColor(mainColor)
+                                window.setNavigationBarColor(mainColor)
+                                window.setStatusBarColor(mainColor)
                                 val actionBar = getSupportActionBar()
                                 if (actionBar != null) actionBar.setBackgroundDrawable(ColorDrawable(mainColor))
                             }
@@ -278,6 +293,10 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
                 }
             }
         })
+    }
+
+    override fun setTitle(title: CharSequence?) {
+        tvTitle.text = title
     }
 
     override fun onStatusChange(status: Int) {

@@ -10,7 +10,7 @@
         <item name="colorSecondaryVariant">@color/pine_700</item>
         <item name="colorOnSecondary">@android:color/holo_green_light</item>
         <!-- Status bar color. -->
-        <item name="android:statusBarColor" >?attr/colorPrimaryVariant</item>
+        <item name="android:statusBarColor" >@color/black_tran</item>
         <!-- Customize your theme here. -->
         <item name="android:textColorPrimary">@color/white</item>
         <item name="android:textColor">@color/white</item>

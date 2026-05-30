@@ -28,7 +28,7 @@ public class TimeProgressView extends View implements View.OnTouchListener {
     private float thumbHeight;
     private int max = 100;
     private int min;
-    private int progress = 100;
+    private int progress = 0;
     private int buffer = 0;
     private final Paint textPaint;
     private final Paint seekBarPaint;
@@ -214,8 +214,6 @@ public class TimeProgressView extends View implements View.OnTouchListener {
 
         seekBarPaint.setAlpha(255);
         canvas.drawRoundRect(progressPointRect,progressPointRect.width()/4,progressPointRect.width()/4, seekBarPaint);
-//        canvas.drawOval(progressPointRect,seekBarPaint);
-
     }
 
     private SeekBar.OnSeekBarChangeListener listener;

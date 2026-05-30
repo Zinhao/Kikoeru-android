@@ -4,11 +4,12 @@ import android.util.Log
 import okhttp3.OkHttpClient
 import java.io.IOException
 import java.net.*
+import java.util.concurrent.TimeUnit
 
 
 object HttpClientManager {
     val TAG = "HttpClientManager"
-    val pacEnabledClient: OkHttpClient.Builder
+    val pacEnabledClient: OkHttpClient
         get() = OkHttpClient.Builder()
             .proxySelector(object : ProxySelector() {
                 override fun select(uri: URI): MutableList<Proxy?> {
@@ -28,7 +29,7 @@ object HttpClientManager {
                         // 相当于在 App 内部实现了一套“手动代理”的兜底逻辑
                         Log.i(TAG, "select:手动代理")
                         return mutableListOf<Proxy?>(
-                            Proxy(Proxy.Type.HTTP, InetSocketAddress("192.168.1.124", 7890))
+                            Proxy(Proxy.Type.HTTP, InetSocketAddress("192.168.31.253", 7890))
                         )
                     }
 
@@ -41,6 +42,9 @@ object HttpClientManager {
                     // 代理连接失败时的回调
                     getDefault().connectFailed(uri, sa, ioe)
                 }
-            })
+            }).callTimeout(100, TimeUnit.SECONDS)
+            .writeTimeout(100, TimeUnit.SECONDS)
+            .readTimeout(100, TimeUnit.SECONDS)
+            .addInterceptor(LoggingInterceptor()).build()
 
 }

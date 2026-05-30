@@ -1,55 +1,83 @@
-package com.zinhao.kikoeru;
+package com.zinhao.kikoeru
 
-import android.os.Bundle;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import com.zinhao.kikoeru.databinding.ActivityLocalHistoryBinding;
-import com.zinhao.kikoeru.db.LocalWorkHistory;
+import android.content.Intent
+import android.os.Bundle
+import android.text.format.DateFormat
+import android.widget.ImageView
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
+import com.koushikdutta.async.http.AsyncHttpClient
+import com.koushikdutta.async.http.AsyncHttpResponse
+import com.zinhao.kikoeru.Api.fullCoverImageUrl
+import com.zinhao.kikoeru.databinding.ActivityLocalHistoryBinding
+import com.zinhao.kikoeru.db.LocalWorkHistory
+import org.json.JSONException
+import org.json.JSONObject
+import java.security.AccessController.getContext
 
-import java.util.Comparator;
-import java.util.List;
+class LastWatchActivity : BaseActivity() {
+    private var viewBinding: ActivityLocalHistoryBinding? = null
 
-public class LastWatchActivity extends BaseActivity {
-    private ActivityLocalHistoryBinding viewBinding;
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        viewBinding = ActivityLocalHistoryBinding.inflate(getLayoutInflater())
+        setContentView(viewBinding!!.getRoot())
+        setTitle(R.string.local_history)
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        viewBinding = ActivityLocalHistoryBinding.inflate(getLayoutInflater());
-        setContentView(viewBinding.getRoot());
-        setTitle(R.string.local_history);
+        val app = application as App
+        val localWorkHistoryList = app.getLocalWorkHistoryList()
+        localWorkHistoryList.sortBy { -it.position }
+        viewBinding!!.mainRecycler.setAdapter(object : SuperRecyclerAdapter<LocalWorkHistory?>(localWorkHistoryList) {
+            override fun bindData(holder: SuperVHolder, position: Int) {
+                val item = localWorkHistoryList.get(position)
 
-        App app = (App) getApplication();
-        List<LocalWorkHistory> localWorkHistoryList = app.getLocalWorkHistoryList();
-        localWorkHistoryList.sort(new Comparator<LocalWorkHistory>() {
-            @Override
-            public int compare(LocalWorkHistory o1, LocalWorkHistory o2) {
-                return Long.compare(o2.getPosition(),o1.getPosition());
+                val coverUrl = fullCoverImageUrl(item.rjNumber)
+                holder.setText(item.title,R.id.tvTitle)
+                holder.setText("RJ${item.rjNumber}",R.id.tvRJ)
+                holder.setText(DateFormat.format("yyyy-MM-dd HH:mm:ss",item.position).toString(),R.id.tvDate)
+                val ivCover = holder.getView(R.id.ivCover)
+                if(ivCover is ImageView) {
+                    Glide.with(holder.itemView.context).load(coverUrl)
+                        .apply(App.getInstance().radius15Pic)
+                        .into(ivCover)
+                }
+                holder.itemView.setOnClickListener { Api.doGetWork(item.rjNumber.toString(), 1, searchWorkCallback) }
             }
-        });
-        viewBinding.mainRecycler.setAdapter(new SuperRecyclerAdapter<LocalWorkHistory>(localWorkHistoryList) {
-            @Override
-            public void bindData(SuperRecyclerAdapter.SuperVHolder  holder, int position) {
-                LocalWorkHistory item = localWorkHistoryList.get(position);
 
-                String coverUrl = Api.fullCoverImageUrl(item.getRjNumber());
-                holder.setImage(coverUrl,R.id.ivCover);
-
-//                holder.setText(""+item.getRjNumber() +item.getTitle(),R.id.tvTitle);
-
+            override fun setLayout(viewType: Int): Int {
+                return R.layout.item_recent_work
             }
+        })
 
-            @Override
-            public int setLayout(int viewType) {
-                return R.layout.item_work_3;
+
+//        val col = max(getResources().getDisplayMetrics().widthPixels / 395, 3)
+//        val layoutManager = GridLayoutManager(this@LastWatchActivity, col)
+//        viewBinding!!.mainRecycler.setLayoutManager(layoutManager)
+        viewBinding!!.mainRecycler.layoutManager = LinearLayoutManager(this)
+    }
+
+    private val searchWorkCallback: AsyncHttpClient.JSONObjectCallback = object : AsyncHttpClient.JSONObjectCallback() {
+        override fun onCompleted(e: Exception?, asyncHttpResponse: AsyncHttpResponse, jsonObject: JSONObject) {
+            if (e != null) {
+                alertException(e)
+                return
             }
-
-        });
-        int col = Math.max(getResources().getDisplayMetrics().widthPixels/395,3);
-        GridLayoutManager layoutManager = new GridLayoutManager(LastWatchActivity.this, col);
-        viewBinding.mainRecycler.setLayoutManager(layoutManager);
-
-
-
+            if (asyncHttpResponse.code() == 200) {
+                try {
+                    val totalCount = jsonObject.getJSONObject("pagination").getInt("totalCount")
+                    if (totalCount < 1) return
+                    val works = jsonObject.getJSONArray("works")
+                    if (works.length() != 0) {
+                        val item = works.getJSONObject(0)
+                        val intent = Intent(this@LastWatchActivity, WorkTreeActivity::class.java)
+                        intent.putExtra("work_json_str", item.toString())
+                        this@LastWatchActivity.startActivity(intent, null)
+                    }
+                } catch (jsonException: JSONException) {
+                    jsonException.printStackTrace()
+                }
+            }
+        }
     }
 }

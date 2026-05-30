@@ -6,18 +6,34 @@
                                                    xmlns:tools="http://schemas.android.com/tools"
                                                    android:background="@drawable/player_bg">
 
-    <ImageView
-        android:id="@+id/ivCover"
-        android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:layout_margin="15dp"
-        android:adjustViewBounds="true"
-        android:scaleType="centerInside"
-        android:transitionName="hero_bottom"
-        android:src="@drawable/ic_no_cover"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                  android:orientation="vertical" android:padding="20dp"
+                  android:id="@+id/linearLayout2">
+        <TextView
+                android:text="TextView"
+                android:layout_width="match_parent"
+                android:gravity="center"
+                android:layout_marginBottom="15dp"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                android:shadowRadius="5"
+                android:shadowDy="3"
+                android:shadowDx="3"
+                android:shadowColor="@color/black"
+                android:layout_height="wrap_content" android:id="@+id/textView13"/>
+        <ImageView
+                android:id="@+id/ivCover"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+
+                android:adjustViewBounds="true"
+                android:scaleType="centerInside"
+                android:transitionName="hero_bottom"
+                android:src="@drawable/ic_no_cover"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"/>
+    </LinearLayout>
 
     <com.zinhao.kikoeru.TimeProgressView
             android:id="@+id/time_view"
@@ -25,74 +41,85 @@
             android:layout_height="45dp"
             android:layout_marginStart="24dp"
             android:layout_marginEnd="24dp"
-            android:layout_marginBottom="8dp"
-            app:layout_constraintBottom_toTopOf="@+id/ib2"
-            app:layout_constraintEnd_toEndOf="@+id/ivCover"
-            app:layout_constraintStart_toStartOf="@+id/ivCover"/>
-
-    <ImageButton
-        android:id="@+id/ib1"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginEnd="24dp"
-        android:background="@drawable/ripple_white_bg"
-        app:layout_constraintBottom_toBottomOf="@+id/ib2"
-        app:layout_constraintEnd_toStartOf="@+id/ib2"
-        app:layout_constraintTop_toTopOf="@+id/ib2"
-        app:srcCompat="@drawable/ic_baseline_skip_previous_24" />
-
-    <ImageButton
-            android:id="@+id/ib2"
-            android:layout_width="68dp"
-            android:layout_height="68dp"
-            android:layout_marginBottom="8dp"
-            android:background="@drawable/ripple_white_bg"
-            android:scaleType="centerCrop"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="@+id/ivCover"
             app:layout_constraintStart_toStartOf="@+id/ivCover"
-            app:srcCompat="@drawable/ic_baseline_pause_24"/>
+            app:layout_constraintBottom_toTopOf="@+id/linearLayout3" android:layout_marginBottom="8dp"/>
 
-    <ImageButton
-        android:id="@+id/ib3"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginStart="24dp"
-        android:background="@drawable/ripple_white_bg"
-        app:layout_constraintBottom_toBottomOf="@+id/ib2"
-        app:layout_constraintStart_toEndOf="@+id/ib2"
-        app:layout_constraintTop_toTopOf="@+id/ib2"
-        app:srcCompat="@drawable/ic_baseline_skip_next_24" />
 
     <androidx.recyclerview.widget.RecyclerView android:layout_width="match_parent"
                                                android:layout_height="0dp"
                                                android:padding="20dp"
                                                android:id="@+id/mainRecycler"
                                                tools:listitem="@layout/item_text_row"
-                                               app:layout_constraintBottom_toTopOf="@+id/time_view"
-                                               app:layout_constraintTop_toBottomOf="@+id/ivCover"
                                                app:layout_constraintEnd_toEndOf="parent"
-                                               app:layout_constraintStart_toStartOf="parent"/>
-    <ImageButton
-        android:id="@+id/imageButton2"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginStart="24dp"
-        android:background="@drawable/ripple_white_bg"
-        app:layout_constraintBottom_toBottomOf="@+id/ib3"
-        app:layout_constraintStart_toEndOf="@+id/ib3"
-        app:layout_constraintTop_toTopOf="@+id/ib3"
-        app:srcCompat="@drawable/ic_baseline_text_fields_24" />
+                                               app:layout_constraintStart_toStartOf="parent"
+                                               app:layout_constraintTop_toBottomOf="@+id/linearLayout2"
+                                               app:layout_constraintBottom_toTopOf="@+id/time_view"
+                                               android:layout_marginBottom="16dp"
+                                               android:layout_marginTop="8dp"/>
 
-    <ImageButton
-        android:id="@+id/ibLoop"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginEnd="24dp"
-        android:background="@drawable/ripple_white_bg"
-        android:src="@drawable/ic_baseline_loop_24"
-        app:layout_constraintBottom_toBottomOf="@+id/ib1"
-        app:layout_constraintEnd_toStartOf="@+id/ib1"
-        app:layout_constraintTop_toTopOf="@+id/ib1" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                  android:orientation="horizontal"
+                  android:gravity="center"
+                  app:layout_constraintBottom_toBottomOf="parent" android:id="@+id/linearLayout3"
+                  android:layout_marginBottom="16dp">
+        <ImageButton
+                android:id="@+id/ibLoop"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="24dp"
+                android:background="@drawable/ripple_white_bg"
+                android:src="@drawable/ic_baseline_loop_24"
+                app:layout_constraintBottom_toBottomOf="@+id/ib1"
+                app:layout_constraintEnd_toStartOf="@+id/ib1"
+                app:layout_constraintTop_toTopOf="@+id/ib1"/>
+
+        <ImageButton
+                android:id="@+id/ib1"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="24dp"
+                android:background="@drawable/ripple_white_bg"
+                app:layout_constraintBottom_toBottomOf="@+id/ib2"
+                app:layout_constraintEnd_toStartOf="@+id/ib2"
+                app:layout_constraintTop_toTopOf="@+id/ib2"
+                app:srcCompat="@drawable/ic_baseline_skip_previous_24"/>
+
+        <ImageButton
+                android:id="@+id/ib2"
+                android:layout_width="68dp"
+                android:layout_height="68dp"
+                android:background="@drawable/ripple_white_bg"
+                android:scaleType="centerCrop"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="@+id/ivCover"
+                app:layout_constraintStart_toStartOf="@+id/ivCover"
+                app:srcCompat="@drawable/ic_baseline_pause_24"/>
+
+        <ImageButton
+                android:id="@+id/ib3"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="24dp"
+                android:background="@drawable/ripple_white_bg"
+                app:layout_constraintBottom_toBottomOf="@+id/ib2"
+                app:layout_constraintStart_toEndOf="@+id/ib2"
+                app:layout_constraintTop_toTopOf="@+id/ib2"
+                app:srcCompat="@drawable/ic_baseline_skip_next_24"/>
+
+        <ImageButton
+                android:id="@+id/imageButton2"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="24dp"
+                android:background="@drawable/ripple_white_bg"
+                app:layout_constraintBottom_toBottomOf="@+id/ib3"
+                app:layout_constraintStart_toEndOf="@+id/ib3"
+                app:layout_constraintTop_toTopOf="@+id/ib3"
+                app:srcCompat="@drawable/ic_baseline_text_fields_24" app:layout_constraintVertical_bias="0.0"/>
+
+    </LinearLayout>
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

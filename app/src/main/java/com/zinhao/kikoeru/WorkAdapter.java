@@ -13,7 +13,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -133,7 +132,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 ((SimpleViewHolder) holder).tvCircles.setTagClickListener(circlesClickListener);
                 ((SimpleViewHolder) holder).tvTags.setTagClickListener(tagClickListener);
                 Glide.with(holder.itemView.getContext()).load(App.getInstance().currentUser().getHost() + String.format("/api/cover/%d?type=sam&token=%s", item.getInt("id"), Api.token))
-                        .apply(App.getInstance().getDefaultPic()).into(((SimpleViewHolder) holder).ivCover);
+                        .apply(App.getInstance().getRadius15Pic()).into(((SimpleViewHolder) holder).ivCover);
             } catch (JSONException e) {
                 e.printStackTrace();
                 App.getInstance().alertException(e);
@@ -143,7 +142,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             GirdViewHolder girdHolder = (GirdViewHolder) holder;
             try {
                 Glide.with(holder.itemView.getContext()).load(Api.fullCoverImageUrl(item.optInt("id")))
-                        .apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
+                        .apply(App.getInstance().getRadius15Pic()).into(girdHolder.ivCover);
                 girdHolder.tvTitle.setText(item.getString("title"));
                 girdHolder.tvArt.setTags(App.getVasList(item), TagsView.JSON_TEXT_GET.setKey("name"));
                 girdHolder.tvArt.setTagClickListener(vaClickListener);
@@ -180,7 +179,7 @@ public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             SmallGirdViewHolder girdHolder = (SmallGirdViewHolder) holder;
             try {
                 Glide.with(holder.itemView.getContext()).load(Api.fullCoverImageUrl(item.optInt("id")))
-                        .apply(App.getInstance().getDefaultPic()).into(girdHolder.ivCover);
+                        .apply(App.getInstance().getRadius5Pic()).into(girdHolder.ivCover);
                 girdHolder.tvRjNumber.setText(String.format("RJ%d", item.getInt("id")));
                 girdHolder.tvDate.setText(item.getString("release"));
                 if (item.has(JSONConst.Work.HOST)) {

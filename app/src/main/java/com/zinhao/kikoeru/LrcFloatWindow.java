@@ -49,38 +49,6 @@ public class LrcFloatWindow extends BaseActivity implements ServiceConnection{
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         ctrlBinder = (AudioService.CtrlBinder) service;
-        if (ctrlBinder.getLrcFloatView() == null) {
-            TextView view = (TextView) LayoutInflater.from(this).inflate(R.layout.lrc_layout, null, false);
-            view.setOnTouchListener(new View.OnTouchListener() {
-                private float downX, downY;
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    // 歌词手势
-                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                        downX = event.getRawX();
-                        downY = event.getRawY();
-                    } else if (event.getAction() == MotionEvent.ACTION_UP) {
-                        if (ctrlBinder != null)
-                            App.getInstance().savePosition(ctrlBinder.getLrcWindowParams().x, ctrlBinder.getLrcWindowParams().y);
-                    } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
-
-                        float nowX = event.getRawX();
-                        float nowY = event.getRawY();
-                        float moveX = nowX - downX;
-                        float moveY = nowY - downY;
-                        if (ctrlBinder != null) {
-                            ctrlBinder.getLrcWindowParams().x += moveX;
-                            ctrlBinder.getLrcWindowParams().y += moveY;
-                            getWindowManager().updateViewLayout(ctrlBinder.getLrcFloatView(), ctrlBinder.getLrcWindowParams());
-                        }
-                        downX = nowX;
-                        downY = nowY;
-                    }
-                    return true;
-                }
-            });
-            ctrlBinder.setLrcView(view);
-        }
         if (Settings.canDrawOverlays(this)) {
             // 有权限
             ctrlBinder.showLrcFloatWindow();
@@ -102,9 +70,11 @@ public class LrcFloatWindow extends BaseActivity implements ServiceConnection{
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (Settings.canDrawOverlays(this)) {
-            ctrlBinder.showLrcFloatWindow();
+        if(ctrlBinder!=null){
+            if (Settings.canDrawOverlays(this)) {
+                ctrlBinder.showLrcFloatWindow();
+            }
+            finishAndRemoveTask();
         }
-        finishAndRemoveTask();
     }
 }

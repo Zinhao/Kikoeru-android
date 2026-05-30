@@ -7,7 +7,9 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.room.Room;
@@ -50,7 +52,8 @@ public class App extends Application implements Application.ActivityLifecycleCal
     private final List<LocalWorkHistory> localWorkHistoryList = new ArrayList<>();
     private long currentUserId;
 
-    private RequestOptions defaultPic;
+    private RequestOptions radius15Pic;
+    private RequestOptions radius5Pic;
     private UserDao userDao;
     private LocalWorkHistoryDao historyDao;
 
@@ -112,8 +115,12 @@ public class App extends Application implements Application.ActivityLifecycleCal
         return circlesIdMap;
     }
 
-    public RequestOptions getDefaultPic() {
-        return defaultPic;
+    public RequestOptions getRadius15Pic() {
+        return radius15Pic;
+    }
+
+    public RequestOptions getRadius5Pic() {
+        return radius5Pic;
     }
 
     @Override
@@ -137,7 +144,14 @@ public class App extends Application implements Application.ActivityLifecycleCal
             Api.init(user.getToken(), user.getHost());
         }
 
-        defaultPic = new RequestOptions().placeholder(R.drawable.ic_no_cover).apply(RequestOptions.bitmapTransform(new RoundedCorners(10)));
+
+
+        radius15Pic = new RequestOptions().placeholder(R.drawable.ic_no_cover).apply(RequestOptions.bitmapTransform(
+                new RoundedCorners((int) dp2px(15.0f,getResources().getDisplayMetrics()))
+        ));
+        radius5Pic = new RequestOptions().placeholder(R.drawable.ic_no_cover).apply(RequestOptions.bitmapTransform(
+                new RoundedCorners((int) dp2px(5.0f,getResources().getDisplayMetrics()))
+        ));
 
         DownloadUtils.getInstance().init(this);
         NotificationChannel channelMusicService =
@@ -165,6 +179,10 @@ public class App extends Application implements Application.ActivityLifecycleCal
                 }
             }
         });
+    }
+
+    private static float dp2px(float dp, DisplayMetrics displayMetrics){
+        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,dp,displayMetrics);
     }
 
     public void alertException(Exception e) {
