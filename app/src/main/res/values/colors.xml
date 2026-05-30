@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="main_color">#70a5c3</color>
+    <color name="main_color">#0B2D72</color>
+    <color name="second_color">#0AC4E0</color>
+    <color name="third_color">#0992C2</color>
+    <color name="forth_color">#0B2D72</color>
 
     <color name="pure_80">#9B8EC7</color>
+    <color name="green">#6FCF97</color>
+
     <color name="pure_50">#BDA6CE</color>
     <color name="gray">#B4D3D9</color>
     <color name="orange">#F2EAE0</color>

@@ -37,11 +37,13 @@ import com.zinhao.kikoeru.Lrc.LrcRow
 import org.json.JSONException
 import org.json.JSONObject
 import java.util.*
+import androidx.core.graphics.drawable.toDrawable
 
 class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListener, LrcRowChangeListener,
     OnSeekBarChangeListener {
     private var ctrlBinder: CtrlBinder? = null
     private var imageView: ImageView? = null
+    private lateinit var rootView: View
     private lateinit var tvTitle: TextView
     private var ibPrevious: ImageButton? = null
     private var ibPause: ImageButton? = null
@@ -56,12 +58,9 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_player)
+        rootView = findViewById(R.id.root)
         imageView = findViewById<ImageView>(R.id.ivCover)
-        imageView!!.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(v: View?) {
-                doGetWork(ctrlBinder!!.currentAlbumId.toString(), 1, searchWorkCallback)
-            }
-        })
+        imageView!!.setOnClickListener { doGetWork(ctrlBinder!!.currentAlbumId.toString(), 1, searchWorkCallback) }
         ibPrevious = findViewById<ImageButton>(R.id.ib1)
         ibPause = findViewById<ImageButton>(R.id.ib2)
         ibNext = findViewById<ImageButton>(R.id.ib3)
@@ -258,19 +257,18 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
                     imageView!!.setImageBitmap(bitmap)
                     Palette.from(bitmap).generate(object : PaletteAsyncListener {
                         override fun onGenerated(palette: Palette?) {
-                            val bg = imageView!!.getParent() as View?
-                            if (bg != null && palette != null) {
+                            if (palette != null) {
                                 val mainColor = palette.getDarkMutedColor(
                                     ActivityCompat.getColor(
                                         this@AudioPlayerActivity,
                                         R.color.main_color
                                     )
                                 )
-                                bg.setBackgroundColor(mainColor)
+                                rootView.setBackgroundColor(mainColor)
                                 window.setNavigationBarColor(mainColor)
                                 window.setStatusBarColor(mainColor)
                                 val actionBar = getSupportActionBar()
-                                if (actionBar != null) actionBar.setBackgroundDrawable(ColorDrawable(mainColor))
+                                actionBar?.setBackgroundDrawable(mainColor.toDrawable())
                             }
                         }
                     })

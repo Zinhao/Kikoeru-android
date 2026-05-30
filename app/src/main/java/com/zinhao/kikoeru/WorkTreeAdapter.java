@@ -12,6 +12,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import org.json.JSONArray;
@@ -86,7 +87,7 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             int[] attribute = new int[]{android.R.attr.textColor, android.R.attr.colorPrimary};
             TypedArray array = context.obtainStyledAttributes(typedValue.resourceId, attribute);
             unCacheColor = array.getColor(0, Color.GRAY);
-            cachedColor = array.getColor(1, Color.GREEN);
+            cachedColor = ContextCompat.getColor(context, R.color.green);
             array.recycle();
         }
         View v;

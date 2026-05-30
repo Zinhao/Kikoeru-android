@@ -20,10 +20,7 @@ import android.view.SubMenu;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
@@ -34,6 +31,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
 import com.zinhao.kikoeru.db.LocalWorkHistory;
@@ -55,6 +53,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
      */
     private static final String TAG = "WorkActivity";
     private RecyclerView recyclerView;
+    private ProgressBar progressIndicator;
     private WorkTreeAdapter workTreeAdapter;
     private AudioService.CtrlBinder ctrlBinder;
 
@@ -139,6 +138,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                 recyclerView.setItemAnimator(null);
                 recyclerView.setLayoutManager(new LinearLayoutManager(WorkTreeActivity.this));
                 recyclerView.setAdapter(workTreeAdapter);
+                progressIndicator.setVisibility(View.GONE);
             });
         }
     };
@@ -176,6 +176,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
             throw new RuntimeException(e);
         }
         inAnim = AnimationUtils.loadAnimation(this, R.anim.move_bottom_in);
+        progressIndicator = findViewById(R.id.loading);
         recyclerView = findViewById(R.id.recyclerView);
         bottomLayout = findViewById(R.id.bottomLayout);
         ivCover = bottomLayout.findViewById(R.id.imageView);

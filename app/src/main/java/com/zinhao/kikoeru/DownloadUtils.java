@@ -1,6 +1,7 @@
 package com.zinhao.kikoeru;
 
 import android.content.Context;
+import android.util.Log;
 import androidx.collection.SimpleArrayMap;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
@@ -83,6 +84,7 @@ public class DownloadUtils implements Closeable {
                 if (jsonObject.has(JSONConst.WorkTree.MAP_FILE_PATH)) {
                     String mapPath = jsonObject.getString(JSONConst.WorkTree.MAP_FILE_PATH);
                     mapFile = new File(mapPath);
+                    mapFile.getParentFile().mkdirs();
                 }
                 if (jsonObject.has(JSONConst.WorkTree.WORK_ID)) {
                     workId = jsonObject.getInt(JSONConst.WorkTree.WORK_ID);
@@ -109,13 +111,7 @@ public class DownloadUtils implements Closeable {
         }
 
         public boolean equals(JSONObject jsonObject) {
-            try {
-                return hash.equals(jsonObject.getString(JSONConst.WorkTree.HASH));
-            } catch (JSONException e) {
-                missionException = e;
-                e.printStackTrace();
-                return false;
-            }
+            return hash.equals(jsonObject.optString(JSONConst.WorkTree.HASH));
         }
 
         public String getHash() {
@@ -200,6 +196,7 @@ public class DownloadUtils implements Closeable {
 
             try {
                 String url = getDownLoadUrl();
+                Log.d(TAG, "start: download:"+url);
                 Request.Builder requestBuilder = new Request.Builder()
                         .url(url)
                         .addHeader("authorization", Api.authorization);
@@ -218,6 +215,7 @@ public class DownloadUtils implements Closeable {
                     @Override
                     public void onFailure(Call call, IOException e) {
                         missionException = e;
+                        e.printStackTrace();
                         setDownloading(false);
                         App.getInstance().alertException(e);
                     }
@@ -274,6 +272,7 @@ public class DownloadUtils implements Closeable {
                             }
                         } catch (IOException e) {
                             missionException = e;
+                            e.printStackTrace();
                             App.getInstance().alertException(e);
                         } finally {
                             if (source != null) source.close();
@@ -282,7 +281,6 @@ public class DownloadUtils implements Closeable {
                         }
                     }
                 });
-
                 setDownloading(true);
             } catch (JSONException e) {
                 missionException = e;
