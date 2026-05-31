@@ -40,7 +40,7 @@ public class LrcAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         Lrc.LrcRow lrcRow = mLrc.getLrcRows().get(position);
         if (holder instanceof TextRowHolder) {
             ((TextRowHolder) holder).textView.setText(lrcRow.content);
-            if(mLrc.getCurrentIndex() == position){
+            if(oldIndex == position){
                 ((TextRowHolder) holder).textView.setTextSize(36);
                 ((TextRowHolder) holder).textView.setAlpha(1.0f);
                 ((TextRowHolder) holder).ivToHere.setVisibility(View.GONE);

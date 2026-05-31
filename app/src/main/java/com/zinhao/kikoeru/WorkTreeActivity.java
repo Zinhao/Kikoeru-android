@@ -138,7 +138,6 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
                 recyclerView.setItemAnimator(null);
                 recyclerView.setLayoutManager(new LinearLayoutManager(WorkTreeActivity.this));
                 recyclerView.setAdapter(workTreeAdapter);
-                progressIndicator.setVisibility(View.GONE);
             });
         }
     };
@@ -176,7 +175,6 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
             throw new RuntimeException(e);
         }
         inAnim = AnimationUtils.loadAnimation(this, R.anim.move_bottom_in);
-        progressIndicator = findViewById(R.id.loading);
         recyclerView = findViewById(R.id.recyclerView);
         bottomLayout = findViewById(R.id.bottomLayout);
         ivCover = bottomLayout.findViewById(R.id.imageView);
@@ -244,6 +242,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
     }
 
     private void init() {
+        Log.d(TAG, "init: work tree init");
         try {
             if (work.has(JSONConst.Work.IS_LOCAL_WORK)) {
                 boolean isLocalWork = work.getBoolean(JSONConst.Work.IS_LOCAL_WORK);
