@@ -549,7 +549,7 @@ public class AudioService extends Service {
             updateLrcTask = new Runnable() {
                 @Override
                 public void run() {
-                    if (mediaPlayer != null && mediaPlayer.getPlaybackState() == Player.STATE_READY) {
+                    if (mediaPlayer != null && mediaPlayer.getPlaybackState() == Player.STATE_READY && ctrlBinder.mLrc!=null) {
                         Lrc.LrcRow lrcRow = ctrlBinder.mLrc.update(mediaPlayer.getCurrentPosition());
                         if (currentLrcRow != lrcRow) {
                             currentLrcRow = lrcRow;
