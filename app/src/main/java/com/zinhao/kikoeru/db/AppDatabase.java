@@ -6,10 +6,11 @@ import androidx.room.RoomDatabase;
 import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
-@Database(entities = {User.class,LocalWorkHistory.class}, version = 2)
+@Database(entities = {User.class,LocalWorkHistory.class,AudioLrcBind.class}, version = 3)
 public abstract class AppDatabase extends RoomDatabase{
     public abstract UserDao userDao();
     public abstract LocalWorkHistoryDao historyDao();
+    public abstract AudioLrcBindDao audioLrcBindDao();
 
     public static final Migration MIGRATION_1_2 = new Migration(1, 2) {
         @Override
@@ -26,6 +27,22 @@ public abstract class AppDatabase extends RoomDatabase{
             // 注意：索引名称必须完全等于报错信息里的 index_local_work_history_rjNumber
             database.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_local_work_history_rjNumber` " +
                     "ON `local_work_history` (`rjNumber`)");
+        }
+    };
+
+    // ===== ✅ Migration 2 → 3（新增）=====
+    public static final Migration MIGRATION_2_3 = new Migration(2, 3) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL("CREATE TABLE IF NOT EXISTS `audio_lrc_bind` (" +
+                    "`id` INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    "`rjNumber` INTEGER NOT NULL, " +
+                    "`audioPath` TEXT, " +
+                    "`lrcPath` TEXT)");
+            database.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS `index_audio_lrc_bind_audioPath` " +
+                            "ON `audio_lrc_bind` (`audioPath`)"
+            );
         }
     };
 }

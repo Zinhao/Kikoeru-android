@@ -53,6 +53,8 @@ public class TextRowActivity extends BaseActivity implements ServiceConnection {
     private Text mText;
     private TextAdapter adapter;
 
+    private JSONObject textItem;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,15 +67,15 @@ public class TextRowActivity extends BaseActivity implements ServiceConnection {
             return;
         }
         try {
-            JSONObject item = new JSONObject(text);
-            setTitle(item.getString(JSONConst.WorkTree.TITLE));
-            if (item.has(JSONConst.WorkTree.EXISTS)) {
-                boolean exists = item.getBoolean(JSONConst.WorkTree.EXISTS);
+            textItem = new JSONObject(text);
+            setTitle(textItem.getString(JSONConst.WorkTree.TITLE));
+            if (textItem.has(JSONConst.WorkTree.EXISTS)) {
+                boolean exists = textItem.getBoolean(JSONConst.WorkTree.EXISTS);
                 if (exists) {
-                    File mapFile = new File(item.getString(JSONConst.WorkTree.MAP_FILE_PATH));
+                    File mapFile = new File(textItem.getString(JSONConst.WorkTree.MAP_FILE_PATH));
                     LocalFileCache.getInstance().readText(mapFile, textCallback);
                 } else {
-                    String hash = item.getString(JSONConst.WorkTree.HASH);
+                    String hash = textItem.getString(JSONConst.WorkTree.HASH);
                     Api.doGetMediaString(hash, textCallback);
                 }
             }
@@ -92,7 +94,8 @@ public class TextRowActivity extends BaseActivity implements ServiceConnection {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(item.getItemId() == 0){
             if(ctrlBinder!=null && mText != null){
-                ctrlBinder.setmLrc(mText.getText());
+                ctrlBinder.setLrc(mText.getText());
+                ctrlBinder.insertLrcBind(textItem.optString(JSONConst.WorkTree.HASH));
             }
         }
         return super.onOptionsItemSelected(item);

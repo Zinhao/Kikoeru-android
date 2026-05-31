@@ -461,7 +461,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
     }
 
     @Override
-    public void onAlbumChange(int rjNumber) {
+    public void onAlbumChange(long rjNumber) {
         Glide.with(this).load(Api.minCoverImageUrl(rjNumber))
                 .apply(App.getInstance().getRadius5Pic()).into(ivCover);
     }

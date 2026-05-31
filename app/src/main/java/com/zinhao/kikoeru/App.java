@@ -56,6 +56,7 @@ public class App extends Application implements Application.ActivityLifecycleCal
     private RequestOptions radius5Pic;
     private UserDao userDao;
     private LocalWorkHistoryDao historyDao;
+    private AudioLrcBindDao  audioLrcBindDao ;
 
     private final List<Activity> activities = new ArrayList<>();
     private final HashMap<String,Long> circlesIdMap = new HashMap<>();
@@ -129,9 +130,11 @@ public class App extends Application implements Application.ActivityLifecycleCal
         instance = this;
         AppDatabase appDatabase = Room.databaseBuilder(getApplicationContext(), AppDatabase.class,"app.db")
                 .addMigrations(AppDatabase.MIGRATION_1_2)
+                .addMigrations(AppDatabase.MIGRATION_2_3)
                 .build();
         userDao = appDatabase.userDao();
         historyDao = appDatabase.historyDao();
+        audioLrcBindDao = appDatabase.audioLrcBindDao();
 
         currentUserId = getValue(App.CONFIG_USER_DATABASE_ID, -1);
         appDebug = getValue(App.CONFIG_DEBUG, 0) == 1;
@@ -313,6 +316,25 @@ public class App extends Application implements Application.ActivityLifecycleCal
             }
         }
         return null;
+    }
+
+    public void insertLrcBind(AudioLrcBind lrcBind) {
+        LocalFileCache.getInstance().doSomething(()->{
+            audioLrcBindDao.insertLrcBind(lrcBind);
+        });
+    }
+
+    public void getLrcBind(long rjNumber,String audioPath,DatabaseResultCallback callback) {
+        LocalFileCache.getInstance().doSomething(()->{
+            List<AudioLrcBind> rl = audioLrcBindDao.getLrcBind(rjNumber,audioPath);
+            if(!rl.isEmpty()){
+                callback.onResult(rl.get(0));
+            }
+        });
+    }
+
+    public interface DatabaseResultCallback {
+        void onResult(Object result);
     }
 
     @Override

@@ -44,6 +44,7 @@ import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.metadata.Metadata;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
+import com.zinhao.kikoeru.db.AudioLrcBind;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -487,7 +488,8 @@ public class AudioService extends Service {
         private final List<JSONObject> playList = new ArrayList<>();
         private JSONObject current;
         private int currentIndex;
-        private int currentAlbumId;
+        //和 rjNumber 相同
+        private long currentAlbumId;
         private Lrc mLrc = Lrc.NONE;
         private final Timer mLrcUpdateTimer;
         private final WindowManager windowManager;
@@ -614,6 +616,7 @@ public class AudioService extends Service {
 
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject lrcResult) {
+                boolean findLrc = false;
                 if (e != null) {
                     mLrc = Lrc.NONE;
                     alertException(e);
@@ -626,6 +629,7 @@ public class AudioService extends Service {
                     try {
                         boolean exist = lrcResult.optBoolean("result");
                         if (exist) {
+                            findLrc = true;
                             Api.doGetMediaString(lrcResult.getString(JSONConst.WorkTree.HASH), lrcCallBack);
                         } else {
                             mLrc = Lrc.NONE;
@@ -635,6 +639,20 @@ public class AudioService extends Service {
                         alertException(jsonException);
                         mLrc = Lrc.NONE;
                     }
+                }
+                if(!findLrc){
+                    Log.d(TAG, "onCompleted: use audio lrc bind");
+                    App.getInstance().getLrcBind(currentAlbumId, current.optString(JSONConst.WorkTree.MEDIA_STREAM_URL), new App.DatabaseResultCallback() {
+                        @Override
+                        public void onResult(Object result) {
+                            if(result instanceof AudioLrcBind){
+                                AudioLrcBind lrcBind = (AudioLrcBind) result;
+                                Log.d(TAG, "onCompleted: find bind:"+lrcBind.getAudioPath() +", lrc_hash:"+ lrcBind.getLrcPath());
+                                Api.doGetMediaString(lrcBind.getLrcPath(), lrcCallBack);
+                            }
+
+                        }
+                    });
                 }
                 lrcRowChangeListeners.forEach(new Consumer<LrcRowChangeListener>() {
                     @Override
@@ -726,7 +744,7 @@ public class AudioService extends Service {
             lrcRowChangeListeners.remove(listener);
         }
 
-        private void setCurrentAlbumId(int currentAlbumId) {
+        private void setCurrentAlbumId(long currentAlbumId) {
             this.currentAlbumId = currentAlbumId;
             ctrlBinder.musicChangeListeners.forEach(new Consumer<MusicChangeListener>() {
                 @Override
@@ -781,7 +799,7 @@ public class AudioService extends Service {
             return current;
         }
 
-        public int getCurrentAlbumId() {
+        public long getCurrentAlbumId() {
             return currentAlbumId;
         }
 
@@ -789,8 +807,15 @@ public class AudioService extends Service {
             return mLrc;
         }
 
-        public void setmLrc(String lrcText){
+        public void setLrc(String lrcText){
             mLrc = new Lrc(lrcText);
+        }
+
+        public void insertLrcBind(String lrcPath){
+            String audioUrl = current.optString(JSONConst.WorkTree.MEDIA_STREAM_URL);
+            long riNumber = currentAlbumId;
+            AudioLrcBind audioLrcBind = new AudioLrcBind(riNumber,audioUrl,lrcPath);
+            App.getInstance().insertLrcBind(audioLrcBind);
         }
 
         public WindowManager.LayoutParams getLrcWindowParams() {

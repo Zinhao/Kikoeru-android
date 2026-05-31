@@ -277,7 +277,7 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
 
     @SuppressLint("DefaultLocale")
     @Override
-    public void onAlbumChange(int rjNumber) {
+    public void onAlbumChange(long rjNumber) {
         if (rjNumber != 0 && bottomLayout.getVisibility() == View.GONE) {
             toggleBottom();
         }

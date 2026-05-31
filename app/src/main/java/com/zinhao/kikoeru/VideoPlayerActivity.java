@@ -34,7 +34,7 @@ public class VideoPlayerActivity extends BaseActivity implements ServiceConnecti
     }
 
     @Override
-    public void onAlbumChange(int rjNumber) {
+    public void onAlbumChange(long rjNumber) {
 
     }
 

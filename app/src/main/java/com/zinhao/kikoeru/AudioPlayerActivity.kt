@@ -247,7 +247,7 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
         }
     }
 
-    override fun onAlbumChange(rjNumber: Int) {
+    override fun onAlbumChange(rjNumber: Long) {
         Glide.with(this).asBitmap().load(formatGetUrl(String.format(Locale.US, "/api/cover/%d", rjNumber), true))
             .apply(App.getInstance().radius15Pic).into(object : CustomViewTarget<ImageView?, Bitmap?>(imageView!!) {
                 override fun onLoadFailed(drawable: Drawable?) {
