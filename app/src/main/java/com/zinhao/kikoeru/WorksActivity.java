@@ -130,7 +130,6 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
         page = (int) App.getInstance().getValue(CONFIG_PAGE,1);
         vaId = App.getInstance().getValue(CONFIG_PARAM_STR,"");
         tagId = (int) App.getInstance().getValue(CONFIG_PARAM_INT,-1);
-        reloadRecycleView();
 
         bt1.setOnClickListener(v -> {
             type = TYPE_ALL_WORK;
@@ -207,6 +206,21 @@ public class WorksActivity extends BaseActivity implements MusicChangeListener, 
                 }
             }
         });
+        Api.doGetCirclesList(new AsyncHttpClient.JSONArrayCallback() {
+            @Override
+            public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONArray jsonArray) {
+                if(e!=null){
+                    App.getInstance().alertException(e);
+                    return;
+                }
+                try {
+                    App.getInstance().initCirclesIdMap(jsonArray);
+                } catch (JSONException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        });
+        reloadRecycleView();
     }
 
     private void toggleBottom() {

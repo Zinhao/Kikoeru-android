@@ -167,21 +167,6 @@ public class App extends Application implements Application.ActivityLifecycleCal
         channelMusicService.enableVibration(false);
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.createNotificationChannel(channelMusicService);
-
-        Api.doGetCirclesList(new AsyncHttpClient.JSONArrayCallback() {
-            @Override
-            public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONArray jsonArray) {
-                if(e!=null){
-                    App.getInstance().alertException(e);
-                    return;
-                }
-                try {
-                    App.getInstance().initCirclesIdMap(jsonArray);
-                } catch (JSONException ex) {
-                    throw new RuntimeException(ex);
-                }
-            }
-        });
     }
 
     private static float dp2px(float dp, DisplayMetrics displayMetrics){

@@ -39,7 +39,7 @@ object Api {
     private var sort = 1
     private var order = "id"
 
-    private val okHttpClient: OkHttpClient = HttpClientManager.pacEnabledClient
+    private val okHttpClient: OkHttpClient = HttpClientManager.getPacEnabledClient()
 
     @JvmStatic
     fun init(tokenStr: String, host: String) {
@@ -168,7 +168,7 @@ object Api {
     }
     @JvmStatic
     fun doGetWorks(page: Int, callback: JSONObjectCallback?) {
-        val url = "${HOST}/api/works?order=${order}&sort${makeSort()}&page=${page}&seed=35&subtitle=${subtitle}"
+        val url = "${HOST}/api/works?order=${order}&sort=${makeSort()}&page=${page}&seed=35&subtitle=${subtitle}"
         callback?.let {
             okhttpGetJsonObject(url,it)
         }
@@ -288,16 +288,16 @@ object Api {
 
     /**
      * GET
-     * [...](https://api.asmr.one/api/review?order=updated_at&sort=desc&page=1&filter=marked)      我的进度 - 想听
-     * [...](https://api.asmr.one/api/review?order=updated_at&sort=desc&page=1&filter=listening)   我的进度 - 在听
-     * [...](https://api.asmr.one/api/review?order=updated_at&sort=desc&page=1&filter=listened)    我的进度 - 听过
-     * [...](https://api.asmr.one/api/review?order=updated_at&sort=desc&page=1&filter=replay)      我的进度 - 重听
-     * [...](https://api.asmr.one/api/review?order=updated_at&sort=desc&page=1&filter=postponed)   我的进度 - 搁置
-     * [...](https://api.asmr.one/api/review?order=updated_at&sort=desc&page=1)                    我的评价
+     * [...](https://api.asmr.one/api/review?order=id&sort=desc&page=1&filter=marked)      我的进度 - 想听
+     * [...](https://api.asmr.one/api/review?order=id&sort=desc&page=1&filter=listening)   我的进度 - 在听
+     * [...](https://api.asmr.one/api/review?order=id&sort=desc&page=1&filter=listened)    我的进度 - 听过
+     * [...](https://api.asmr.one/api/review?order=id&sort=desc&page=1&filter=replay)      我的进度 - 重听
+     * [...](https://api.asmr.one/api/review?order=id&sort=desc&page=1&filter=postponed)   我的进度 - 搁置
+     * [...](https://api.asmr.one/api/review?order=id&sort=desc&page=1)                    我的评价
      */
     @JvmStatic
     fun doGetReview(@Filter filter: String?, page: Int, callback: JSONObjectCallback?) {
-        val url = "$HOST/api/review?order=updated_at&sort=desc&page=${page}&filter=${filter}"
+        val url = "$HOST/api/review?order=${order}&sort=${makeSort()}&page=${page.coerceAtLeast(1)}&filter=${filter}"
         callback?.let {
             okhttpGetJsonObject(url,it)
         }
