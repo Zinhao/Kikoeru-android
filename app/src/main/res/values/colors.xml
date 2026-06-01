@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="main_color">#0B2D72</color>
-    <color name="second_color">#0AC4E0</color>
-    <color name="third_color">#0992C2</color>
-    <color name="forth_color">#0B2D72</color>
+    <color name="main_color">#977ac2</color>
+    <color name="main_dark">#2e243c</color>
+
+    <color name="second_color">#fac2ae</color>
+    <color name="third_color">#d6a9c9</color>
+    <color name="forth_color">#b693e0</color>
 
     <color name="pure_80">#9B8EC7</color>
     <color name="green">#6FCF97</color>

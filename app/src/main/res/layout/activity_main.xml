@@ -10,7 +10,7 @@
             android:id="@+id/recyclerView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            tools:listitem="@layout/item_work_1"
+            tools:listitem="@layout/item_work_2"
             tools:itemCount="3"
             android:scrollbars="vertical"
             android:fadeScrollbars="false"
@@ -40,17 +40,17 @@
         <ImageButton android:id="@+id/bt1" android:layout_width="match_parent"
                      android:layout_height="match_parent"
                      android:src="@drawable/ic_baseline_widgets_24"
-                     android:background="@null"
+                     android:background="@drawable/ripple_white_bg"
                      android:layout_weight="1"/>
         <ImageButton android:id="@+id/bt2" android:layout_width="match_parent"
                      android:layout_height="match_parent"
                      android:src="@drawable/ic_baseline_favorite_24"
-                     android:background="@null"
+                     android:background="@drawable/ripple_white_bg"
                      android:layout_weight="1"/>
         <ImageButton android:id="@+id/bt3" android:layout_width="match_parent"
                      android:layout_height="match_parent"
                      android:src="@drawable/ic_baseline_more_horiz_24"
-                     android:background="@null"
+                     android:background="@drawable/ripple_white_bg"
                      android:layout_weight="1"/>
     </LinearLayout>
 

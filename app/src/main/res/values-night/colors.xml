@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="main_dark">#2e243c</color>
+
+    <color name="second_color">#5e473f</color>
+    <color name="third_color">#3b2e37</color>
+    <color name="forth_color">#372c45</color>
+</resources>

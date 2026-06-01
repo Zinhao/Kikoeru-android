@@ -47,7 +47,7 @@
         android:layout_width="52dp"
         android:layout_height="52dp"
         android:layout_marginEnd="8dp"
-        android:background="@drawable/item_bg"
+        android:background="@drawable/ripple_white_bg"
         android:contentDescription="play or pause"
         android:src="@drawable/ic_baseline_play_arrow_white_24"
         app:contentDescription="play or pause"

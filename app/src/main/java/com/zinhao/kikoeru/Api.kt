@@ -161,7 +161,7 @@ object Api {
                 if(response.isSuccessful){
                     callback.onCompleted(null, LocalResponse(response.code), response.body?.string())
                 }else{
-                    callback.onCompleted(null, LocalResponse(response.code), "")
+                    callback.onCompleted(null, LocalResponse(response.code), response.body?.string())
                 }
             }
         })

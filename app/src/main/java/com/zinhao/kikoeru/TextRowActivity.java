@@ -37,7 +37,7 @@ public class TextRowActivity extends BaseActivity implements ServiceConnection {
                 return;
             }
             if (asyncHttpResponse == null || asyncHttpResponse.code() != 200) {
-                Log.d(TAG, "onCompleted: lrcTextCallback err!");
+                runOnUiThread(() -> init(s));
                 return;
             }
             runOnUiThread(new Runnable() {
