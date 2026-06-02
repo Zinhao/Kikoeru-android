@@ -26,6 +26,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.content.FileProvider;
+import androidx.core.graphics.Insets;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -34,7 +36,9 @@ import com.bumptech.glide.Glide;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
+import com.zinhao.kikoeru.databinding.ActivityWorkBinding;
 import com.zinhao.kikoeru.db.LocalWorkHistory;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -68,6 +72,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
     private ImageButton ibFloatLrc;
 
     private HeaderViewCompat headerViewCompat;
+    private ActivityWorkBinding viewBinding;
 
     private static class HeaderViewCompat{
         private ImageView ivCover;
@@ -146,7 +151,17 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_work);
+        viewBinding = ActivityWorkBinding.inflate(getLayoutInflater());
+        setContentView(viewBinding.getRoot());
+        setSafeArea(viewBinding.toolbar, new InsetReady() {
+            @Override
+            public void onInsetReady(@NotNull Insets insets) {
+                viewBinding.bottomLayout.getRoot().setPadding(
+                        insets.left,0,insets.right,insets.bottom
+                );
+            }
+        });
+        setSupportActionBar(viewBinding.toolbar);
         String workStr = getIntent().getStringExtra("work_json_str");
         if (workStr != null && !workStr.isEmpty()) {
             try {
@@ -175,15 +190,15 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
             throw new RuntimeException(e);
         }
         inAnim = AnimationUtils.loadAnimation(this, R.anim.move_bottom_in);
-        recyclerView = findViewById(R.id.recyclerView);
-        bottomLayout = findViewById(R.id.bottomLayout);
-        ivCover = bottomLayout.findViewById(R.id.imageView);
-        tvTitle = bottomLayout.findViewById(R.id.textView);
-        tvWorkTitle = bottomLayout.findViewById(R.id.textView2);
-        ibStatus = bottomLayout.findViewById(R.id.button);
-        ibFloatLrc = bottomLayout.findViewById(R.id.imageButton);
+        recyclerView = viewBinding.recyclerView;
+        bottomLayout = viewBinding.bottomLayout.getRoot();
+        ivCover = viewBinding.bottomLayout.imageView;
+        tvTitle = viewBinding.bottomLayout.textView;
+        tvWorkTitle = viewBinding.bottomLayout.textView2;
+        ibStatus = viewBinding.bottomLayout.button;
+        ibFloatLrc = viewBinding.bottomLayout.imageButton;
 
-        View header = findViewById(R.id.header_info);
+        View header = viewBinding.headerInfo.getRoot();
         headerViewCompat = new HeaderViewCompat(header);
         headerViewCompat.setTagClickListener(WorkTreeActivity.this);
         headerViewCompat.setVaClickListener(vaClickListener);
@@ -278,6 +293,7 @@ public class WorkTreeActivity extends BaseActivity implements View.OnClickListen
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         SubMenu subMenu = menu.addSubMenu(0, 0, 0, R.string.mark_action);
+        subMenu.setIcon(R.drawable.ic_baseline_work_24);
         subMenu.add(1, 1, 1, R.string.marked);
         subMenu.add(1, 2, 2, R.string.listening);
         subMenu.add(1, 3, 3, R.string.listened);

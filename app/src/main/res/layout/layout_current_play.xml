@@ -3,10 +3,9 @@
                                                    xmlns:app="http://schemas.android.com/apk/res-auto"
                                                    android:layout_width="match_parent"
                                                    android:background="@drawable/card_bg_current_play"
-                                                   android:paddingRight="20dp"
-                                                   android:paddingLeft="20dp"
-                                                   android:paddingBottom="10dp"
-                                                   android:layout_height="90dp">
+                                                   android:paddingRight="15dp"
+                                                   android:paddingLeft="15dp"
+                                                   android:layout_height="wrap_content">
 
     <ImageView
             android:id="@+id/imageView"

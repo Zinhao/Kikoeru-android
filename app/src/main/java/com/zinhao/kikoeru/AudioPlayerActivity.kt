@@ -4,22 +4,19 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
 import android.graphics.Bitmap
-import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.IBinder
 import android.support.v4.media.session.PlaybackStateCompat
-import android.view.Menu
-import android.view.MenuItem
+import android.util.DisplayMetrics
+import android.util.TypedValue
 import android.view.View
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.SeekBar
+import android.widget.*
 import android.widget.SeekBar.OnSeekBarChangeListener
-import android.widget.TextView
-import android.widget.Toast
+import androidx.appcompat.widget.ListPopupWindow
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toDrawable
 import androidx.palette.graphics.Palette
 import androidx.palette.graphics.Palette.PaletteAsyncListener
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -37,7 +34,6 @@ import com.zinhao.kikoeru.Lrc.LrcRow
 import org.json.JSONException
 import org.json.JSONObject
 import java.util.*
-import androidx.core.graphics.drawable.toDrawable
 
 class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListener, LrcRowChangeListener,
     OnSeekBarChangeListener {
@@ -48,7 +44,7 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
     private var ibPrevious: ImageButton? = null
     private var ibPause: ImageButton? = null
     private var ibNext: ImageButton? = null
-    private var ibLrc: ImageButton? = null
+    private var ibSleep: ImageButton? = null
     private var ibLoop: ImageButton? = null
     private var recyclerView: RecyclerView? = null
     private var timeProgressView: TimeProgressView? = null
@@ -59,15 +55,16 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_player)
         rootView = findViewById(R.id.root)
+        setSafeArea(rootView)
         imageView = findViewById<ImageView>(R.id.ivCover)
         imageView!!.setOnClickListener { doGetWork(ctrlBinder!!.currentAlbumId.toString(), 1, searchWorkCallback) }
         ibPrevious = findViewById<ImageButton>(R.id.ib1)
         ibPause = findViewById<ImageButton>(R.id.ib2)
         ibNext = findViewById<ImageButton>(R.id.ib3)
-        ibLrc = findViewById<ImageButton>(R.id.imageButton2)
+        ibSleep = findViewById<ImageButton>(R.id.imageButton2)
         ibLoop = findViewById<ImageButton>(R.id.ibLoop)
         tvTitle = findViewById(R.id.textView13)
-
+        setupSleepMenu()
         timeProgressView = findViewById<TimeProgressView>(R.id.time_view)
         timeProgressView!!.setColor(ContextCompat.getColor(this, R.color.play_control_icon_color))
         ibPause!!.setOnClickListener(object : View.OnClickListener {
@@ -124,6 +121,28 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
         timeProgressView!!.setOnSeekBarChangeListener(this)
 
         bindService(Intent(this, AudioService::class.java), this, BIND_AUTO_CREATE)
+    }
+
+    private var sleepMenu: ListPopupWindow? = null
+    private fun setupSleepMenu() {
+        sleepMenu = ListPopupWindow(this)
+        sleepMenu!!.setAdapter(
+            ArrayAdapter<String?>(
+                this, android.R.layout.simple_list_item_1,
+                listOf<String?>(
+                    "30 minutes", "1 hours", "90 minutes", "2 hours", "150 minutes", "3 hours",
+                )
+            )
+        )
+        sleepMenu!!.setModal(true)
+        sleepMenu!!.setAnchorView( ibSleep )
+        sleepMenu?.width = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 130f, resources.displayMetrics).toInt()
+        sleepMenu!!.setOnItemClickListener(AdapterView.OnItemClickListener { parent: AdapterView<*>?, view: View?, position: Int, id: Long ->
+            sleepMenu!!.dismiss()
+            val minutes= 30*(position+1)
+            ctrlBinder?.stopAfterMinutes(minutes)
+            Toast.makeText(this, "will stop after ${minutes} minutes", Toast.LENGTH_LONG).show()
+        })
     }
 
     var lastScrollIDLE = 0L
@@ -198,13 +217,9 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
             ctrlBinder!!.hideLrcFloatWindow()
         }
         updateLoopIcon()
-        ibLrc!!.setOnClickListener(object : View.OnClickListener {
+        ibSleep!!.setOnClickListener(object : View.OnClickListener {
             override fun onClick(v: View?) {
-                if (ctrlBinder!!.isLrcWindowShow()) {
-                    ctrlBinder!!.hideLrcFloatWindow()
-                } else {
-                    ctrlBinder!!.showLrcFloatWindow()
-                }
+                sleepMenu?.show()
             }
         })
         timeProgressView!!.setMax(ctrlBinder!!.getExoPlayer().getDuration().toInt())
@@ -214,6 +229,11 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
             timeProgressView!!.setProgress(current.toInt(), buffer.toInt())
         }
         updateSeek()
+        if(ctrlBinder?.lrc== Lrc.NONE){
+            runOnUiThread { imageView?.alpha = 1f }
+        }else{
+            runOnUiThread { imageView?.alpha = 0.3f }
+        }
         setupLrc()
     }
 
@@ -242,6 +262,11 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
     }
 
     override fun onLrcChange(lrc: Lrc?) {
+        if(ctrlBinder?.lrc== Lrc.NONE){
+            runOnUiThread { imageView?.alpha = 1f }
+        }else{
+            runOnUiThread { imageView?.alpha = 0.3f }
+        }
         runOnUiThread {
             setupLrc()
         }
@@ -336,36 +361,6 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
             ctrlBinder!!.getController().getTransportControls().seekTo(progress.toLong())
         }
     }
-
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        val subMenu = menu.addSubMenu(0, 0, 0, R.string.stop_delay)
-        subMenu.add(1, 1, 1, "30 minutes")
-        subMenu.add(1, 2, 2, "60 minutes")
-        subMenu.add(1, 3, 3, "90 minutes")
-        subMenu.add(1, 4, 4, "120 minutes")
-        subMenu.add(1, 5, 5, "240 minutes")
-        subMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
-        return super.onCreateOptionsMenu(menu)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        try {
-            if (item.getItemId() == 1) {
-                ctrlBinder!!.stopAfterMinutes(30)
-            } else if (item.getItemId() == 2) {
-                ctrlBinder!!.stopAfterMinutes(60)
-            } else if (item.getItemId() == 3) {
-                ctrlBinder!!.stopAfterMinutes(90)
-            } else if (item.getItemId() == 4) {
-                ctrlBinder!!.stopAfterMinutes(120)
-            } else if (item.getItemId() == 5) {
-                ctrlBinder!!.stopAfterMinutes(240)
-            }
-        } catch (e: Exception) {
-        }
-        return super.onOptionsItemSelected(item)
-    }
-
     override fun onStartTrackingTouch(seekBar: SeekBar?) {
     }
 

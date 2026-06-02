@@ -18,6 +18,7 @@ public class VasActivity extends BaseActivity implements TagsView.TagClickListen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_tags);
+        setSafeArea(getWindow().getDecorView(),null);
         VasView = findViewById(R.id.tagsView);
         VasView.setTagClickListener(this);
         VasView.setTagBackgroundResource(R.drawable.card_bg_va);

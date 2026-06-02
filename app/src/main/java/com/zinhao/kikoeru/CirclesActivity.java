@@ -26,6 +26,7 @@ public class CirclesActivity extends BaseActivity implements TagsView.TagClickLi
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_tags);
+        setSafeArea(getWindow().getDecorView(),null);
         imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         circlesView = findViewById(R.id.tagsView);
         circlesView.setTagClickListener(this);

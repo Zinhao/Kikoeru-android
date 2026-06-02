@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ public class LicenseActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_license);
+        setSafeArea(getWindow().getDecorView(),null);
         listView = findViewById(R.id.listview);
 
         projectList = new ArrayList<>();
@@ -48,7 +50,12 @@ public class LicenseActivity extends BaseActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         Uri uri = Uri.parse(projectList.get(position).getLicenseUrl());
                         Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                        startActivity(intent);
+                        try {
+                            startActivity(intent);
+                        }catch (Exception e) {
+                            Toast.makeText(LicenseActivity.this,"No Activity found to handle！",Toast.LENGTH_SHORT).show();
+                        }
+
                     }
                 });
                 alertDialog.show();

@@ -6,7 +6,6 @@ import android.text.format.DateFormat
 import android.widget.ImageView
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
-import com.bumptech.glide.request.RequestOptions
 import com.koushikdutta.async.http.AsyncHttpClient
 import com.koushikdutta.async.http.AsyncHttpResponse
 import com.zinhao.kikoeru.Api.fullCoverImageUrl
@@ -14,7 +13,6 @@ import com.zinhao.kikoeru.databinding.ActivityLocalHistoryBinding
 import com.zinhao.kikoeru.db.LocalWorkHistory
 import org.json.JSONException
 import org.json.JSONObject
-import java.security.AccessController.getContext
 
 class LastWatchActivity : BaseActivity() {
     private var viewBinding: ActivityLocalHistoryBinding? = null
@@ -23,6 +21,7 @@ class LastWatchActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         viewBinding = ActivityLocalHistoryBinding.inflate(getLayoutInflater())
         setContentView(viewBinding!!.getRoot())
+        setSafeArea(getWindow().getDecorView())
         setTitle(R.string.local_history)
 
         val app = application as App

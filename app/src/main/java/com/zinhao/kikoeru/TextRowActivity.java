@@ -9,8 +9,12 @@ import android.os.IBinder;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SubMenu;
+import android.view.View;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.koushikdutta.async.http.AsyncHttpClient;
@@ -59,7 +63,11 @@ public class TextRowActivity extends BaseActivity implements ServiceConnection {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_lrc_show);
+        View root = findViewById(R.id.root);
+        setSafeArea(root,null);
         mRecyclerView = findViewById(R.id.recyclerView);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
         String text = getIntent().getStringExtra("jsonText");
         bindService(new Intent(this, AudioService.class), this, BIND_AUTO_CREATE);
         if (text == null) {
@@ -86,7 +94,9 @@ public class TextRowActivity extends BaseActivity implements ServiceConnection {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(0, 0, 0, "load as lrc");
+        SubMenu subMenu = menu.addSubMenu(0, 0, 0, "load as lrc");
+        subMenu.setIcon(R.drawable.ic_baseline_text_fields_24);
+        subMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -95,6 +105,7 @@ public class TextRowActivity extends BaseActivity implements ServiceConnection {
         if(item.getItemId() == 0){
             if(ctrlBinder!=null && mText != null){
                 ctrlBinder.setLrc(mText.getText());
+                Toast.makeText(this,"load as lrc success",Toast.LENGTH_SHORT).show();
                 ctrlBinder.insertLrcBind(textItem.optString(JSONConst.WorkTree.HASH));
             }
         }

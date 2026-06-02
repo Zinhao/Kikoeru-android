@@ -1,156 +1,171 @@
-package com.zinhao.kikoeru;
+package com.zinhao.kikoeru
 
-import android.Manifest;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Environment;
-import android.provider.Settings;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.lifecycle.ViewModelProvider;
+import android.Manifest
+import android.content.DialogInterface
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Color
+import android.os.Build
+import android.os.Bundle
+import android.os.Environment
+import android.provider.Settings
+import android.view.View
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.graphics.Insets
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import java.util.*
+import java.util.function.Consumer
 
-import java.util.Arrays;
-import java.util.function.Consumer;
-
-public class BaseActivity extends AppCompatActivity {
-
-    private static final int REQUEST_WRITE_READ_CODE = 23;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+open class BaseActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            enableEdgeToEdge(
+                statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+            )
+        }
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_WRITE_READ_CODE) {
-            if (activityResultCallBack != null) {
-                activityResultCallBack.run();
-                activityResultCallBack = null;
+    interface InsetReady{
+        fun onInsetReady(insets: Insets)
+    }
+
+    fun setSafeArea(view: View,insetReady: InsetReady? = null){
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
+                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
+                insetReady?.onInsetReady(systemBars)
+                insets
             }
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_WRITE_READ_CODE) {
             if (activityResultCallBack != null) {
-                activityResultCallBack.run();
-                activityResultCallBack = null;
+                activityResultCallBack!!.run()
+                activityResultCallBack = null
             }
         }
     }
 
-    private Runnable activityResultCallBack;
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String?>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_WRITE_READ_CODE) {
+            if (activityResultCallBack != null) {
+                activityResultCallBack!!.run()
+                activityResultCallBack = null
+            }
+        }
+    }
+
+    private var activityResultCallBack: Runnable? = null
 
     /**
      * 请求读写权限
-     *
+     * 
      * @param callback 对话框被关闭时回调 或者 获取权限成功回调
      * @return
      */
-    protected boolean requestReadWriteExternalPermission(Runnable callback) {
+    protected fun requestReadWriteExternalPermission(callback: Runnable?): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (!Environment.isExternalStorageManager()) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle(R.string.tip);
-                builder.setMessage(R.string.external_storage_tip);
-                builder.setNegativeButton("去授予", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Intent intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
-                        startActivityForResult(intent, REQUEST_WRITE_READ_CODE);
-                        dialog.dismiss();
-                        activityResultCallBack = callback;
+                val builder = AlertDialog.Builder(this)
+                builder.setTitle(R.string.tip)
+                builder.setMessage(R.string.external_storage_tip)
+                builder.setNegativeButton("去授予", object : DialogInterface.OnClickListener {
+                    override fun onClick(dialog: DialogInterface, which: Int) {
+                        val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                        startActivityForResult(intent, REQUEST_WRITE_READ_CODE)
+                        dialog.dismiss()
+                        activityResultCallBack = callback
                     }
-                });
-                builder.setPositiveButton("取消", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
+                })
+                builder.setPositiveButton("取消", object : DialogInterface.OnClickListener {
+                    override fun onClick(dialog: DialogInterface, which: Int) {
+                        dialog.dismiss()
                     }
-                });
-                builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                    @Override
-                    public void onDismiss(DialogInterface dialog) {
-                        if (callback != null)
-                            callback.run();
+                })
+                builder.setOnDismissListener(object : DialogInterface.OnDismissListener {
+                    override fun onDismiss(dialog: DialogInterface?) {
+                        if (callback != null) callback.run()
                     }
-                });
-                builder.create().show();
-                return false;
+                })
+                builder.create().show()
+                return false
             } else {
-                return true;
+                return true
             }
         } else {
             if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_WRITE_READ_CODE);
-                activityResultCallBack = callback;
-                return false;
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf<String>(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                    REQUEST_WRITE_READ_CODE
+                )
+                activityResultCallBack = callback
+                return false
             } else {
-                return true;
+                return true
             }
-
         }
     }
 
-    protected void alertException(Exception e) {
+    fun alertException(e: Exception) {
         if (!App.getInstance().isAppDebug() || isDestroyed()) {
-            return;
+            return
         }
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                AlertDialog.Builder builder = new AlertDialog.Builder(BaseActivity.this);
-                builder.setTitle(e.getClass().getSimpleName());
-                StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append(String.format("%s: %s", e.getClass().getSimpleName(), e.getMessage())).append('\n');
-                Arrays.stream(e.getStackTrace()).forEach(new Consumer<StackTraceElement>() {
-                    @Override
-                    public void accept(StackTraceElement stackTraceElement) {
-                        stringBuilder.append(stackTraceElement.getClassName()).append('.')
-                                .append(stackTraceElement.getMethodName()).append(':')
-                                .append(stackTraceElement.getLineNumber()).append('\n');
+        runOnUiThread(object : Runnable {
+            override fun run() {
+                val builder = AlertDialog.Builder(this@BaseActivity)
+                builder.setTitle(e.javaClass.getSimpleName())
+                val stringBuilder = StringBuilder()
+                stringBuilder.append(String.format("%s: %s", e.javaClass.getSimpleName(), e.message)).append('\n')
+                Arrays.stream<StackTraceElement?>(e.getStackTrace()).forEach(object : Consumer<StackTraceElement?> {
+                    override fun accept(stackTraceElement: StackTraceElement?) {
+                        stringBuilder.append(stackTraceElement?.getClassName()).append('.')
+                            .append(stackTraceElement?.getMethodName()).append(':')
+                            .append(stackTraceElement?.getLineNumber()).append('\n')
                     }
-                });
-                builder.setMessage(stringBuilder.toString());
-                builder.create().show();
+                })
+                builder.setMessage(stringBuilder.toString())
+                builder.create().show()
             }
-        });
+        })
     }
 
-    protected void alertMessage(AppMessage e) {
+    protected fun alertMessage(e: AppMessage) {
         if (!App.getInstance().isAppDebug() || isDestroyed()) {
-            return;
+            return
         }
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                AlertDialog.Builder builder = new AlertDialog.Builder(BaseActivity.this);
-                builder.setTitle(e.getTitle());
-                builder.setMessage(String.format("%s: %s", e.getClass().getSimpleName(), e.getMessage()) + '\n');
-                builder.setPositiveButton(e.getActionName(), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        e.getAction().run();
-                        dialog.dismiss();
+        runOnUiThread(object : Runnable {
+            override fun run() {
+                val builder = AlertDialog.Builder(this@BaseActivity)
+                builder.setTitle(e.getTitle())
+                builder.setMessage(String.format("%s: %s", e.javaClass.getSimpleName(), e.message) + '\n')
+                builder.setPositiveButton(e.getActionName(), object : DialogInterface.OnClickListener {
+                    override fun onClick(dialog: DialogInterface, which: Int) {
+                        e.getAction().run()
+                        dialog.dismiss()
                     }
-                });
-                builder.create().show();
+                })
+                builder.create().show()
             }
-        });
+        })
     }
 
-    @Override
-    public void finish() {
-        super.finish();
+    override fun finish() {
+        super.finish()
+    }
+
+    companion object {
+        private const val REQUEST_WRITE_READ_CODE = 23
     }
 }

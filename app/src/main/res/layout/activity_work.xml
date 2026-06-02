@@ -7,6 +7,21 @@
               android:orientation="vertical"
     tools:context=".WorkTreeActivity">
 
+    <com.google.android.material.appbar.AppBarLayout android:layout_width="match_parent"
+                                                     android:layout_height="wrap_content"
+                                                     app:layout_constraintStart_toStartOf="parent"
+                                                     app:layout_constraintEnd_toEndOf="parent"
+                                                     app:layout_constraintTop_toTopOf="parent"
+                                                     android:background="?attr/colorSurface"
+                                                     android:id="@+id/appBarLayout">
+        <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:titleTextColor="@color/white"
+        />
+    </com.google.android.material.appbar.AppBarLayout>
+
     <include
             android:id="@+id/header_info"
             layout="@layout/item_work_header"

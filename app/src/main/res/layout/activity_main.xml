@@ -6,7 +6,8 @@
     android:layout_height="match_parent"
     tools:context=".WorksActivity">
 
-    <com.google.android.material.appbar.AppBarLayout android:layout_width="match_parent" android:layout_height="60dp"
+    <com.google.android.material.appbar.AppBarLayout android:layout_width="match_parent"
+                                                     android:layout_height="wrap_content"
                                                      app:layout_constraintStart_toStartOf="parent"
                                                      app:layout_constraintEnd_toEndOf="parent"
                                                      app:layout_constraintTop_toTopOf="parent"
@@ -44,7 +45,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-    <LinearLayout android:layout_width="match_parent" android:layout_height="60dp"
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                   app:layout_constraintBottom_toBottomOf="parent"
                   app:layout_constraintEnd_toEndOf="parent"
                   android:background="?attr/colorPrimaryVariant"
@@ -52,17 +53,17 @@
                   android:orientation="horizontal"
                   app:layout_constraintStart_toStartOf="parent" android:id="@+id/linearLayout">
         <ImageButton android:id="@+id/bt1" android:layout_width="match_parent"
-                     android:layout_height="match_parent"
+                     android:layout_height="60dp"
                      android:src="@drawable/ic_baseline_widgets_24"
                      android:background="@drawable/ripple_white_bg"
                      android:layout_weight="1"/>
         <ImageButton android:id="@+id/bt2" android:layout_width="match_parent"
-                     android:layout_height="match_parent"
+                     android:layout_height="60dp"
                      android:src="@drawable/ic_baseline_favorite_24"
                      android:background="@drawable/ripple_white_bg"
                      android:layout_weight="1"/>
         <ImageButton android:id="@+id/bt3" android:layout_width="match_parent"
-                     android:layout_height="match_parent"
+                     android:layout_height="60dp"
                      android:src="@drawable/ic_baseline_more_horiz_24"
                      android:background="@drawable/ripple_white_bg"
                      android:layout_weight="1"/>

@@ -43,4 +43,8 @@
     <style name="Theme.Kikoeru.Toolbar" parent="Widget.Material3.Toolbar">
         <item name="titleTextColor">@color/white</item>
     </style>
+
+    <style name="Theme.Kikoeru.TextInputStyle" parent="Theme.MaterialComponents.Light">
+        <item name="android:textColor">@color/black</item>
+    </style>
 </resources>

@@ -28,6 +28,7 @@ public class MoreActivity extends BaseActivity implements CompoundButton.OnCheck
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_more);
+        setSafeArea(getWindow().getDecorView(),null);
 
         itemOnlyLoadLrc = findViewById(R.id.relativeLayout);
         itemOnlyLoadLrc.setOnClickListener(new View.OnClickListener() {

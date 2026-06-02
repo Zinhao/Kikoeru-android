@@ -28,6 +28,7 @@ public class TagsActivity extends BaseActivity implements TagsView.TagClickListe
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_tags);
+        setSafeArea(getWindow().getDecorView(),null);
         imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         tagsView = findViewById(R.id.tagsView);
         tagsView.setTagClickListener(this);

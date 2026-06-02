@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
-import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
@@ -18,15 +17,10 @@ import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.*
 import android.widget.AdapterView.OnItemClickListener
-import androidx.activity.SystemBarStyle
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.widget.ListPopupWindow
-import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityOptionsCompat
 import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.setPadding
 import androidx.recyclerview.widget.*
 import androidx.recyclerview.widget.GridLayoutManager.SpanSizeLookup
 import androidx.recyclerview.widget.RecyclerView.ItemDecoration
@@ -86,17 +80,15 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
     private lateinit var viewBinding: ActivityMainBinding
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            enableEdgeToEdge()
-        }
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setSupportActionBar(viewBinding.toolbar)
         setContentView(viewBinding.root)
         // 统一应用状态栏和导航栏的系统边距
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ViewCompat.setOnApplyWindowInsetsListener(viewBinding.root) { v, insets ->
+            ViewCompat.setOnApplyWindowInsetsListener(viewBinding.appBarLayout) { v, insets ->
                 val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+                v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
+                viewBinding.linearLayout.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom)
                 insets
             }
         }
@@ -143,34 +135,8 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
             clearWork()
             reloadRecycleView()
         })
-        progressMenu = ListPopupWindow(this)
-        progressMenu!!.setAdapter(
-            ArrayAdapter<String?>(
-                this, android.R.layout.simple_list_item_1,
-                Arrays.asList<String?>(
-                    getString(R.string.marked),
-                    getString(R.string.listening),
-                    getString(R.string.listened),
-                    getString(R.string.replay),
-                    getString(R.string.postponed)
-                )
-            )
-        )
-        progressMenu!!.setModal(true)
-        progressMenu!!.setAnchorView( viewBinding.bt2)
-        progressMenu!!.setOnItemClickListener(OnItemClickListener { parent: AdapterView<*>?, view: View?, position: Int, id: Long ->
-            progressMenu!!.dismiss()
-            when (position) {
-                0 -> type = TYPE_SELF_MARKED
-                1 -> type = TYPE_SELF_LISTENING
-                2 -> type = TYPE_SELF_LISTENED
-                3 -> type = TYPE_SELF_REPLAY
-                4 -> type = TYPE_SELF_POSTPONED
-            }
-            clearWork()
-            reloadRecycleView()
-        })
-        viewBinding.bt2.setOnClickListener(View.OnClickListener { v: View? -> progressMenu!!.show() })
+        setupProgressMenu()
+        viewBinding.bt2.setOnClickListener(View.OnClickListener { v: View? -> progressMenu?.show() })
 
         moreMenu = ListPopupWindow(this)
         moreMenu?.setAdapter(
@@ -226,6 +192,36 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
             }
         })
         reloadRecycleView()
+    }
+
+    private fun setupProgressMenu() {
+        progressMenu = ListPopupWindow(this)
+        progressMenu!!.setAdapter(
+            ArrayAdapter<String?>(
+                this, android.R.layout.simple_list_item_1,
+                Arrays.asList<String?>(
+                    getString(R.string.marked),
+                    getString(R.string.listening),
+                    getString(R.string.listened),
+                    getString(R.string.replay),
+                    getString(R.string.postponed)
+                )
+            )
+        )
+        progressMenu!!.setModal(true)
+        progressMenu!!.setAnchorView( viewBinding.bt2)
+        progressMenu!!.setOnItemClickListener(OnItemClickListener { parent: AdapterView<*>?, view: View?, position: Int, id: Long ->
+            progressMenu!!.dismiss()
+            when (position) {
+                0 -> type = TYPE_SELF_MARKED
+                1 -> type = TYPE_SELF_LISTENING
+                2 -> type = TYPE_SELF_LISTENED
+                3 -> type = TYPE_SELF_REPLAY
+                4 -> type = TYPE_SELF_POSTPONED
+            }
+            clearWork()
+            reloadRecycleView()
+        })
     }
 
     private fun toggleBottom() {
@@ -361,26 +357,30 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menu.add(0, 0, 0, "切换账号")
 
+
         val layoutMenu = menu.addSubMenu(0, 9, 9, R.string.works_layout)
         layoutMenu.setIcon(R.drawable.ic_baseline_view_column_24)
         layoutMenu.add(2, 10, 10, R.string.list_layout)
         layoutMenu.add(2, 11, 11, R.string.cover_layout)
         layoutMenu.add(2, 12, 12, R.string.detail_layout)
         layoutMenu.add(2, 13, 13, R.string.staggered)
-        layoutMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
+        layoutMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
 
 
         val sortMenu = menu.addSubMenu(0, 16, 16, R.string.sort)
+        sortMenu.setIcon(R.drawable.ic_baseline_sort_24)
         sortMenu.add(3, 17, 17, R.string.release_date)
         sortMenu.add(3, 18, 18, R.string.rj_number)
         sortMenu.add(3, 19, 19, R.string.prize)
         sortMenu.add(3, 20, 20, R.string.last_in_lib)
+        sortMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
 
         menu.add(0, 22, 22, R.string.download_mission)
         menu.add(0, 24, 24, R.string.local_history)
         menu.add(0, 15, 99, R.string.more)
 
         val searchMenu = menu.add(0, 23, 23, R.string.search)
+        menu.getItem(4).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
 
         searchMenu.setIcon(R.drawable.ic_baseline_search_24)
         searchMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
@@ -602,7 +602,7 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        val resultType: String = intent.getStringExtra("resultType")!!
+        val resultType: String? = intent.getStringExtra("resultType")
         if ("va" == resultType) {
             val vaId: String = intent.getStringExtra("id")!!
             if (vaId != this.vaId || type != TYPE_VA_WORK) {

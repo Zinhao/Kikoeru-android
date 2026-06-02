@@ -35,6 +35,7 @@ public class SearchActivity extends BaseActivity implements TagsView.TagClickLis
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
+        setSafeArea(getWindow().getDecorView(),null);
         imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         recyclerView = findViewById(R.id.recyclerView);
         etInput = findViewById(R.id.editTextNumber);

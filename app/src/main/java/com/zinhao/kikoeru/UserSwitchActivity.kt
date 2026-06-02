@@ -1,219 +1,189 @@
-package com.zinhao.kikoeru;
+package com.zinhao.kikoeru
 
-import android.annotation.SuppressLint;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.os.Bundle;
-import android.view.*;
-import android.widget.ImageButton;
-import android.widget.TextView;
-import android.widget.Toast;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import com.koushikdutta.async.http.AsyncHttpClient;
-import com.koushikdutta.async.http.AsyncHttpResponse;
-import com.zinhao.kikoeru.databinding.ActivityUserSwitchBinding;
-import com.zinhao.kikoeru.db.User;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import android.annotation.SuppressLint
+import android.content.DialogInterface
+import android.content.Intent
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageButton
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.koushikdutta.async.http.AsyncHttpClient.JSONObjectCallback
+import com.koushikdutta.async.http.AsyncHttpResponse
+import com.zinhao.kikoeru.Api.doGetToken
+import com.zinhao.kikoeru.Api.init
+import com.zinhao.kikoeru.databinding.ActivityUserSwitchBinding
+import com.zinhao.kikoeru.db.User
+import org.json.JSONException
+import org.json.JSONObject
 
-import java.util.List;
+class UserSwitchActivity : BaseActivity() {
+    private var binding: ActivityUserSwitchBinding? = null
+    private var users: MutableList<User>? = null
+    private var adapter: UserAdapter? = null
 
-public class UserSwitchActivity extends BaseActivity {
-    private ActivityUserSwitchBinding binding;
-    private List<User> users;
-    private UserAdapter adapter;
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuItem signOutMenu = menu.add(0, 0, 0, "添加账号");
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == 0) {
-            startActivity(new Intent(this, LoginAccountActivity.class));
-            finish();
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        binding = ActivityUserSwitchBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
-        App app = (App) getApplication();
-        users = app.getAllUsers();
-        if (users.size() == 0) {
-            binding.button5.setVisibility(View.VISIBLE);
-        } else {
-            binding.button5.setVisibility(View.GONE);
-        }
-        binding.button5.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(v.getContext(), LoginAccountActivity.class));
-                finish();
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityUserSwitchBinding.inflate(getLayoutInflater())
+        setContentView(binding!!.getRoot())
+        val app = getApplication() as App
+        users = app.getAllUsers()
+        binding!!.button5.setOnClickListener(object : View.OnClickListener {
+            override fun onClick(v: View) {
+                startActivity(Intent(v.getContext(), LoginAccountActivity::class.java))
+                finish()
             }
-        });
-        adapter = new UserAdapter();
-        binding.recyclerView.setAdapter(adapter);
-        binding.recyclerView.setLayoutManager(new LinearLayoutManager(UserSwitchActivity.this));
+        })
+        adapter = UserAdapter()
+        binding!!.recyclerView.setAdapter(adapter)
+        binding!!.recyclerView.setLayoutManager(LinearLayoutManager(this@UserSwitchActivity))
     }
 
-    public void switchUser(User user) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("确认切换？");
-        builder.setPositiveButton(R.string.confirm, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-                Api.init(user.getToken(), user.getHost());
-                stopService(new Intent(UserSwitchActivity.this, AudioService.class));
-                App.getInstance().setValue(App.CONFIG_USER_DATABASE_ID, user.getId());
-                App.getInstance().setCurrentUserId(user.getId());
-                startActivity(new Intent(UserSwitchActivity.this, LauncherActivity.class));
-                finish();
+    fun switchUser(user: User) {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("确认切换？")
+        builder.setPositiveButton(R.string.confirm, object : DialogInterface.OnClickListener {
+            override fun onClick(dialog: DialogInterface, which: Int) {
+                dialog.dismiss()
+                init(user.getToken(), user.getHost())
+                stopService(Intent(this@UserSwitchActivity, AudioService::class.java))
+                App.getInstance().setValue(App.CONFIG_USER_DATABASE_ID, user.getId())
+                App.getInstance().setCurrentUserId(user.getId())
+                startActivity(Intent(this@UserSwitchActivity, LauncherActivity::class.java))
+                finish()
             }
-        });
-        builder.create().show();
+        })
+        builder.create().show()
     }
 
-    private User refreshUser;
-    private AsyncHttpClient.JSONObjectCallback refreshTokenCallback = new AsyncHttpClient.JSONObjectCallback() {
-        @Override
-        public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
+    private var refreshUser: User? = null
+    private val refreshTokenCallback: JSONObjectCallback = object : JSONObjectCallback() {
+        override fun onCompleted(e: Exception?, asyncHttpResponse: AsyncHttpResponse, jsonObject: JSONObject) {
             if (e != null) {
-                alertException(e);
-                return;
+                alertException(e)
+                return
             }
             if (asyncHttpResponse.code() == 200) {
                 if (jsonObject.has("token")) {
                     try {
-                        if (refreshUser == null)
-                            return;
-                        String newToken = jsonObject.getString("token");
-                        if (refreshUser.getToken().equals(Api.token)) {
+                        if (refreshUser == null) return
+                        val newToken = jsonObject.getString("token")
+                        if (refreshUser!!.getToken() == Api.token) {
                             // 需要更新当前账号token
-                            Api.init(newToken, refreshUser.getHost());
+                            init(newToken, refreshUser!!.getHost())
                         }
-                        refreshUser.setToken(newToken);
-                        App.getInstance().updateUser(refreshUser);
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(UserSwitchActivity.this, "refresh token success!", Toast.LENGTH_SHORT).show();
+                        refreshUser!!.setToken(newToken)
+                        App.getInstance().updateUser(refreshUser)
+                        runOnUiThread(object : Runnable {
+                            override fun run() {
+                                Toast.makeText(this@UserSwitchActivity, "refresh token success!", Toast.LENGTH_SHORT)
+                                    .show()
                             }
-                        });
-                    } catch (JSONException jsonException) {
-                        jsonException.printStackTrace();
-                        alertException(jsonException);
+                        })
+                    } catch (jsonException: JSONException) {
+                        jsonException.printStackTrace()
+                        alertException(jsonException)
                     }
                 }
             } else {
-                StringBuilder stringBuilder = new StringBuilder();
+                val stringBuilder = StringBuilder()
                 try {
                     if (jsonObject.has("error")) {
-                        stringBuilder.append(jsonObject.getString("error"));
+                        stringBuilder.append(jsonObject.getString("error"))
                     } else if (jsonObject.has("errors")) {
-                        JSONArray errors = jsonObject.getJSONArray("errors");
-                        for (int i = 0; i < errors.length(); i++) {
-                            JSONObject error = errors.getJSONObject(i);
-                            String errorValue = error.getString("msg");
-                            stringBuilder.append(errorValue);
+                        val errors = jsonObject.getJSONArray("errors")
+                        for (i in 0..<errors.length()) {
+                            val error = errors.getJSONObject(i)
+                            val errorValue = error.getString("msg")
+                            stringBuilder.append(errorValue)
                         }
                     }
-                } catch (JSONException e1) {
-                    alertException(e);
-                    return;
+                } catch (e1: JSONException) {
+                    alertException(e1)
+                    return
                 }
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(UserSwitchActivity.this, String.format("%d:%s", asyncHttpResponse.code(), stringBuilder.toString()), Toast.LENGTH_SHORT).show();
+                runOnUiThread(object : Runnable {
+                    override fun run() {
+                        Toast.makeText(
+                            this@UserSwitchActivity,
+                            String.format("%d:%s", asyncHttpResponse.code(), stringBuilder.toString()),
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
-                });
+                })
             }
-        }
-    };
-
-    private class UserAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-
-        @NonNull
-        @Override
-        public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            return new UserViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_server_and_user, parent, false));
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, @SuppressLint("RecyclerView") int position) {
-            User user = users.get(position);
-            if (holder instanceof UserViewHolder) {
-                holder.itemView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        switchUser(user);
-                    }
-                });
-                if (Api.token.equals(user.getToken())) {
-                    ((UserViewHolder) holder).tvName.setText(user.getName() + "(当前)");
-                } else {
-                    ((UserViewHolder) holder).tvName.setText(user.getName());
-                }
-
-                ((UserViewHolder) holder).tvServer.setText(user.getHost());
-                ((UserViewHolder) holder).ibDelete.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        notifyItemRemoved(position);
-                        App app = (App) getApplication();
-                        app.deleteUser(user);
-                        notifyItemRangeChanged(position, users.size() - position);
-                        if (user.getId().equals(app.getCurrentUserId())) {
-                            if (app.getAllUsers().size() != 0) {
-                                User firstUser = app.getAllUsers().get(0);
-                                app.setCurrentUserId(firstUser.getId());
-                                Api.init(firstUser.getToken(), firstUser.getHost());
-                            } else {
-                                binding.button5.setVisibility(View.VISIBLE);
-                            }
-                        }
-                    }
-                });
-                ((UserViewHolder) holder).ibRefresh.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        refreshUser = user;
-                        Api.doGetToken(user.getName(), user.getPassword(), user.getHost(), refreshTokenCallback);
-                    }
-                });
-            }
-        }
-
-        @Override
-        public int getItemCount() {
-            return users.size();
         }
     }
 
-    private static class UserViewHolder extends RecyclerView.ViewHolder {
-        private TextView tvName;
-        private TextView tvServer;
-        private ImageButton ibDelete;
-        private ImageButton ibRefresh;
+    private inner class UserAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder?>() {
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+            return UserViewHolder(
+                LayoutInflater.from(parent.getContext()).inflate(R.layout.item_server_and_user, parent, false)
+            )
+        }
 
-        public UserViewHolder(@NonNull View itemView) {
-            super(itemView);
-            tvName = itemView.findViewById(R.id.tvName);
-            tvServer = itemView.findViewById(R.id.tvServer);
-            ibDelete = itemView.findViewById(R.id.imageButton3);
-            ibRefresh = itemView.findViewById(R.id.imageButton4);
+        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, @SuppressLint("RecyclerView") position: Int) {
+            val user = users!!.get(position)
+            if (holder is UserViewHolder) {
+                holder.itemView.setOnClickListener(object : View.OnClickListener {
+                    override fun onClick(v: View?) {
+                        switchUser(user)
+                    }
+                })
+                if (Api.token == user.getToken()) {
+                    holder.tvName.setText(user.getName() + "(当前)")
+                } else {
+                    holder.tvName.setText(user.getName())
+                }
 
+                holder.tvServer.setText(user.getHost())
+                holder.ibDelete.setOnClickListener(object : View.OnClickListener {
+                    override fun onClick(v: View?) {
+                        notifyItemRemoved(position)
+                        val app = getApplication() as App
+                        app.deleteUser(user)
+                        notifyItemRangeChanged(position, users!!.size - position)
+                        if (user.getId() == app.getCurrentUserId()) {
+                            if (app.getAllUsers().size != 0) {
+                                val firstUser = app.getAllUsers().get(0)
+                                app.setCurrentUserId(firstUser.getId())
+                                init(firstUser.getToken(), firstUser.getHost())
+                            } else {
+                                binding!!.button5.setVisibility(View.VISIBLE)
+                            }
+                        }
+                    }
+                })
+                holder.ibRefresh.setOnClickListener(object : View.OnClickListener {
+                    override fun onClick(v: View?) {
+                        refreshUser = user
+                        doGetToken(user.getName(), user.getPassword(), user.getHost(), refreshTokenCallback)
+                    }
+                })
+            }
+        }
+
+        override fun getItemCount(): Int {
+            return users!!.size
+        }
+    }
+
+    private class UserViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val tvName: TextView
+        val tvServer: TextView
+        val ibDelete: ImageButton
+        val ibRefresh: ImageButton
+
+        init {
+            tvName = itemView.findViewById<TextView>(R.id.tvName)
+            tvServer = itemView.findViewById<TextView>(R.id.tvServer)
+            ibDelete = itemView.findViewById<ImageButton>(R.id.imageButton3)
+            ibRefresh = itemView.findViewById<ImageButton>(R.id.imageButton4)
         }
     }
 }
