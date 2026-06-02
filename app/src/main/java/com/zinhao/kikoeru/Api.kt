@@ -90,7 +90,7 @@ object Api {
             .build()
         okHttpClient.newCall(request).enqueue(object :Callback{
             override fun onFailure(call: Call, e: IOException) {
-                callback.onCompleted(e, LocalResponse(404), null)
+                callback.onCompleted(e, LocalResponse(404), JSONObject("{}"))
             }
 
             override fun onResponse(call: Call, response: Response) {
@@ -112,7 +112,7 @@ object Api {
             .build()
         okHttpClient.newCall(request).enqueue(object :Callback{
             override fun onFailure(call: Call, e: IOException) {
-                callback.onCompleted(e, LocalResponse(404), null)
+                callback.onCompleted(e, LocalResponse(404), JSONObject("{}"))
             }
 
             override fun onResponse(call: Call, response: Response) {
@@ -133,7 +133,7 @@ object Api {
             .build()
         okHttpClient.newCall(request).enqueue(object :Callback{
             override fun onFailure(call: Call, e: IOException) {
-                callback.onCompleted(e, LocalResponse(404), null)
+                callback.onCompleted(e, LocalResponse(404), JSONArray("[]"))
             }
 
             override fun onResponse(call: Call, response: Response) {

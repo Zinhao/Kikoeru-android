@@ -6,6 +6,20 @@
     android:layout_height="match_parent"
     tools:context=".WorksActivity">
 
+    <com.google.android.material.appbar.AppBarLayout android:layout_width="match_parent" android:layout_height="60dp"
+                                                     app:layout_constraintStart_toStartOf="parent"
+                                                     app:layout_constraintEnd_toEndOf="parent"
+                                                     app:layout_constraintTop_toTopOf="parent"
+                                                     android:background="?attr/colorSurface"
+                                                     android:id="@+id/appBarLayout">
+        <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:titleTextColor="@color/white"
+                />
+    </com.google.android.material.appbar.AppBarLayout>
+
     <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView"
             android:layout_width="match_parent"
@@ -17,8 +31,8 @@
             android:scrollbarSize="14dp"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toTopOf="@+id/bottomLayout"/>
+            app:layout_constraintBottom_toTopOf="@+id/bottomLayout"
+            app:layout_constraintTop_toBottomOf="@+id/appBarLayout"/>
 
     <include
             android:id="@+id/bottomLayout"

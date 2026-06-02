@@ -67,6 +67,7 @@ public class CloudflareDoh implements Dns {
                     }
                     if (!addresses.isEmpty()) {
                         dnsAddressResult.addAll(addresses);
+                        printInetAddress(dnsAddressResult);
                         return addresses;
                     }
                 }
@@ -83,7 +84,15 @@ public class CloudflareDoh implements Dns {
 //        dnsAddressResult.add(InetAddress.getByName("2606:4700:3037:0:0:0:ac43:d779"));
         // 如果 Cloudflare DoH 解析失败，降级使用系统原生 DNS
         dnsAddressResult.addAll(Dns.SYSTEM.lookup(hostname));
+        printInetAddress(dnsAddressResult);
         return dnsAddressResult;
+    }
+
+    private void printInetAddress(List<InetAddress> inetAddressList){
+        for (int i = 0; i < inetAddressList.size(); i++) {
+            InetAddress address = inetAddressList.get(i);
+            Log.d(TAG, "printInetAddress: "+address.getHostAddress());
+        }
     }
 
     // --- Cloudflare JSON 响应对应的实体类 ---

@@ -32,18 +32,21 @@ public class NoSniSSLSocketFactory extends SSLSocketFactory {
                 // 方式 A：彻底移除 SNI（针对大部分 Android 原生平台的原生底层实现）
                 // 不同的 Android 版本底层实现不同，通常是 com.android.org.conscrypt.OpenSSLSocketImpl
                 Class<?> cls = sslSocket.getClass();
-//                try {
-//                    // 尝试寻找 setUseSessionTickets 方法和 setHostname 方法
-//                    java.lang.reflect.Method setHostnameMethod = cls.getMethod("setHostname", String.class);
-//                    // 传入 null 可以让底层在握手时不发送 SNI 扩展
+                try {
+                    // 尝试寻找 setUseSessionTickets 方法和 setHostname 方法
+                    java.lang.reflect.Method setHostnameMethod = cls.getMethod("setHostname", String.class);
+                    // 传入 null 可以让底层在握手时不发送 SNI 扩展
 //                    setHostnameMethod.invoke(sslSocket, (String) null);
-//                } catch (NoSuchMethodException e) {
-//                    // 如果没有 setHostname，尝试直接清空主机名相关的配置
-//                }
+//                    String decoy = "dash.cloudflare.com";
+                    String decoy = "cloudflare-ech.com";
+                    setHostnameMethod.invoke(sslSocket, decoy);
+                } catch (NoSuchMethodException e) {
+                    // 如果没有 setHostname，尝试直接清空主机名相关的配置
+                }
 
                 // 方式 B：如果你不是想去掉 SNI，而是想“伪造”一个看似合法的 SNI，可以这样做：
-                java.lang.reflect.Method setHostnameMethod = cls.getMethod("setHostname", String.class);
-                setHostnameMethod.invoke(sslSocket, "asmr.one");
+//                java.lang.reflect.Method setHostnameMethod = cls.getMethod("setHostname", String.class);
+//                setHostnameMethod.invoke(sslSocket, "asmr.one");
 
 
             } catch (Exception e) {
