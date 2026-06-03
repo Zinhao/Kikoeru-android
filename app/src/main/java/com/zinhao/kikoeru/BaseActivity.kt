@@ -35,12 +35,20 @@ open class BaseActivity : AppCompatActivity() {
         fun onInsetReady(insets: Insets)
     }
 
-    fun setSafeArea(view: View,insetReady: InsetReady? = null){
+    fun setSafeArea(topView: View, insetReady: InsetReady? = null){
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
-                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-                v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
-                insetReady?.onInsetReady(systemBars)
+            ViewCompat.setOnApplyWindowInsetsListener(topView) { v, insets ->
+                val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                val cutout = insets.getInsets(WindowInsetsCompat.Type.displayCutout())
+                // 旋转后，cutout.left 或 cutout.right 会自动有值
+                // 结合系统栏和刘海，计算出最终需要的 padding
+                val leftPadding = maxOf(bars.left, cutout.left)
+                val rightPadding = maxOf(bars.right, cutout.right)
+                val topPadding = bars.top // 横屏时状态栏高度通常变为 0 或很小
+                val bottomPadding = bars.bottom
+
+                v.setPadding(leftPadding, topPadding, rightPadding, 0)
+                insetReady?.onInsetReady(Insets.of(leftPadding, topPadding, rightPadding, bottomPadding))
                 insets
             }
         }

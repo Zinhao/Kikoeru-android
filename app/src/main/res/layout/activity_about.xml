@@ -1,32 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
+    android:background="@drawable/player_bg"
+              android:orientation="vertical"
+              android:gravity="center_horizontal"
     android:layout_height="match_parent">
 
     <ImageView
         android:id="@+id/imageView2"
-        android:layout_width="90dp"
-        android:layout_height="90dp"
-        android:src="@mipmap/ic_launcher"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.24000001"
+        android:layout_marginTop="100dp"
+        android:layout_width="190dp"
+        android:layout_height="190dp"
+        android:src="@mipmap/ic_launcher_foreground"
         />
 
     <TextView
         android:id="@+id/textView4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
         android:autoLink="web"
+        android:layout_marginBottom="12dp"
         android:text="@string/project_kikoeru_android_url"
-        app:layout_constraintEnd_toEndOf="@+id/imageView2"
-        app:layout_constraintStart_toStartOf="@+id/imageView2"
-        app:layout_constraintTop_toBottomOf="@+id/imageView2" />
+        />
 
     <TextView
         android:id="@+id/textView5"
@@ -34,9 +31,8 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="24dp"
         android:text="@string/this_is_a_open_source_project"
+        android:textColor="?attr/colorOnPrimary"
         android:autoLink="web"
-        app:layout_constraintBottom_toTopOf="@+id/imageView2"
-        app:layout_constraintEnd_toEndOf="@+id/imageView2"
-        app:layout_constraintStart_toStartOf="@+id/imageView2" />
+        />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

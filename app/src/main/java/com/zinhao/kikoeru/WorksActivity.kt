@@ -19,6 +19,7 @@ import android.widget.*
 import android.widget.AdapterView.OnItemClickListener
 import androidx.appcompat.widget.ListPopupWindow
 import androidx.core.app.ActivityOptionsCompat
+import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.*
@@ -84,14 +85,12 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
         setSupportActionBar(viewBinding.toolbar)
         setContentView(viewBinding.root)
         // 统一应用状态栏和导航栏的系统边距
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ViewCompat.setOnApplyWindowInsetsListener(viewBinding.appBarLayout) { v, insets ->
-                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-                v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
-                viewBinding.linearLayout.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom)
-                insets
+        setSafeArea(viewBinding.appBarLayout, object :InsetReady{
+            override fun onInsetReady(insets: Insets) {
+                viewBinding.recyclerView.setPadding(insets.left, 0, insets.right, 0)
+                viewBinding.linearLayout.setPadding(insets.left, 0, insets.right, insets.bottom)
             }
-        }
+        })
         // 统一应用状态栏和导航栏的系统边距
         recyclerView = viewBinding.recyclerView
         bottomLayout = viewBinding.bottomLayout.root

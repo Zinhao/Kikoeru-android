@@ -26,13 +26,22 @@ public class LrcAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return new TextRowHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_lrc_row, parent, false));
     }
 
+    private static final int ALPHA_COUNT = 3;
+
     public void update(){
         int index = mLrc.getCurrentIndex();
-        if(oldIndex != -1){
-            notifyItemChanged(oldIndex);
+        if(Math.abs(index - oldIndex) > ALPHA_COUNT){
+            notifyRange(oldIndex);
         }
-        notifyItemChanged(index);
+        notifyRange(index);
         oldIndex = index;
+    }
+
+    private void notifyRange(int index){
+        int startIndex = Math.max(0,index - ALPHA_COUNT);
+        int minCount = getItemCount() - startIndex;
+        int updateCount = Math.min(minCount,ALPHA_COUNT*2-1);
+        notifyItemRangeChanged(startIndex, updateCount);
     }
 
     @Override
@@ -41,14 +50,15 @@ public class LrcAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if (holder instanceof TextRowHolder) {
             ((TextRowHolder) holder).textView.setText(lrcRow.content);
             if(oldIndex == position){
-                ((TextRowHolder) holder).textView.setTextSize(36);
                 ((TextRowHolder) holder).textView.setAlpha(1.0f);
+                ((TextRowHolder) holder).textView.setTextSize(36);
                 ((TextRowHolder) holder).ivToHere.setVisibility(View.GONE);
             }else{
+                ((TextRowHolder) holder).textView.setAlpha(0.3f);
                 ((TextRowHolder) holder).textView.setTextSize(15);
-                ((TextRowHolder) holder).textView.setAlpha(0.5f);
                 ((TextRowHolder) holder).ivToHere.setVisibility(View.VISIBLE);
                 ((TextRowHolder) holder).ivToHere.setTag(lrcRow);
+                ((TextRowHolder) holder).ivToHere.setAlpha(0.3f);
                 ((TextRowHolder) holder).ivToHere.setOnClickListener(onToHereClickListener);
             }
         }

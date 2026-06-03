@@ -5,23 +5,32 @@ import android.view.Menu;
 import android.view.MenuItem;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.Insets;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.appbar.AppBarLayout;
+import com.zinhao.kikoeru.databinding.ActivityDownLoadMissionBinding;
+import org.jetbrains.annotations.NotNull;
 
 public class DownLoadMissionActivity extends BaseActivity implements Runnable {
     private RecyclerView recyclerView;
     private MissionAdapter missionAdapter;
     private boolean isStop = false;
-
+    private ActivityDownLoadMissionBinding viewBinding;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_down_load_mission);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        setSafeArea(toolbar,null);
-        recyclerView = findViewById(R.id.recyclerView);
+        viewBinding = ActivityDownLoadMissionBinding.inflate(getLayoutInflater());
+        setContentView(viewBinding.getRoot());
+        setSupportActionBar(viewBinding.toolbar);
+        setSafeArea(viewBinding.appBarLayout, new InsetReady() {
+            @Override
+            public void onInsetReady(@NotNull Insets insets) {
+                viewBinding.recyclerView.setPadding(insets.left,0,insets.right,insets.bottom);
+            }
+        });
+        recyclerView = viewBinding.recyclerView;
         missionAdapter = new MissionAdapter();
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(missionAdapter);
