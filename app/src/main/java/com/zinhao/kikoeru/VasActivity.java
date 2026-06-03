@@ -1,9 +1,17 @@
 package com.zinhao.kikoeru;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.view.KeyEvent;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.TextView;
+import androidx.annotation.NonNull;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
 import org.json.JSONArray;
@@ -12,35 +20,77 @@ import org.json.JSONObject;
 
 public class VasActivity extends BaseActivity implements TagsView.TagClickListener<JSONObject> {
     private static final String TAG = "VasActivity";
-    private TagsView<JSONArray> VasView;
-
+    private TagsView<JSONArray> vasView;
+    private EditText etInput;
+    private JSONArray allVas;
+    private InputMethodManager imm;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_tags);
         setSafeArea(getWindow().getDecorView(),null);
-        VasView = findViewById(R.id.tagsView);
-        VasView.setTagClickListener(this);
-        VasView.setTagBackgroundResource(R.drawable.card_bg_va);
-        EditText input = findViewById(R.id.editText);
-        input.setHint(R.string.va_voicer);
+        imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        vasView = findViewById(R.id.tagsView);
+        vasView.setTagClickListener(this);
+        vasView.setTagBackgroundResource(R.drawable.card_bg_va);
+        etInput = findViewById(R.id.editText);
+        etInput.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                    vasView.setTags(filterTag(v.getText().toString().trim()), textGet);
+                    return true;
+                }
+                return false;
+            }
+        });
+        etInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void afterTextChanged(Editable s) {
+                vasView.setTags(filterTag(s.toString().trim()), textGet);
+            }
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+        });
         Api.doGetAllVas(callback);
+    }
+
+    private JSONArray filterTag(@NonNull String text) {
+        if (text.isEmpty()) {
+            return allVas;
+        }
+        JSONArray result = new JSONArray();
+        for (int i = 0; i < allVas.length(); i++) {
+            try {
+                JSONObject tag = allVas.getJSONObject(i);
+                String tagName = textGet.onGetText(tag);
+                if (tagName.contains(text)) {
+                    result.put(tag);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                continue;
+            }
+        }
+        return result;
     }
 
     private final TagsView.TextGet<JSONObject> textGet = new TagsView.TextGet<JSONObject>() {
         @Override
         public String onGetText(JSONObject jsonObject) {
-            try {
-                return jsonObject.getString("name") + "(" + jsonObject.getInt("count") + ")";
-            } catch (JSONException e) {
-                e.printStackTrace();
-                alertException(e);
-            }
-            return "";
+            return jsonObject.optString("name") + "(" + jsonObject.optInt("count") + ")";
         }
     };
 
-    private AsyncHttpClient.JSONArrayCallback callback = new AsyncHttpClient.JSONArrayCallback() {
+    private final AsyncHttpClient.JSONArrayCallback callback = new AsyncHttpClient.JSONArrayCallback() {
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONArray jsonArray) {
             if (e != null) {
@@ -51,19 +101,20 @@ public class VasActivity extends BaseActivity implements TagsView.TagClickListen
                 Log.d(TAG, "onCompleted: err");
                 return;
             }
+            allVas = jsonArray;
             Log.d(TAG, "onCompleted: " + jsonArray.length());
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    VasView.setTags(jsonArray, textGet);
-                    if (!VasView.isInLayout()) {
-                        VasView.requestLayout();
+                    vasView.setTags(jsonArray, textGet);
+                    if (!vasView.isInLayout()) {
+                        vasView.requestLayout();
                     } else {
-                        VasView.postDelayed(new Runnable() {
+                        vasView.postDelayed(new Runnable() {
                             @Override
                             public void run() {
-                                if (!VasView.isInLayout()) {
-                                    VasView.requestLayout();
+                                if (!vasView.isInLayout()) {
+                                    vasView.requestLayout();
                                 }
                             }
                         }, 500);
@@ -74,6 +125,15 @@ public class VasActivity extends BaseActivity implements TagsView.TagClickListen
 
         }
     };
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        etInput.setFocusable(true);
+        etInput.setFocusableInTouchMode(true);
+        etInput.requestFocus();
+        imm.showSoftInput(etInput, 0);
+    }
 
     @Override
     public void onTagClick(JSONObject jsonObject) {

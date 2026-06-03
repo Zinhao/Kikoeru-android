@@ -15,15 +15,16 @@ import javax.net.ssl.X509TrustManager
 object HttpClientManager {
     val TAG = "HttpClientManager"
     fun getPacEnabledClient(): OkHttpClient {
-        val client = OkHttpClient.Builder()
+        val okHttpClientBuilder = OkHttpClient.Builder()
             .callTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
-            .proxySelector(proxySelector)
 //            .useNoSniSSL()
-            .addInterceptor(LoggingInterceptor())
-            .build()
-        return client
+            if(BuildConfig.DEBUG) {
+                okHttpClientBuilder.proxySelector(proxySelector)
+                okHttpClientBuilder.addInterceptor(LoggingInterceptor())
+            }
+        return okHttpClientBuilder.build()
     }
 
     private fun OkHttpClient.Builder.useNoSniSSL(): OkHttpClient.Builder {
@@ -58,7 +59,7 @@ object HttpClientManager {
                     // 相当于在 App 内部实现了一套“手动代理”的兜底逻辑
                     Log.i(TAG, "select:手动代理")
                     return mutableListOf<Proxy?>(
-                        Proxy(Proxy.Type.HTTP, InetSocketAddress("192.168.1.124", 7890))
+                        Proxy(Proxy.Type.HTTP, InetSocketAddress("192.168.31.253", 7890))
                     )
                 }
             }

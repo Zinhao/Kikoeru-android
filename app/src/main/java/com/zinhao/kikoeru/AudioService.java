@@ -746,7 +746,7 @@ public class AudioService extends Service {
 
         private void setCurrentAlbumId(long currentAlbumId) {
             this.currentAlbumId = currentAlbumId;
-            ctrlBinder.musicChangeListeners.forEach(new Consumer<MusicChangeListener>() {
+            musicChangeListeners.forEach(new Consumer<MusicChangeListener>() {
                 @Override
                 public void accept(MusicChangeListener listener) {
                     listener.onAlbumChange(currentAlbumId);

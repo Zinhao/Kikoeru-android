@@ -3,6 +3,8 @@ package com.zinhao.kikoeru;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -21,7 +23,6 @@ public class CirclesActivity extends BaseActivity implements TagsView.TagClickLi
     private EditText etInput;
     private JSONArray allCircles;
     private InputMethodManager imm;
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,7 +33,22 @@ public class CirclesActivity extends BaseActivity implements TagsView.TagClickLi
         circlesView.setTagClickListener(this);
         circlesView.setTagBackgroundResource(R.drawable.card_bg_circles);
         etInput = findViewById(R.id.editText);
-        etInput.setVisibility(View.GONE);
+        etInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void afterTextChanged(Editable s) {
+                circlesView.setTags(filterTag(s.toString().trim()),textGet);
+            }
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+        });
         Api.doGetCirclesList(callback);
     }
 
@@ -59,26 +75,20 @@ public class CirclesActivity extends BaseActivity implements TagsView.TagClickLi
     @Override
     protected void onResume() {
         super.onResume();
-//        etInput.setFocusable(true);
-//        etInput.setFocusableInTouchMode(true);
-//        etInput.requestFocus();
-//        imm.showSoftInput(etInput, 0);
+        etInput.setFocusable(true);
+        etInput.setFocusableInTouchMode(true);
+        etInput.requestFocus();
+        imm.showSoftInput(etInput, 0);
     }
 
     private final TagsView.TextGet<JSONObject> textGet = new TagsView.TextGet<JSONObject>() {
         @Override
         public String onGetText(JSONObject jsonObject) {
-            try {
-                return jsonObject.getString("name") + "(" + jsonObject.getInt("count") + ")";
-            } catch (JSONException e) {
-                e.printStackTrace();
-                alertException(e);
-            }
-            return "";
+            return jsonObject.opt("name") + "(" + jsonObject.optInt("count") + ")";
         }
     };
 
-    private AsyncHttpClient.JSONArrayCallback callback = new AsyncHttpClient.JSONArrayCallback() {
+    private final AsyncHttpClient.JSONArrayCallback callback = new AsyncHttpClient.JSONArrayCallback() {
         @Override
         public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONArray jsonArray) {
             if (e != null) {

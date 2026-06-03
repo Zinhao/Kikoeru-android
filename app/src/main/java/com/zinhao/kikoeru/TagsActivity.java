@@ -3,6 +3,8 @@ package com.zinhao.kikoeru;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
@@ -41,6 +43,22 @@ public class TagsActivity extends BaseActivity implements TagsView.TagClickListe
                     return true;
                 }
                 return false;
+            }
+        });
+        etInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void afterTextChanged(Editable s) {
+                tagsView.setTags(filterTag(s.toString().trim()), textGet);
+            }
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
             }
         });
         Api.doGetAllTags(callback);
