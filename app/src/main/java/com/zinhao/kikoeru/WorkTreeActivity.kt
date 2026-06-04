@@ -169,10 +169,10 @@ class WorkTreeActivity : BaseActivity(), View.OnClickListener, MusicChangeListen
                 workAdapter = null
             }else{
                 if(workTreeAdapter == null){
-                    finish()
+                    finishAfterTransition()
                 }else{
                     if(workTreeAdapter!!.parentDir()){
-                        finish()
+                        finishAfterTransition()
                     }
                 }
 
@@ -801,11 +801,7 @@ class WorkTreeActivity : BaseActivity(), View.OnClickListener, MusicChangeListen
                             }
                         }
                         initLayout()
-                        workAdapter!!.notifyItemRangeInserted(
-                            max(0, works!!.size - jsonArray.length()),
-                            jsonArray.length()
-                        )
-                        workAdapter!!.notifyItemRangeChanged(
+                        workAdapter?.notifyItemRangeInserted(
                             max(0, works!!.size - jsonArray.length()),
                             jsonArray.length()
                         )

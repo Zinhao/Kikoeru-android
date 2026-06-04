@@ -626,8 +626,8 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
             workAdapter!!.setCirclesClickListener(circlesClickListener)
             workAdapter!!.setItemClickListener(object : View.OnClickListener {
                 override fun onClick(v: View) {
-                    val item = v.getTag() as JSONObject
-                    val intent = Intent(v.getContext(), WorkTreeActivity::class.java)
+                    val item = v.tag as JSONObject
+                    val intent = Intent(v.context, WorkTreeActivity::class.java)
                     intent.putExtra("work_json_str", item.toString())
                     val heroView = v.findViewById<View>(R.id.ivCover)
                     val options = ActivityOptionsCompat.makeSceneTransitionAnimation(
