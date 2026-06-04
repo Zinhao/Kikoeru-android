@@ -21,23 +21,26 @@
                 style="@style/Theme.Kikoeru.TextInputStyle"
         />
     </com.google.android.material.textfield.TextInputLayout>
-
-    <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:layout_constraintBottom_toTopOf="@+id/editText"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:contentDescription="@string/tag">
-
-        <com.zinhao.kikoeru.TagsView
-                android:id="@+id/tagsView"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout android:id="@+id/swipe" android:layout_width="match_parent"
+                                                           android:layout_height="match_parent">
+        <ScrollView
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="10dp"
-                android:layout_marginRight="10dp"
-                app:tagBackground="@drawable/card_bg_tag"/>
+                android:layout_height="match_parent"
+                app:layout_constraintBottom_toTopOf="@+id/editText"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:contentDescription="@string/tag">
 
-    </ScrollView>
+            <com.zinhao.kikoeru.TagsView
+                    android:id="@+id/tagsView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp"
+                    app:tagBackground="@drawable/card_bg_tag"/>
+
+        </ScrollView>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
 </LinearLayout>

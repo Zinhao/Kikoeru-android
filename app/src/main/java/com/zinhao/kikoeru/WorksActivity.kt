@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
-import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.support.v4.media.session.PlaybackStateCompat
@@ -17,11 +16,10 @@ import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.*
 import android.widget.AdapterView.OnItemClickListener
+import androidx.activity.addCallback
 import androidx.appcompat.widget.ListPopupWindow
 import androidx.core.app.ActivityOptionsCompat
 import androidx.core.graphics.Insets
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.*
 import androidx.recyclerview.widget.GridLayoutManager.SpanSizeLookup
 import androidx.recyclerview.widget.RecyclerView.ItemDecoration
@@ -49,10 +47,10 @@ import kotlin.math.max
 import kotlin.math.min
 
 class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, TagClickListener<JSONObject?> {
-    private var recyclerView: RecyclerView? = null
+    private lateinit var recyclerView: RecyclerView
     private var workAdapter: WorkAdapter? = null
-    private var works: MutableList<JSONObject?>? = null
-    private var scrollListener: RecyclerView.OnScrollListener? = null
+    private lateinit var works: MutableList<JSONObject>
+    private lateinit var scrollListener: RecyclerView.OnScrollListener
     private var page = 1
     private var currentPage = 0
     private var totalCount = 0
@@ -73,6 +71,8 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
     private var circlesName: String? = ""
     private var circlesId: Long = -1
 
+    private lateinit var lastOpenTitle: String
+
     private var type: Int = TYPE_ALL_WORK
     private var ctrlBinder: CtrlBinder? = null
     private var progressMenu: ListPopupWindow? = null
@@ -84,6 +84,32 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setSupportActionBar(viewBinding.toolbar)
         setContentView(viewBinding.root)
+        setupView()
+
+        startForegroundService(Intent(this, AudioService::class.java))
+        bindService(Intent(this, AudioService::class.java), this, BIND_AUTO_CREATE)
+
+        setupData()
+        setupProgressMenu()
+        setupMoreMenu()
+        setupListener()
+        doGetCirclesList(object : JSONArrayCallback() {
+            override fun onCompleted(e: Exception?, asyncHttpResponse: AsyncHttpResponse?, jsonArray: JSONArray) {
+                if (e != null) {
+                    App.getInstance().alertException(e)
+                    return
+                }
+                try {
+                    App.getInstance().initCirclesIdMap(jsonArray)
+                } catch (ex: JSONException) {
+                    throw RuntimeException(ex)
+                }
+            }
+        })
+        loadLastOpenWork()
+    }
+
+    private fun setupView(){
         // 统一应用状态栏和导航栏的系统边距
         setSafeArea(viewBinding.appBarLayout, object :InsetReady{
             override fun onInsetReady(insets: Insets) {
@@ -91,7 +117,6 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
                 viewBinding.linearLayout.setPadding(insets.left, 0, insets.right, insets.bottom)
             }
         })
-        // 统一应用状态栏和导航栏的系统边距
         recyclerView = viewBinding.recyclerView
         bottomLayout = viewBinding.bottomLayout.root
         ivCover = bottomLayout!!.findViewById<ImageView>(R.id.imageView)
@@ -99,22 +124,52 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
         tvWorkTitle = bottomLayout!!.findViewById<TextView>(R.id.textView2)
         ibStatus = bottomLayout!!.findViewById<ImageButton>(R.id.button)
         ibFloatLrcWindow = bottomLayout!!.findViewById<ImageButton>(R.id.imageButton)
-        startForegroundService(Intent(this, AudioService::class.java))
-        bindService(Intent(this, AudioService::class.java), this, BIND_AUTO_CREATE)
         itemDecoration = DividerItemDecoration(this, DividerItemDecoration.VERTICAL)
         outAnim = AnimationUtils.loadAnimation(this, R.anim.move_bottom_out)
         inAnim = AnimationUtils.loadAnimation(this, R.anim.move_bottom_in)
+    }
+
+    private fun setupData(){
+        works = arrayListOf()
+        type = App.getInstance().getValue(CONFIG_TYPE, TYPE_ALL_WORK.toLong()).toInt()
+        page = App.getInstance().getValue(CONFIG_PAGE, 1).toInt()
+        totalCount = App.getInstance().getValue(CONFIG_TOTAL, 1).toInt()
+        vaId = App.getInstance().getValue(CONFIG_PARAM_STR, "")
+        tagId = App.getInstance().getValue(CONFIG_PARAM_INT, -1).toInt()
+        lastOpenTitle = App.getInstance().getValue(CONFIG_PARAM_TITLE,getString(R.string.app_name))
+    }
+
+    private fun setupListener(){
+        viewBinding.bt1.setOnClickListener(View.OnClickListener { v: View? ->
+            clearWork()
+            loadFromNetWork(TYPE_ALL_WORK)
+        })
+        viewBinding.bt2.setOnClickListener(View.OnClickListener { v: View? -> progressMenu?.show() })
+        viewBinding.bt3.setOnClickListener(View.OnClickListener { v: View? -> moreMenu?.show() })
+        ibFloatLrcWindow!!.setOnClickListener(object : View.OnClickListener {
+            override fun onClick(v: View?) {
+                if (ctrlBinder!!.isLrcWindowShow()) {
+                    ctrlBinder!!.hideLrcFloatWindow()
+                } else {
+                    ctrlBinder!!.showLrcFloatWindow()
+                }
+            }
+        })
         scrollListener = object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
-                if (works!!.size >= totalCount) {
+                if (works.size >= totalCount) {
                     workAdapter!!.setLoading(false)
                     return
                 }
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    if (!recyclerView.canScrollVertically(1)) {
-                        Log.i(TAG, "work size:" + works!!.size + ", total:" + totalCount)
-                        reloadRecycleView()
+                    workAdapter?.let {
+                        if(!it.isLoading()){
+                            if (!recyclerView.canScrollVertically(1)) {
+                                Log.i(TAG, "work size:" + works.size + ", total:" + totalCount)
+                                loadFromNetWork(type)
+                            }
+                        }
                     }
                 }
             }
@@ -123,27 +178,55 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
                 super.onScrolled(recyclerView, dx, dy)
             }
         }
-        works = ArrayList<JSONObject?>()
-        type = App.getInstance().getValue(CONFIG_TYPE, TYPE_ALL_WORK.toLong()).toInt()
-        page = App.getInstance().getValue(CONFIG_PAGE, 1).toInt()
-        vaId = App.getInstance().getValue(CONFIG_PARAM_STR, "")
-        tagId = App.getInstance().getValue(CONFIG_PARAM_INT, -1).toInt()
+        onBackPressedDispatcher.addCallback(this, enabled = true) {
+            // 这里就是你以前的 onBackPressed() 里的逻辑
+            try {
+                App.getInstance().setValue(CONFIG_TYPE, type.toLong())
+                App.getInstance().setValue(CONFIG_PAGE, currentPage.toLong())
+                App.getInstance().setValue(CONFIG_PARAM_TITLE, title.toString())
+                if (type == TYPE_TAG_WORK) {
+                    App.getInstance().setValue(CONFIG_PARAM_INT, tagId.toLong())
+                } else if (type == TYPE_VA_WORK) {
+                    App.getInstance().setValue(CONFIG_PARAM_STR, vaId)
+                }
+                works.let {
+                    val jsonArray = JSONArray()
+                    for (i in 0 until it.size) {
+                        jsonArray.put(it[i])
+                    }
+                    Log.i(TAG,"setupListener:save works info:${it.size}")
+                    val layoutManager = recyclerView?.layoutManager
+                    var lastVisiblePosition: Int = 0
+                    if(layoutManager is GridLayoutManager || layoutManager is LinearLayoutManager) {
+                        lastVisiblePosition = layoutManager.findFirstVisibleItemPosition()
+                    }else if(layoutManager is StaggeredGridLayoutManager){
+                        val lastVisiblePositions = IntArray(layoutManager.spanCount)
+                        layoutManager.findFirstVisibleItemPositions(lastVisiblePositions)
+                        lastVisiblePosition = lastVisiblePositions.maxOrNull() ?: RecyclerView.NO_POSITION
+                    }
+                    App.getInstance().setValue(CONFIG_PARAM_POSITION, lastVisiblePosition.toLong())
+                    App.getInstance().setValue(CONFIG_TOTAL, totalCount.toLong())
+                    Log.i(TAG, "setupListener: save position:${lastVisiblePosition}")
+                    LocalFileCache.getInstance().saveLastOpenWorks(jsonArray)
+                }
+                DownloadUtils.getInstance().close()
+                Log.i(TAG,"setupListener: save player info:")
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+            isEnabled = false
+            return@addCallback
+        }
+    }
 
-        viewBinding.bt1.setOnClickListener(View.OnClickListener { v: View? ->
-            type = TYPE_ALL_WORK
-            clearWork()
-            reloadRecycleView()
-        })
-        setupProgressMenu()
-        viewBinding.bt2.setOnClickListener(View.OnClickListener { v: View? -> progressMenu?.show() })
-
+    private fun setupMoreMenu(){
         moreMenu = ListPopupWindow(this)
         moreMenu?.setAdapter(
             ArrayAdapter<String?>(
                 this, android.R.layout.simple_list_item_1,
-                Arrays.asList<String?>(
+                listOf<String?>(
                     getString(R.string.va_voicer),
-                    getString(R.string.tag), "Circles",
+                    getString(R.string.tag), getString(R.string.circles),
                     getString(R.string.local_works)
                 )
             )
@@ -161,36 +244,11 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
                 )
 
                 3 -> {
-                    type = TYPE_LOCAL_WORK
                     clearWork()
-                    reloadRecycleView()
+                    loadFromNetWork(TYPE_LOCAL_WORK)
                 }
             }
         })
-        viewBinding.bt3.setOnClickListener(View.OnClickListener { v: View? -> moreMenu?.show() })
-        ibFloatLrcWindow!!.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(v: View?) {
-                if (ctrlBinder!!.isLrcWindowShow()) {
-                    ctrlBinder!!.hideLrcFloatWindow()
-                } else {
-                    ctrlBinder!!.showLrcFloatWindow()
-                }
-            }
-        })
-        doGetCirclesList(object : JSONArrayCallback() {
-            override fun onCompleted(e: Exception?, asyncHttpResponse: AsyncHttpResponse?, jsonArray: JSONArray) {
-                if (e != null) {
-                    App.getInstance().alertException(e)
-                    return
-                }
-                try {
-                    App.getInstance().initCirclesIdMap(jsonArray)
-                } catch (ex: JSONException) {
-                    throw RuntimeException(ex)
-                }
-            }
-        })
-        reloadRecycleView()
     }
 
     private fun setupProgressMenu() {
@@ -211,15 +269,14 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
         progressMenu!!.setAnchorView( viewBinding.bt2)
         progressMenu!!.setOnItemClickListener(OnItemClickListener { parent: AdapterView<*>?, view: View?, position: Int, id: Long ->
             progressMenu!!.dismiss()
-            when (position) {
-                0 -> type = TYPE_SELF_MARKED
-                1 -> type = TYPE_SELF_LISTENING
-                2 -> type = TYPE_SELF_LISTENED
-                3 -> type = TYPE_SELF_REPLAY
-                4 -> type = TYPE_SELF_POSTPONED
-            }
             clearWork()
-            reloadRecycleView()
+            when (position) {
+                0 -> loadFromNetWork(TYPE_SELF_MARKED)
+                1 -> loadFromNetWork(TYPE_SELF_LISTENING)
+                2 -> loadFromNetWork(TYPE_SELF_LISTENED)
+                3 -> loadFromNetWork(TYPE_SELF_REPLAY)
+                4 -> loadFromNetWork(TYPE_SELF_POSTPONED)
+            }
         })
     }
 
@@ -245,10 +302,45 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
         }
     }
 
-    fun reloadRecycleView() {
+    fun loadLastOpenWork(){
         if (workAdapter != null) {
             workAdapter!!.setLoading(true)
         }
+        try {
+            LocalFileCache.getInstance().readLastOpenWorks(object : JSONArrayCallback(){
+                override fun onCompleted(
+                    e: java.lang.Exception?,
+                    asyncHttpResponse: AsyncHttpResponse?,
+                    lastOpenWorksArray: JSONArray?
+                ) {
+                    if (e != null) {
+                        e.printStackTrace(System.err)
+                        alertException(e)
+                        loadFromNetWork(type)
+                        return
+                    }
+                    if (asyncHttpResponse == null || asyncHttpResponse.code() != 200) {
+                        if (lastOpenWorksArray != null) { } else {
+                            return
+                        }
+                    }
+                    runOnUiThread { setTitle(lastOpenTitle) }
+                    lastOpenWorksArray?.let {
+                        updateListWith(it) { scrollToLastOpenPosition() }
+                    }
+                }
+            })
+        } catch (e: JSONException) {
+            e.printStackTrace()
+            alertException(e)
+        }
+    }
+
+    fun loadFromNetWork(type: Int = TYPE_ALL_WORK) {
+        if (workAdapter != null) {
+            workAdapter!!.setLoading(true)
+        }
+        this.type = type
         if (type == TYPE_ALL_WORK) {
             setTitle(getString(R.string.app_name))
             doGetWorks(page, apisCallback)
@@ -277,9 +369,9 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
             setTitle(circlesName)
             doGetWorkByCircles(page, circlesId, apisCallback)
         } else if (type == TYPE_LOCAL_WORK) {
-            setTitle(String.format("%s", if (App.getInstance().isSaveExternal()) "外部公共目录" else "内部私有目录"))
+            setTitle(String.format("%s", if (App.getInstance().isSaveExternal) "外部公共目录" else "内部私有目录"))
             try {
-                LocalFileCache.getInstance().readLocalWorks(this, apisCallback)
+                LocalFileCache.getInstance().readLocalDownloadWorks(apisCallback)
             } catch (e: JSONException) {
                 e.printStackTrace()
                 alertException(e)
@@ -418,7 +510,7 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
             }
             if (update) {
                 clearWork()
-                reloadRecycleView()
+                loadFromNetWork(type)
             }
             return true
         }
@@ -451,22 +543,22 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
                 }
                 if (resultType == "va") {
                     val vaId: String = data.getStringExtra("id")!!
-                    type = TYPE_VA_WORK
                     if (vaId != this.vaId) {
                         vaName = data.getStringExtra("name")
                         clearWork()
                         this.vaId = vaId
                     }
+                    loadFromNetWork(TYPE_VA_WORK)
                 } else if (resultType == "tag") {
                     val tagId = data.getIntExtra("id", -1)
-                    type = TYPE_TAG_WORK
                     if (tagId != this.tagId) {
                         tagStr = data.getStringExtra("name")
                         clearWork()
                         this.tagId = tagId
                     }
+                    loadFromNetWork(TYPE_TAG_WORK)
                 }
-                reloadRecycleView()
+
             }
         } else if (requestCode == CIRCLES_SELECT_RESULT) {
             if (resultCode == RESULT_OK && data != null) {
@@ -477,20 +569,29 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
                 if (resultType == "circles") {
                     val circlesId = data.getLongExtra("id", -1)
                     if (this.circlesId != circlesId && circlesId != -1L) {
-                        type = TYPE_CIRCLES_WORK
                         circlesName = data.getStringExtra("name")
                         clearWork()
                         this.circlesId = circlesId
-                        reloadRecycleView()
+                        loadFromNetWork(TYPE_CIRCLES_WORK)
                     }
                 }
             }
         }
     }
 
+    private fun scrollToLastOpenPosition(){
+        val manger = recyclerView.layoutManager
+        if(manger is GridLayoutManager || manger is LinearLayoutManager || manger is StaggeredGridLayoutManager) {
+            val index = App.getInstance().getValue(CONFIG_PARAM_POSITION, 0).toInt()
+            if(index!=RecyclerView.NO_POSITION){
+                manger.scrollToPosition(index)
+            }
+        }
+    }
+
     private fun initLayout(layoutType: Int) {
         var layoutManager: RecyclerView.LayoutManager? = null
-        recyclerView!!.removeItemDecoration(itemDecoration!!)
+        recyclerView.removeItemDecoration(itemDecoration!!)
         val col: Int
         if (layoutType == WorkAdapter.LAYOUT_LIST) {
             layoutManager = LinearLayoutManager(this@WorksActivity)
@@ -517,70 +618,72 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
                 }
             })
         }
-        workAdapter = WorkAdapter(works, layoutType)
-        workAdapter!!.setTagClickListener(this)
-        workAdapter!!.setVaClickListener(vaClickListener)
-        workAdapter!!.setCirclesClickListener(circlesClickListener)
-        workAdapter!!.setItemClickListener(object : View.OnClickListener {
-            override fun onClick(v: View) {
-                val item = v.getTag() as JSONObject
-                val intent = Intent(v.getContext(), WorkTreeActivity::class.java)
-                intent.putExtra("work_json_str", item.toString())
-                val heroView = v.findViewById<View>(R.id.ivCover)
-                val options = ActivityOptionsCompat.makeSceneTransitionAnimation(
-                    this@WorksActivity, heroView, "hero_image" // 这里的字符串必须匹配 transitionName
-                )
-                startActivity(intent, options.toBundle())
-            }
-        })
-        workAdapter!!.setItemLongClickListener(object : OnLongClickListener {
-            override fun onLongClick(v: View): Boolean {
-                if (type != TYPE_LOCAL_WORK) {
+        works.let {
+            workAdapter = WorkAdapter(it, layoutType)
+            workAdapter!!.setTagClickListener(this)
+            workAdapter!!.setVaClickListener(vaClickListener)
+            workAdapter!!.setCirclesClickListener(circlesClickListener)
+            workAdapter!!.setItemClickListener(object : View.OnClickListener {
+                override fun onClick(v: View) {
+                    val item = v.getTag() as JSONObject
+                    val intent = Intent(v.getContext(), WorkTreeActivity::class.java)
+                    intent.putExtra("work_json_str", item.toString())
+                    val heroView = v.findViewById<View>(R.id.ivCover)
+                    val options = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                        this@WorksActivity, heroView, "hero_image" // 这里的字符串必须匹配 transitionName
+                    )
+                    startActivity(intent, options.toBundle())
+                }
+            })
+            workAdapter!!.setItemLongClickListener(object : OnLongClickListener {
+                override fun onLongClick(v: View): Boolean {
+                    if (type != TYPE_LOCAL_WORK) {
+                        return true
+                    }
+                    val listPopupWindow = ListPopupWindow(v.getContext())
+                    listPopupWindow.setModal(true)
+                    listPopupWindow.setAnchorView(v)
+                    val _str = getString(R.string.delete_cache)
+                    listPopupWindow.setAdapter(
+                        ArrayAdapter<String?>(
+                            v.getContext(),
+                            android.R.layout.simple_list_item_1,
+                            mutableListOf<String?>(_str)
+                        )
+                    )
+                    listPopupWindow.setOnItemClickListener(object : OnItemClickListener {
+                        override fun onItemClick(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                            val item = v.getTag() as JSONObject
+                            try {
+                                LocalFileCache.getInstance().removeWork(item.getInt("id"))
+                            } catch (e: JSONException) {
+                                e.printStackTrace()
+                                alertException(e)
+                            }
+
+                            val index = works.indexOf(item)
+                            if (index != -1) {
+                                works.removeAt(index)
+                                workAdapter!!.notifyItemRemoved(index)
+                            }
+                            listPopupWindow.dismiss()
+                        }
+                    })
+                    listPopupWindow.show()
                     return true
                 }
-                val listPopupWindow = ListPopupWindow(v.getContext())
-                listPopupWindow.setModal(true)
-                listPopupWindow.setAnchorView(v)
-                val _str = getString(R.string.delete_cache)
-                listPopupWindow.setAdapter(
-                    ArrayAdapter<String?>(
-                        v.getContext(),
-                        android.R.layout.simple_list_item_1,
-                        mutableListOf<String?>(_str)
-                    )
-                )
-                listPopupWindow.setOnItemClickListener(object : OnItemClickListener {
-                    override fun onItemClick(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                        val item = v.getTag() as JSONObject
-                        try {
-                            LocalFileCache.getInstance().removeWork(item.getInt("id"))
-                        } catch (e: JSONException) {
-                            e.printStackTrace()
-                            alertException(e)
-                        }
-
-                        val index = works!!.indexOf(item)
-                        if (index != -1) {
-                            works!!.removeAt(index)
-                            workAdapter!!.notifyItemRemoved(index)
-                        }
-                        listPopupWindow.dismiss()
-                    }
-                })
-                listPopupWindow.show()
-                return true
-            }
-        })
-        recyclerView!!.setLayoutManager(layoutManager)
-        recyclerView!!.setAdapter(workAdapter)
+            })
+            recyclerView.setLayoutManager(layoutManager)
+            recyclerView.setAdapter(workAdapter)
+        }
     }
 
     private fun clearWork() {
         page = 1
         if (workAdapter == null) return
-        workAdapter!!.notifyItemRangeRemoved(0, works!!.size)
-        workAdapter!!.notifyItemRangeChanged(0, works!!.size)
-        works!!.clear()
+        workAdapter?.notifyItemRangeRemoved(0, works.size)
+//        workAdapter?.notifyItemRangeChanged(0, works.size)
+        works.clear()
     }
 
     override fun onDestroy() {
@@ -609,7 +712,7 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
                 clearWork()
                 this.vaId = vaId
             }
-            type = TYPE_VA_WORK
+            loadFromNetWork(TYPE_VA_WORK)
         } else if ("tag" == resultType) {
             val tagId = intent.getIntExtra("id", -1)
             if (tagId != this.tagId || type != TYPE_TAG_WORK) {
@@ -617,12 +720,12 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
                 clearWork()
                 this.tagId = tagId
             }
-            type = TYPE_TAG_WORK
+            loadFromNetWork(TYPE_TAG_WORK)
         } else {
-            type = TYPE_ALL_WORK
             clearWork()
+            loadFromNetWork()
         }
-        reloadRecycleView()
+
     }
 
     override fun onTagClick(jsonObject: JSONObject?) {
@@ -635,8 +738,7 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
                     clearWork()
                     this.tagId = tagId
                 }
-                type = TYPE_TAG_WORK
-                reloadRecycleView()
+                loadFromNetWork(TYPE_TAG_WORK)
             } catch (e: JSONException) {
                 e.printStackTrace()
                 alertException(e)
@@ -655,8 +757,7 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
                         clearWork()
                         this@WorksActivity.vaId = vaId
                     }
-                    type = TYPE_VA_WORK
-                    reloadRecycleView()
+                    loadFromNetWork(TYPE_VA_WORK)
                 } catch (e: JSONException) {
                     e.printStackTrace()
                     alertException(e)
@@ -675,98 +776,70 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
             clearWork()
             this@WorksActivity.circlesName = circlesName
             this@WorksActivity.circlesId = circlesId
-            type = TYPE_CIRCLES_WORK
-            reloadRecycleView()
+            loadFromNetWork(TYPE_CIRCLES_WORK)
         }
         Log.d(TAG, "onTagClick: " + circlesName)
     }
 
     private val apisCallback: JSONObjectCallback = object : JSONObjectCallback() {
         override fun onCompleted(e: Exception?, asyncHttpResponse: AsyncHttpResponse?, jsonObject: JSONObject?) {
+            runOnUiThread { workAdapter?.setLoading(false) }
             if (e != null) {
-                e.printStackTrace()
+                e.printStackTrace(System.err)
                 alertException(e)
-                /**
-                 * why?
-                 * javax.net.ssl.SSLHandshakeException: Read error: ssl=0x798b43bc58: Failure in SSL library, usually a protocol error
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err: error:10000065:SSL routines:OPENSSL_internal:ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT (external/boringssl/src/ssl/tls13_client.cc:385 0x78de42cc60:0x00000000)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.SSLUtils.toSSLHandshakeException(SSLUtils.java:363)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.ConscryptEngine.convertException(ConscryptEngine.java:1134)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:919)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:747)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:712)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.android.org.conscrypt.Java8EngineWrapper.unwrap(Java8EngineWrapper.java:237)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncSSLSocketWrapper$6.onDataAvailable(AsyncSSLSocketWrapper.java:296)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.Util.emitAllData(Util.java:23)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncNetworkSocket.onReadable(AsyncNetworkSocket.java:160)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncServer.runLoop(AsyncServer.java:878)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncServer.run(AsyncServer.java:726)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncServer.access$800(AsyncServer.java:46)
-                 * 2022-04-22 00:32:30.323 15775-15802/com.zinhao.kikoeru W/System.err:     at com.koushikdutta.async.AsyncServer$8.run(AsyncServer.java:680)
-                 */
                 return
             }
             if (asyncHttpResponse == null || asyncHttpResponse.code() != 200) {
                 if (jsonObject != null && jsonObject.has("works")) {
                     Log.d(TAG, "onCompleted: load local cache!")
                 } else {
-                    Log.d(TAG, String.format("onCompleted:failed! "))
-                    if (!isDestroyed()) {
-                        ivCover!!.postDelayed(object : Runnable {
-                            override fun run() {
-                                reloadRecycleView()
-                            }
-                        }, 3000)
-                    }
                     return
                 }
             }
             try {
-                val jsonArray = jsonObject!!.getJSONArray("works")
+                val networksResult = jsonObject!!.getJSONArray("works")
                 totalCount = jsonObject.getJSONObject("pagination").getInt("totalCount")
                 currentPage = page
                 page = jsonObject.getJSONObject("pagination").getInt("currentPage") + 1
 
-                if (jsonArray.length() != 0) {
-                    page = min(page, totalCount / jsonArray.length() + 1)
+                if (networksResult.length() != 0) {
+                    page = min(page, totalCount / networksResult.length() + 1)
                 }
-                runOnUiThread(object : Runnable {
-                    @SuppressLint("DefaultLocale")
-                    override fun run() {
-                        setTitle(String.format("%s (%d)", currentTitle, totalCount))
-                        for (i in 0..<jsonArray.length()) {
-                            try {
-                                works!!.add(jsonArray.getJSONObject(i))
-                            } catch (jsonException: JSONException) {
-                                jsonException.printStackTrace()
-                                alertException(jsonException)
-                            }
-                        }
-                        if (workAdapter == null) {
-                            initLayout(
-                                App.getInstance()
-                                    .getValue(App.CONFIG_LAYOUT_TYPE, WorkAdapter.LAYOUT_STAGGERED.toLong()).toInt()
-                            )
-                            recyclerView!!.addOnScrollListener(scrollListener!!)
-                        } else {
-                            workAdapter!!.notifyItemRangeInserted(
-                                max(0, works!!.size - jsonArray.length()),
-                                jsonArray.length()
-                            )
-                            workAdapter!!.notifyItemRangeChanged(
-                                max(0, works!!.size - jsonArray.length()),
-                                jsonArray.length()
-                            )
-                            if (works!!.size == totalCount) {
-                                workAdapter!!.setLoading(false)
-                            }
-                        }
-                    }
-                })
+                runOnUiThread { setTitle("${currentTitle} ($totalCount)") }
+                updateListWith(networksResult)
             } catch (jsonException: JSONException) {
                 jsonException.printStackTrace()
                 alertException(jsonException)
             }
+        }
+    }
+
+    private fun updateListWith(jsonArray: JSONArray, afterUpdate: Runnable? = null) {
+        runOnUiThread {
+            val resultList = arrayListOf<JSONObject>()
+            for (i in 0..<jsonArray.length()) {
+                try {
+                    resultList.add(jsonArray.getJSONObject(i))
+                } catch (jsonException: JSONException) {
+                    jsonException.printStackTrace(System.err)
+                    alertException(jsonException)
+                }
+            }
+            if (workAdapter == null) {
+                works.addAll(resultList)
+                initLayout(App.getInstance().getValue(App.CONFIG_LAYOUT_TYPE, WorkAdapter.LAYOUT_STAGGERED.toLong()).toInt())
+                recyclerView.addOnScrollListener(scrollListener)
+            } else {
+                works.addAll(resultList)
+                workAdapter!!.notifyItemRangeInserted(
+                    max(0, works.size - jsonArray.length()),
+                    jsonArray.length()
+                )
+                if (works.size == totalCount) {
+                    workAdapter!!.setLoading(false)
+                }
+            }
+            afterUpdate?.run()
         }
     }
 
@@ -801,29 +874,15 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
             return "--"
         }
 
-    override fun onBackPressed() {
-        super.onBackPressed()
-        try {
-            App.getInstance().setValue(CONFIG_TYPE, type.toLong())
-            App.getInstance().setValue(CONFIG_PAGE, currentPage.toLong())
-            if (type == TYPE_TAG_WORK) {
-                App.getInstance().setValue(CONFIG_PARAM_INT, tagId.toLong())
-            } else if (type == TYPE_VA_WORK) {
-                App.getInstance().setValue(CONFIG_PARAM_STR, vaId)
-            }
-
-            DownloadUtils.getInstance().close()
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-    }
-
     companion object {
         private const val TAG = "WorksActivity"
         private const val CONFIG_TYPE = "last_type"
         private const val CONFIG_PAGE = "last_page"
+        private const val CONFIG_TOTAL = "total_count"
         private const val CONFIG_PARAM_INT = "last_param_int"
         private const val CONFIG_PARAM_STR = "last_param_str"
+        private const val CONFIG_PARAM_TITLE = "last_param_title"
+        private const val CONFIG_PARAM_POSITION = "last_open_work_position"
         private const val TYPE_ALL_WORK = 491
         private const val TYPE_SELF_LISTENING = 492
         private const val TYPE_SELF_LISTENED = 493

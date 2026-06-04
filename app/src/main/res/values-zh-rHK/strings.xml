@@ -56,9 +56,10 @@
     <string name="no_lrc">无歌词</string>
     <string name="stop_delay">定时停止</string>
     <string name="delete_cache">删除快取</string>
-    <string name="local_history">history view</string>
-    <string name="staggered">staggered</string>
+    <string name="local_history">History view</string>
+    <string name="staggered">Staggered</string>
     <string name="all_repeat">All Repeat</string>
     <string name="repeat_off">Repeat Off</string>
     <string name="repeat_one">Repeat One</string>
+    <string name="circles">Circles</string>
 </resources>

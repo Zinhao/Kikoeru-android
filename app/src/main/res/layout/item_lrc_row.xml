@@ -20,6 +20,9 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:textColor="@color/white"
+        android:shadowRadius="5"
+        android:shadowDy="3"
+        android:shadowDx="3"
         android:shadowColor="@color/black"
         app:layout_constraintTop_toTopOf="parent" />
 </LinearLayout>

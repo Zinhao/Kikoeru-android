@@ -13,7 +13,7 @@ import java.io.IOException;
 public class LoggingInterceptor implements Interceptor {
     private static final String TAG = "LoggingInterceptor";
     @Override
-    public @NotNull Response intercept(Chain chain){
+    public @NotNull Response intercept(Chain chain) throws IOException {
         // 获取请求
         Request request = chain.request();
 
@@ -46,14 +46,12 @@ public class LoggingInterceptor implements Interceptor {
                     .body(newResponseBody) // 替换为新的 ResponseBody
                     .build();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace(System.err);
         }finally {
             if(response!=null){
                 response.close();
             }
-
         }
-
-
+        return chain.proceed(request);
     }
 }

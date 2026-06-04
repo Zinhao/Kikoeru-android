@@ -73,9 +73,9 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
                 if (ctrlBinder!!.getController() == null || ctrlBinder!!.getController()
                         .getTransportControls() == null
                 ) return
-                val playbackStateCompat = ctrlBinder!!.getController().getPlaybackState()
+                val playbackStateCompat = ctrlBinder!!.controller.getPlaybackState()
                 if (playbackStateCompat != null && playbackStateCompat.getState() == PlaybackStateCompat.STATE_PLAYING) {
-                    ctrlBinder!!.getController().getTransportControls().pause()
+                    ctrlBinder!!.controller.getTransportControls().pause()
                 } else {
                     ctrlBinder!!.getController().getTransportControls().play()
                 }

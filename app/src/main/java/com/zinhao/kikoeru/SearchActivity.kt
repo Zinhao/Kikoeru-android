@@ -1,174 +1,182 @@
-package com.zinhao.kikoeru;
+package com.zinhao.kikoeru
 
-import android.annotation.SuppressLint;
-import android.content.Context;
-import android.content.Intent;
-import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.util.Log;
-import android.view.View;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
-import androidx.core.app.ActivityCompat;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import com.koushikdutta.async.http.AsyncHttpClient;
-import com.koushikdutta.async.http.AsyncHttpResponse;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import android.annotation.SuppressLint
+import android.content.Intent
+import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.util.Log
+import android.view.KeyEvent
+import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
+import android.widget.TextView
+import android.widget.TextView.OnEditorActionListener
+import androidx.core.app.ActivityCompat
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.koushikdutta.async.http.AsyncHttpClient.JSONObjectCallback
+import com.koushikdutta.async.http.AsyncHttpResponse
+import com.zinhao.kikoeru.Api.doGetWork
+import com.zinhao.kikoeru.TagsView.TagClickListener
+import com.zinhao.kikoeru.databinding.ActivitySearchBinding
+import org.json.JSONException
+import org.json.JSONObject
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class SearchActivity extends BaseActivity implements TagsView.TagClickListener<JSONObject> {
-    private static final String TAG = "SearchActivity";
-    private EditText etInput;
-    private RecyclerView recyclerView;
-    private List<JSONObject> works = new ArrayList<>();
-    private WorkAdapter workAdapter;
-    private InputMethodManager imm;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_search);
-        setSafeArea(getWindow().getDecorView(),null);
-        imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        recyclerView = findViewById(R.id.recyclerView);
-        etInput = findViewById(R.id.editTextNumber);
-        etInput.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+class SearchActivity : BaseActivity(), TagClickListener<JSONObject?> {
+    private var etInput: EditText? = null
+    private var recyclerView: RecyclerView? = null
+    private val works: MutableList<JSONObject> = ArrayList()
+    private var workAdapter: WorkAdapter? = null
+    private var imm: InputMethodManager? = null
+    private lateinit var viewBinding: ActivitySearchBinding
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        viewBinding = ActivitySearchBinding.inflate(layoutInflater)
+        setContentView(viewBinding.root)
+        setSafeArea(getWindow().getDecorView(), null)
+        imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        recyclerView = viewBinding.recyclerView
+        etInput = viewBinding.editTextNumber
+        etInput!!.setOnEditorActionListener(object : OnEditorActionListener {
+            override fun onEditorAction(v: TextView, actionId: Int, event: KeyEvent?): Boolean {
+                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                    viewBinding.swipe.isRefreshing = true
+                    doGetWork(v.getText().toString().trim { it <= ' ' }, 1, searchWorkCallback)
+                    return true
+                }
+                return false
+            }
+        })
+        etInput!!.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
             }
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
             }
 
-            @Override
-            public void afterTextChanged(Editable s) {
+            override fun afterTextChanged(s: Editable) {
                 if (workAdapter != null) {
-                    workAdapter.notifyItemRangeRemoved(0, works.size());
-                    workAdapter.notifyItemRangeChanged(0, works.size());
+                    workAdapter!!.notifyItemRangeRemoved(0, works.size)
+                    workAdapter!!.notifyItemRangeChanged(0, works.size)
                 }
-                works.clear();
-                if (s.toString().length() >= 6) {
-                    Api.doGetWork(s.toString(), 1, searchWorkCallback);
+                works.clear()
+                if (s.toString().length >= 6) {
+                    viewBinding.swipe.isRefreshing = true
+                    doGetWork(s.toString(), 1, searchWorkCallback)
                 }
             }
-        });
+        })
     }
 
-    private void initLayout(int layoutType) {
-        RecyclerView.LayoutManager layoutManager = null;
+    private fun initLayout(layoutType: Int) {
+        var layoutManager: RecyclerView.LayoutManager? = null
         if (layoutType == WorkAdapter.LAYOUT_LIST) {
-            layoutManager = new LinearLayoutManager(SearchActivity.this);
+            layoutManager = LinearLayoutManager(this@SearchActivity)
         } else if (layoutType == WorkAdapter.LAYOUT_SMALL_GRID) {
-            layoutManager = new GridLayoutManager(SearchActivity.this, 3);
+            layoutManager = GridLayoutManager(this@SearchActivity, 3)
         } else if (layoutType == WorkAdapter.LAYOUT_BIG_GRID) {
-            layoutManager = new GridLayoutManager(SearchActivity.this, 2);
+            layoutManager = GridLayoutManager(this@SearchActivity, 2)
         }
-        workAdapter = new WorkAdapter(works, layoutType);
-        workAdapter.setTagClickListener(this);
-        workAdapter.setVaClickListener(vaClickListener);
-        workAdapter.setItemClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                JSONObject item = (JSONObject) v.getTag();
-                Intent intent = new Intent(v.getContext(), WorkTreeActivity.class);
-                intent.putExtra("work_json_str", item.toString());
-                ActivityCompat.startActivity(SearchActivity.this, intent, null);
+        workAdapter = WorkAdapter(works, layoutType)
+        workAdapter!!.setTagClickListener(this)
+        workAdapter!!.setVaClickListener(vaClickListener)
+        workAdapter!!.setItemClickListener(object : View.OnClickListener {
+            override fun onClick(v: View) {
+                val item = v.getTag() as JSONObject
+                val intent = Intent(v.getContext(), WorkTreeActivity::class.java)
+                intent.putExtra("work_json_str", item.toString())
+                ActivityCompat.startActivity(this@SearchActivity, intent, null)
             }
-        });
-        recyclerView.setLayoutManager(layoutManager);
-        recyclerView.setAdapter(workAdapter);
+        })
+        recyclerView!!.setLayoutManager(layoutManager)
+        recyclerView!!.setAdapter(workAdapter)
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        etInput.setFocusable(true);
-        etInput.setFocusableInTouchMode(true);
-        etInput.requestFocus();
-        imm.showSoftInput(etInput, 0);
+    override fun onResume() {
+        super.onResume()
+        etInput!!.setFocusable(true)
+        etInput!!.setFocusableInTouchMode(true)
+        etInput!!.requestFocus()
+        imm!!.showSoftInput(etInput, 0)
     }
 
-    private final TagsView.TagClickListener<JSONObject> vaClickListener = new TagsView.TagClickListener<JSONObject>() {
-        @Override
-        public void onTagClick(JSONObject jsonObject) {
-            try {
-                String vaId = jsonObject.getString("id");
-                Log.d(TAG, "onTagClick: " + vaId);
-                String vaName = jsonObject.getString("name");
-                setTitle(vaName);
-                Intent intent = new Intent(SearchActivity.this, WorksActivity.class);
-                intent.putExtra("resultType", "va");
-                intent.putExtra("id", vaId);
-                intent.putExtra("name", vaName);
-                startActivity(intent);
-            } catch (JSONException e) {
-                e.printStackTrace();
-                alertException(e);
-            }
+    private val vaClickListener: TagClickListener<JSONObject?> = TagClickListener<JSONObject?> { jsonObject ->
+        try {
+            val vaId = jsonObject?.getString("id")
+            Log.d(TAG, "onTagClick: " + vaId)
+            val vaName = jsonObject?.getString("name")
+            setTitle(vaName)
+            val intent = Intent(this@SearchActivity, WorksActivity::class.java)
+            intent.putExtra("resultType", "va")
+            intent.putExtra("id", vaId)
+            intent.putExtra("name", vaName)
+            startActivity(intent)
+        } catch (e: JSONException) {
+            e.printStackTrace()
+            alertException(e)
         }
-    };
+    }
 
 
-
-    private AsyncHttpClient.JSONObjectCallback searchWorkCallback = new AsyncHttpClient.JSONObjectCallback() {
-        @Override
-        public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
+    private val searchWorkCallback: JSONObjectCallback = object : JSONObjectCallback() {
+        override fun onCompleted(e: Exception?, asyncHttpResponse: AsyncHttpResponse?, jsonObject: JSONObject) {
+            runOnUiThread {viewBinding.swipe.isRefreshing = false}
             if (e != null) {
-                e.printStackTrace();
-                alertException(e);
-                return;
+                e.printStackTrace()
+                alertException(e)
+                return
             }
             if (asyncHttpResponse == null || asyncHttpResponse.code() != 200) {
-                return;
+                return
             }
             try {
-                JSONArray jsonArray = jsonObject.getJSONArray("works");
-                int totalCount = jsonObject.getJSONObject("pagination").getInt("totalCount");
-                runOnUiThread(new Runnable() {
+                val jsonArray = jsonObject.getJSONArray("works")
+                val totalCount = jsonObject.getJSONObject("pagination").getInt("totalCount")
+                runOnUiThread(object : Runnable {
                     @SuppressLint("DefaultLocale")
-                    @Override
-                    public void run() {
-                        setTitle(String.format("%s(%d)", getString(R.string.app_name), totalCount));
-                        for (int i = 0; i < jsonArray.length(); i++) {
+                    override fun run() {
+                        setTitle(String.format("%s(%d)", getString(R.string.app_name), totalCount))
+                        for (i in 0..<jsonArray.length()) {
                             try {
-                                works.add(jsonArray.getJSONObject(i));
-                            } catch (JSONException jsonException) {
-                                jsonException.printStackTrace();
-                                alertException(jsonException);
+                                works.add(jsonArray.getJSONObject(i))
+                            } catch (jsonException: JSONException) {
+                                jsonException.printStackTrace()
+                                alertException(jsonException)
                             }
                         }
-                        initLayout((int) App.getInstance().getValue(App.CONFIG_LAYOUT_TYPE, WorkAdapter.LAYOUT_SMALL_GRID));
+                        initLayout(
+                            App.getInstance().getValue(App.CONFIG_LAYOUT_TYPE, WorkAdapter.LAYOUT_SMALL_GRID.toLong())
+                                .toInt()
+                        )
                     }
-                });
-            } catch (JSONException jsonException) {
-                jsonException.printStackTrace();
-                alertException(jsonException);
+                })
+            } catch (jsonException: JSONException) {
+                jsonException.printStackTrace()
+                alertException(jsonException)
             }
         }
-    };
+    }
 
-    @Override
-    public void onTagClick(JSONObject jsonObject) {
+    override fun onTagClick(jsonObject: JSONObject?) {
         try {
-            int tagId = jsonObject.getInt("id");
-            String tagName = jsonObject.getString("name");
-            setTitle(tagName);
-            Intent intent = new Intent(SearchActivity.this, WorksActivity.class);
-            intent.putExtra("resultType", "tag");
-            intent.putExtra("id", tagId);
-            intent.putExtra("name", tagName);
-            startActivity(intent);
-        } catch (JSONException e) {
-            e.printStackTrace();
-            alertException(e);
+            val tagId = jsonObject?.getInt("id")
+            val tagName = jsonObject?.getString("name")
+            setTitle(tagName)
+            val intent = Intent(this@SearchActivity, WorksActivity::class.java)
+            intent.putExtra("resultType", "tag")
+            intent.putExtra("id", tagId)
+            intent.putExtra("name", tagName)
+            startActivity(intent)
+        } catch (e: JSONException) {
+            e.printStackTrace()
+            alertException(e)
         }
+    }
+
+    companion object {
+        private const val TAG = "SearchActivity"
     }
 }

@@ -1,162 +1,159 @@
-package com.zinhao.kikoeru;
+package com.zinhao.kikoeru
 
-import android.content.Context;
-import android.content.Intent;
-import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.util.Log;
-import android.view.KeyEvent;
-import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
-import android.widget.TextView;
-import androidx.annotation.NonNull;
-import com.koushikdutta.async.http.AsyncHttpClient;
-import com.koushikdutta.async.http.AsyncHttpResponse;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import android.content.Intent
+import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.util.Log
+import android.view.KeyEvent
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
+import android.widget.TextView
+import android.widget.TextView.OnEditorActionListener
+import androidx.activity.addCallback
+import com.koushikdutta.async.http.AsyncHttpClient.JSONArrayCallback
+import com.koushikdutta.async.http.AsyncHttpResponse
+import com.zinhao.kikoeru.Api.doGetAllVas
+import com.zinhao.kikoeru.TagsView.TagClickListener
+import com.zinhao.kikoeru.TagsView.TextGet
+import com.zinhao.kikoeru.databinding.LayoutTagsBinding
+import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
 
-public class VasActivity extends BaseActivity implements TagsView.TagClickListener<JSONObject> {
-    private static final String TAG = "VasActivity";
-    private TagsView<JSONArray> vasView;
-    private EditText etInput;
-    private JSONArray allVas;
-    private InputMethodManager imm;
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.layout_tags);
-        setSafeArea(getWindow().getDecorView(),null);
-        imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        vasView = findViewById(R.id.tagsView);
-        vasView.setTagClickListener(this);
-        vasView.setTagBackgroundResource(R.drawable.card_bg_va);
-        etInput = findViewById(R.id.editText);
-        etInput.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+class VasActivity : BaseActivity(), TagClickListener<JSONObject?> {
+    private lateinit var vasView: TagsView<Any?>
+    private lateinit var etInput: EditText
+    private var allVas: JSONArray? = null
+    private var imm: InputMethodManager? = null
+    private lateinit var viewBinding: LayoutTagsBinding
+    protected override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        viewBinding = LayoutTagsBinding.inflate(layoutInflater)
+        setContentView(viewBinding.root)
+        setSafeArea(getWindow().getDecorView(), null)
+        onBackPressedDispatcher.addCallback(this,true){
+            setResult(RESULT_CANCELED)
+            finish()
+        }
+        imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        vasView = viewBinding.tagsView
+        vasView.setTagClickListener(this)
+        vasView.setTagBackgroundResource(R.drawable.card_bg_va)
+        etInput = viewBinding.editText
+        etInput.setOnEditorActionListener(object : OnEditorActionListener {
+            override fun onEditorAction(v: TextView, actionId: Int, event: KeyEvent?): Boolean {
                 if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                    vasView.setTags(filterTag(v.getText().toString().trim()), textGet);
-                    return true;
+                    vasView.setTags(filterTag(v.getText().toString().trim { it <= ' ' }), textGet)
+                    return true
                 }
-                return false;
+                return false
             }
-        });
-        etInput.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void afterTextChanged(Editable s) {
-                vasView.setTags(filterTag(s.toString().trim()), textGet);
-            }
-
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
+        })
+        etInput.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable) {
+                vasView.setTags(filterTag(s.toString().trim { it <= ' ' }), textGet)
             }
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
             }
-        });
-        Api.doGetAllVas(callback);
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            }
+        })
+        viewBinding.swipe.setOnRefreshListener {doGetAllVas(callback)}
+        viewBinding.swipe.isRefreshing = true
+        doGetAllVas(callback)
     }
 
-    private JSONArray filterTag(@NonNull String text) {
+    private fun filterTag(text: String): JSONArray {
         if (text.isEmpty()) {
-            return allVas;
+            return allVas!!
         }
-        JSONArray result = new JSONArray();
-        for (int i = 0; i < allVas.length(); i++) {
-            try {
-                JSONObject tag = allVas.getJSONObject(i);
-                String tagName = textGet.onGetText(tag);
-                if (tagName.contains(text)) {
-                    result.put(tag);
+        val result = JSONArray()
+        allVas?.let {
+            for (i in 0..< it.length()) {
+                try {
+                    val tag = it.getJSONObject(i)
+                    val tagName = textGet.onGetText(tag)
+                    if (tagName.contains(text)) {
+                        result.put(tag)
+                    }
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                    continue
                 }
-            } catch (JSONException e) {
-                e.printStackTrace();
-                continue;
             }
         }
-        return result;
+        return result
     }
 
-    private final TagsView.TextGet<JSONObject> textGet = new TagsView.TextGet<JSONObject>() {
-        @Override
-        public String onGetText(JSONObject jsonObject) {
-            return jsonObject.optString("name") + "(" + jsonObject.optInt("count") + ")";
+    private val textGet: TextGet<JSONObject?> = object : TextGet<JSONObject?> {
+        override fun onGetText(jsonObject: JSONObject?): String {
+            return jsonObject?.optString("name") + "(" + jsonObject?.optInt("count") + ")"
         }
-    };
+    }
 
-    private final AsyncHttpClient.JSONArrayCallback callback = new AsyncHttpClient.JSONArrayCallback() {
-        @Override
-        public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONArray jsonArray) {
+    private val callback: JSONArrayCallback = object : JSONArrayCallback() {
+        override fun onCompleted(e: Exception?, asyncHttpResponse: AsyncHttpResponse?, jsonArray: JSONArray) {
+            runOnUiThread { viewBinding.swipe.isRefreshing = false }
             if (e != null) {
-                alertException(e);
-                return;
+                alertException(e)
+                return
             }
             if (asyncHttpResponse == null || asyncHttpResponse.code() != 200) {
-                Log.d(TAG, "onCompleted: err");
-                return;
+                Log.d(TAG, "onCompleted: err")
+                return
             }
-            allVas = jsonArray;
-            Log.d(TAG, "onCompleted: " + jsonArray.length());
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    vasView.setTags(jsonArray, textGet);
-                    if (!vasView.isInLayout()) {
-                        vasView.requestLayout();
+            allVas = jsonArray
+            Log.d(TAG, "onCompleted: " + jsonArray.length())
+            runOnUiThread(object : Runnable {
+                override fun run() {
+                    vasView!!.setTags(jsonArray, textGet)
+                    if (!vasView!!.isInLayout()) {
+                        vasView!!.requestLayout()
                     } else {
-                        vasView.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (!vasView.isInLayout()) {
-                                    vasView.requestLayout();
+                        vasView!!.postDelayed(object : Runnable {
+                            override fun run() {
+                                if (!vasView!!.isInLayout()) {
+                                    vasView!!.requestLayout()
                                 }
                             }
-                        }, 500);
+                        }, 500)
                     }
-
                 }
-            });
-
+            })
         }
-    };
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        etInput.setFocusable(true);
-        etInput.setFocusableInTouchMode(true);
-        etInput.requestFocus();
-        imm.showSoftInput(etInput, 0);
     }
 
-    @Override
-    public void onTagClick(JSONObject jsonObject) {
+    override fun onResume() {
+        super.onResume()
+        etInput!!.setFocusable(true)
+        etInput!!.setFocusableInTouchMode(true)
+        etInput!!.requestFocus()
+        imm!!.showSoftInput(etInput, 0)
+    }
+
+    override fun onTagClick(jsonObject: JSONObject?) {
         try {
-            String vaId = jsonObject.getString("id");
-            Log.d(TAG, "onTagClick: " + vaId);
-            String vaName = jsonObject.getString("name");
-            setTitle(vaName);
-            Intent intent = new Intent();
-            intent.putExtra("resultType", "va");
-            intent.putExtra("id", vaId);
-            intent.putExtra("name", vaName);
-            setResult(RESULT_OK, intent);
-            finish();
-        } catch (JSONException e) {
-            e.printStackTrace();
-            alertException(e);
+            val vaId = jsonObject?.getString("id")
+            Log.d(TAG, "onTagClick: " + vaId)
+            val vaName = jsonObject?.getString("name")
+            setTitle(vaName)
+            val intent = Intent()
+            intent.putExtra("resultType", "va")
+            intent.putExtra("id", vaId)
+            intent.putExtra("name", vaName)
+            setResult(RESULT_OK, intent)
+            finish()
+        } catch (e: JSONException) {
+            e.printStackTrace()
+            alertException(e)
         }
     }
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        setResult(RESULT_CANCELED);
+    companion object {
+        private const val TAG = "VasActivity"
     }
 }

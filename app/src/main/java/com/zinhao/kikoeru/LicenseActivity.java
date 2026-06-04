@@ -30,6 +30,7 @@ public class LicenseActivity extends BaseActivity {
         projectList.add(new OpenSourceProject("Glide", getString(R.string.project_glide_license)));
         projectList.add(new OpenSourceProject("ExoPlayer", getString(R.string.project_exo_player_license)));
         projectList.add(new OpenSourceProject("AndroidAsync", getString(R.string.project_android_async_license)));
+        projectList.add(new OpenSourceProject("OkHttp", "https://github.com/square/okhttp/blob/master/LICENSE.txt"));
         projectList.add(new OpenSourceProject("SubsamplingScaleImageView", getString(R.string.project_subsampling_scale_image_view_license)));
 
         listView.setAdapter(new ArrayAdapter<>(this, R.layout.item_open_source_project, projectList));

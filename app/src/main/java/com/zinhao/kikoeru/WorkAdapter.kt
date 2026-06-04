@@ -1,276 +1,278 @@
-package com.zinhao.kikoeru;
+package com.zinhao.kikoeru
 
-import android.annotation.SuppressLint;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
-import com.bumptech.glide.Glide;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import android.annotation.SuppressLint
+import android.view.LayoutInflater
+import android.view.View
+import android.view.View.OnLongClickListener
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
+import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.zinhao.kikoeru.Api.fullCoverImageUrl
+import com.zinhao.kikoeru.TagsView.TagClickListener
+import com.zinhao.kikoeru.TagsView.TextGet
+import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
 
-import java.util.Collections;
-import java.util.List;
+class WorkAdapter(
+    private val datas: MutableList<JSONObject>,
+    private val layoutType: Int = LAYOUT_SMALL_GRID
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    class DiffCallback : DiffUtil.ItemCallback<JSONObject>() {
+        override fun areItemsTheSame(oldItem: JSONObject, newItem: JSONObject): Boolean {
+            // 用文件路径作为唯一标识
+            return oldItem.toString() == newItem.toString()
+        }
 
-public class WorkAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    private static final String TAG = "WorkAdapter";
-    private List<JSONObject> datas;
-    private int layoutType;
-    private TagsView.TextGet<JSONObject> textGet;
-    private TagsView.TagClickListener tagClickListener;
-    private TagsView.TagClickListener vaClickListener;
-    private TagsView.TagClickListener circlesClickListener;
-    private View.OnClickListener itemClickListener;
-    private View.OnLongClickListener itemLongClickListener;
+        override fun areContentsTheSame(oldItem: JSONObject, newItem: JSONObject): Boolean {
+            // data class 自动实现 equals，比较所有字段
+            return oldItem == newItem
+        }
+    }
+    private val textGet: TextGet<JSONObject?>?
+    private var tagClickListener: TagClickListener<*>? = null
+    private var vaClickListener: TagClickListener<*>? = null
+    private var circlesClickListener: TagClickListener<*>? = null
+    private var itemClickListener: View.OnClickListener? = null
+    private var itemLongClickListener: OnLongClickListener? = null
 
-    public static final int LAYOUT_LIST = 846;
-    public static final int LAYOUT_SMALL_GRID = 847;
-    public static final int LAYOUT_BIG_GRID = 848;
-    public static final int LAYOUT_STAGGERED = 849;
-
-    private static final int TYPE_ITEM = 0;
-    private static final int TYPE_LOADING = 1;
-
-    private boolean isLoading = false; // 是否正在加载
-
+    private var isLoading = false // 是否正在加载
+    fun isLoading(): Boolean {
+        return isLoading
+    }
     // 辅助方法：显示/隐藏加载动画
-    public void setLoading(boolean loading) {
+    fun setLoading(loading: Boolean) {
         if (this.isLoading != loading) {
-            this.isLoading = loading;
+            this.isLoading = loading
             if (loading) {
-                notifyItemInserted(datas.size());
+                notifyItemInserted(datas.size)
             } else {
-                notifyItemRemoved(datas.size());
+                notifyItemRemoved(datas.size)
             }
         }
     }
 
-    public void setTagClickListener(TagsView.TagClickListener<?> tagClickListener) {
-        this.tagClickListener = tagClickListener;
+    fun setTagClickListener(tagClickListener: TagClickListener<*>?) {
+        this.tagClickListener = tagClickListener
     }
 
-    public void setItemClickListener(View.OnClickListener itemClickListener) {
-        this.itemClickListener = itemClickListener;
+    fun setItemClickListener(itemClickListener: View.OnClickListener?) {
+        this.itemClickListener = itemClickListener
     }
 
-    public void setCirclesClickListener(TagsView.TagClickListener circlesClickListener) {
-        this.circlesClickListener = circlesClickListener;
+    fun setCirclesClickListener(circlesClickListener: TagClickListener<*>?) {
+        this.circlesClickListener = circlesClickListener
     }
 
-    public void setItemLongClickListener(View.OnLongClickListener itemLongClickListener) {
-        this.itemLongClickListener = itemLongClickListener;
+    fun setItemLongClickListener(itemLongClickListener: OnLongClickListener?) {
+        this.itemLongClickListener = itemLongClickListener
     }
 
-    public void setVaClickListener(TagsView.TagClickListener<?> vaClickListener) {
-        this.vaClickListener = vaClickListener;
+    fun setVaClickListener(vaClickListener: TagClickListener<*>?) {
+        this.vaClickListener = vaClickListener
     }
 
-    public WorkAdapter(List<JSONObject> datas) {
-        this(datas, LAYOUT_SMALL_GRID);
-    }
-
-    public WorkAdapter(List<JSONObject> datas, int layoutType) {
-        this.datas = datas;
-        this.layoutType = layoutType;
-        textGet = new TagsView.TextGet<JSONObject>() {
-            @Override
-            public String onGetText(JSONObject t) {
+    init {
+        textGet = object : TextGet<JSONObject?> {
+            override fun onGetText(t: JSONObject?): String {
                 try {
-                    return t.getString("name");
-                } catch (JSONException e) {
-
+                    return t?.optString("name")?:""
+                } catch (e: JSONException) {
                 }
-                return "";
+                return ""
             }
-        };
+        }
     }
 
-    @NonNull
-    @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         if (viewType == TYPE_LOADING) {
-            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_loading, parent, false);
-            return new LoadingViewHolder(view);
+            val view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_loading, parent, false)
+            return LoadingViewHolder(view)
         }
         if (layoutType == LAYOUT_LIST) {
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_1, parent, false);
-            return new SimpleViewHolder(v);
+            val v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_1, parent, false)
+            return SimpleViewHolder(v)
         } else if (layoutType == LAYOUT_BIG_GRID) {
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_2, parent, false);
-            return new GirdViewHolder(v);
+            val v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_2, parent, false)
+            return GirdViewHolder(v)
         } else if (layoutType == LAYOUT_STAGGERED) {
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_2, parent, false);
-            return new GirdViewHolder(v);
+            val v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_2, parent, false)
+            return GirdViewHolder(v)
         } else {
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_3, parent, false);
-            return new SmallGirdViewHolder(v);
+            val v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_3, parent, false)
+            return SmallGirdViewHolder(v)
         }
-
     }
 
     @SuppressLint("DefaultLocale")
-    @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        if(position == datas.size()){
-            return;
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        if (position == datas.size) {
+            return
         }
-        JSONObject item = datas.get(position);
-        holder.itemView.setTag(item);
-        holder.itemView.setOnClickListener(itemClickListener);
-        holder.itemView.setOnLongClickListener(itemLongClickListener);
-        if (holder instanceof SimpleViewHolder) {
+        val item = datas.get(position)
+        holder.itemView.setTag(item)
+        holder.itemView.setOnClickListener(itemClickListener)
+        holder.itemView.setOnLongClickListener(itemLongClickListener)
+        if (holder is SimpleViewHolder) {
             try {
-                ((SimpleViewHolder) holder).tvTitle.setText(item.getString("title"));
-                ((SimpleViewHolder) holder).tvComArt.setTags(App.getVasList(item), TagsView.JSON_TEXT_GET.setKey("name"));
-                ((SimpleViewHolder) holder).tvComArt.setTagClickListener(vaClickListener);
-                ((SimpleViewHolder) holder).tvTags.setTags(App.getTagsList(item), textGet);
-                ((SimpleViewHolder) holder).tvCircles.setTags(Collections.singletonList(item.getString("name")),TagsView.STRING_TEXT_GET);
-                ((SimpleViewHolder) holder).tvCircles.setTagClickListener(circlesClickListener);
-                ((SimpleViewHolder) holder).tvTags.setTagClickListener(tagClickListener);
-                Glide.with(holder.itemView.getContext()).load(App.getInstance().currentUser().getHost() + String.format("/api/cover/%d?type=sam&token=%s", item.getInt("id"), Api.token))
-                        .apply(App.getInstance().getRadius15Pic()).into(((SimpleViewHolder) holder).ivCover);
-            } catch (JSONException e) {
-                e.printStackTrace();
-                App.getInstance().alertException(e);
+                holder.tvTitle.setText(item.getString("title"))
+                holder.tvComArt.setTags(App.getVasList(item), TagsView.JSON_TEXT_GET.setKey("name"))
+                holder.tvComArt.setTagClickListener(vaClickListener)
+                holder.tvTags.setTags(App.getTagsList(item), textGet)
+                holder.tvCircles.setTags(mutableListOf<String?>(item.getString("name")), TagsView.STRING_TEXT_GET)
+                holder.tvCircles.setTagClickListener(circlesClickListener)
+                holder.tvTags.setTagClickListener(tagClickListener)
+                Glide.with(holder.itemView.getContext()).load(
+                    App.getInstance().currentUser().getHost() + String.format(
+                        "/api/cover/%d?type=sam&token=%s",
+                        item.getInt("id"),
+                        Api.token
+                    )
+                )
+                    .apply(App.getInstance().getRadius15Pic()).into(holder.ivCover)
+            } catch (e: JSONException) {
+                e.printStackTrace()
+                App.getInstance().alertException(e)
             }
         }
-        if (holder instanceof GirdViewHolder) {
-            GirdViewHolder girdHolder = (GirdViewHolder) holder;
+        if (holder is GirdViewHolder) {
+            val girdHolder = holder
             try {
-                Glide.with(holder.itemView.getContext()).load(Api.fullCoverImageUrl(item.optInt("id")))
-                        .apply(App.getInstance().getRadius15Pic()).into(girdHolder.ivCover);
-                girdHolder.tvTitle.setText(item.getString("title"));
-                girdHolder.tvArt.setTags(App.getVasList(item), TagsView.JSON_TEXT_GET.setKey("name"));
-                girdHolder.tvArt.setTagClickListener(vaClickListener);
-                girdHolder.tvTags.setTags(App.getTagsList(item), textGet);
-                girdHolder.tvCircles.setTags(Collections.singletonList(item.getString("name")),TagsView.STRING_TEXT_GET);
-                girdHolder.tvCircles.setTagClickListener(circlesClickListener);
-                girdHolder.tvTags.setTagClickListener(tagClickListener);
-                girdHolder.tvRjNumber.setText(String.format("RJ%d", item.getInt("id")));
+                Glide.with(holder.itemView.getContext()).load(fullCoverImageUrl(item.optInt("id").toLong()))
+                    .apply(App.getInstance().getRadius15Pic()).into(girdHolder.ivCover)
+                girdHolder.tvTitle.setText(item.getString("title"))
+                girdHolder.tvArt.setTags(App.getVasList(item), TagsView.JSON_TEXT_GET.setKey("name"))
+                girdHolder.tvArt.setTagClickListener(vaClickListener)
+                girdHolder.tvTags.setTags(App.getTagsList(item), textGet)
+                girdHolder.tvCircles.setTags(mutableListOf<String?>(item.getString("name")), TagsView.STRING_TEXT_GET)
+                girdHolder.tvCircles.setTagClickListener(circlesClickListener)
+                girdHolder.tvTags.setTagClickListener(tagClickListener)
+                girdHolder.tvRjNumber.setText(String.format("RJ%d", item.getInt("id")))
 
-                String dateStr = item.optString("release");
-                if(dateStr.isEmpty()){
-                    girdHolder.tvDate.setVisibility(View.GONE);
-                }else{
-                    girdHolder.tvDate.setVisibility(View.VISIBLE);
-                    girdHolder.tvDate.setText(dateStr);
-                }
-
-                girdHolder.tvPrice.setText(String.format("%d 日元", item.getInt("price")));
-                girdHolder.tvSaleCount.setText(String.format("售出：%d", item.getInt("dl_count")));
-                if (item.has(JSONConst.Work.HOST)) {
-                    girdHolder.tvHost.setVisibility(View.VISIBLE);
-                    girdHolder.tvHost.setText(item.getString(JSONConst.Work.HOST));
+                val dateStr = item.optString("release")
+                if (dateStr.isEmpty()) {
+                    girdHolder.tvDate.setVisibility(View.GONE)
                 } else {
-                    girdHolder.tvHost.setVisibility(View.INVISIBLE);
+                    girdHolder.tvDate.setVisibility(View.VISIBLE)
+                    girdHolder.tvDate.setText(dateStr)
                 }
 
-            } catch (JSONException e) {
-                e.printStackTrace();
-                App.getInstance().alertException(e);
+                girdHolder.tvPrice.setText(String.format("%d 日元", item.getInt("price")))
+                girdHolder.tvSaleCount.setText(String.format("售出：%d", item.getInt("dl_count")))
+                if (item.has(JSONConst.Work.HOST)) {
+                    girdHolder.tvHost.setVisibility(View.VISIBLE)
+                    girdHolder.tvHost.setText(item.getString(JSONConst.Work.HOST))
+                } else {
+                    girdHolder.tvHost.setVisibility(View.INVISIBLE)
+                }
+            } catch (e: JSONException) {
+                e.printStackTrace()
+                App.getInstance().alertException(e)
             }
         }
 
-        if (holder instanceof SmallGirdViewHolder) {
-            SmallGirdViewHolder girdHolder = (SmallGirdViewHolder) holder;
+        if (holder is SmallGirdViewHolder) {
+            val girdHolder = holder
             try {
-                Glide.with(holder.itemView.getContext()).load(Api.fullCoverImageUrl(item.optInt("id")))
-                        .apply(App.getInstance().getRadius5Pic()).into(girdHolder.ivCover);
-                girdHolder.tvRjNumber.setText(String.format("RJ%d", item.getInt("id")));
-                girdHolder.tvDate.setText(item.getString("release"));
+                Glide.with(holder.itemView.getContext()).load(fullCoverImageUrl(item.optInt("id").toLong()))
+                    .apply(App.getInstance().getRadius5Pic()).into(girdHolder.ivCover)
+                girdHolder.tvRjNumber.setText(String.format("RJ%d", item.getInt("id")))
+                girdHolder.tvDate.setText(item.getString("release"))
                 if (item.has(JSONConst.Work.HOST)) {
-                    girdHolder.tvHost.setVisibility(View.VISIBLE);
-                    girdHolder.tvHost.setText(item.getString(JSONConst.Work.HOST));
+                    girdHolder.tvHost.setVisibility(View.VISIBLE)
+                    girdHolder.tvHost.setText(item.getString(JSONConst.Work.HOST))
                 } else {
-                    girdHolder.tvHost.setVisibility(View.INVISIBLE);
+                    girdHolder.tvHost.setVisibility(View.INVISIBLE)
                 }
-            } catch (JSONException e) {
-                e.printStackTrace();
-                App.getInstance().alertException(e);
+            } catch (e: JSONException) {
+                e.printStackTrace()
+                App.getInstance().alertException(e)
             }
-
         }
     }
 
-    @Override
-    public int getItemViewType(int position) {
+    override fun getItemViewType(position: Int): Int {
         // 如果位置是最后一位且处于加载状态，返回加载布局类型
-        if (position == datas.size()) {
-            return TYPE_LOADING;
+        if (position == datas.size) {
+            return TYPE_LOADING
         }
-        return TYPE_ITEM;
+        return TYPE_ITEM
     }
 
-    @Override
-    public int getItemCount() {
-        return datas.size() + (isLoading ? 1 : 0);
+    override fun getItemCount(): Int {
+        return datas.size + (if(isLoading) 1 else 0)
     }
 
-    public static class SimpleViewHolder extends RecyclerView.ViewHolder {
-        private final ImageView ivCover;
-        private final TextView tvTitle;
-        private final TagsView<JSONArray> tvComArt;
-        private final TagsView<JSONArray> tvTags;
-        private final TagsView<List<String>> tvCircles;
+    class SimpleViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val ivCover: ImageView
+        val tvTitle: TextView
+        val tvComArt: TagsView<JSONArray?>
+        val tvTags: TagsView<JSONArray?>
+        val tvCircles: TagsView<MutableList<String?>?>
 
 
-        public SimpleViewHolder(@NonNull View itemView) {
-            super(itemView);
-            ivCover = itemView.findViewById(R.id.ivCover);
-            tvTitle = itemView.findViewById(R.id.tvTitle);
-            tvComArt = itemView.findViewById(R.id.tvComArt);
-            tvTags = itemView.findViewById(R.id.tvTags);
-            tvCircles = itemView.findViewById(R.id.tvCircles);
+        init {
+            ivCover = itemView.findViewById<ImageView>(R.id.ivCover)
+            tvTitle = itemView.findViewById<TextView>(R.id.tvTitle)
+            tvComArt = itemView.findViewById<TagsView<JSONArray?>>(R.id.tvComArt)
+            tvTags = itemView.findViewById<TagsView<JSONArray?>>(R.id.tvTags)
+            tvCircles = itemView.findViewById<TagsView<MutableList<String?>?>>(R.id.tvCircles)
         }
     }
 
-    public static class GirdViewHolder extends RecyclerView.ViewHolder {
-        private final ImageView ivCover;
-        private final TextView tvTitle;
-        private final TagsView<JSONArray> tvArt;
-        private final TagsView<JSONArray> tvTags;
-        private final TagsView<List<String>> tvCircles;
-        private final TextView tvRjNumber;
-        private final TextView tvDate;
-        private final TextView tvPrice;
-        private final TextView tvSaleCount;
-        private final TextView tvHost;
+    class GirdViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val ivCover: ImageView
+        val tvTitle: TextView
+        val tvArt: TagsView<JSONArray?>
+        val tvTags: TagsView<JSONArray?>
+        val tvCircles: TagsView<MutableList<String?>?>
+        val tvRjNumber: TextView
+        val tvDate: TextView
+        val tvPrice: TextView
+        val tvSaleCount: TextView
+        val tvHost: TextView
 
-        public GirdViewHolder(@NonNull View itemView) {
-            super(itemView);
-            ivCover = itemView.findViewById(R.id.ivCover);
-            tvTitle = itemView.findViewById(R.id.tvTitle);
-            tvArt = itemView.findViewById(R.id.tvArt);
-            tvTags = itemView.findViewById(R.id.tvTags);
-            tvRjNumber = itemView.findViewById(R.id.tvRjNumber);
-            tvDate = itemView.findViewById(R.id.tvDate);
-            tvPrice = itemView.findViewById(R.id.tvPrice);
-            tvSaleCount = itemView.findViewById(R.id.tvSaleCount);
-            tvHost = itemView.findViewById(R.id.tvHost);
-            tvCircles = itemView.findViewById(R.id.tvCircles);
+        init {
+            ivCover = itemView.findViewById<ImageView>(R.id.ivCover)
+            tvTitle = itemView.findViewById<TextView>(R.id.tvTitle)
+            tvArt = itemView.findViewById<TagsView<JSONArray?>>(R.id.tvArt)
+            tvTags = itemView.findViewById<TagsView<JSONArray?>>(R.id.tvTags)
+            tvRjNumber = itemView.findViewById<TextView>(R.id.tvRjNumber)
+            tvDate = itemView.findViewById<TextView>(R.id.tvDate)
+            tvPrice = itemView.findViewById<TextView>(R.id.tvPrice)
+            tvSaleCount = itemView.findViewById<TextView>(R.id.tvSaleCount)
+            tvHost = itemView.findViewById<TextView>(R.id.tvHost)
+            tvCircles = itemView.findViewById<TagsView<MutableList<String?>?>>(R.id.tvCircles)
         }
     }
 
-    public static class SmallGirdViewHolder extends RecyclerView.ViewHolder {
-        private ImageView ivCover;
-        private TextView tvRjNumber;
-        private TextView tvDate;
-        private final TextView tvHost;
+    class SmallGirdViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+       val ivCover: ImageView
+       val tvRjNumber: TextView
+       val tvDate: TextView
+       val tvHost: TextView
 
-        public SmallGirdViewHolder(@NonNull View itemView) {
-            super(itemView);
-            ivCover = itemView.findViewById(R.id.ivCover);
-            tvRjNumber = itemView.findViewById(R.id.tvRjNumber);
-            tvDate = itemView.findViewById(R.id.tvDate);
-            tvHost = itemView.findViewById(R.id.tvHost);
+        init {
+            ivCover = itemView.findViewById<ImageView>(R.id.ivCover)
+            tvRjNumber = itemView.findViewById<TextView>(R.id.tvRjNumber)
+            tvDate = itemView.findViewById<TextView>(R.id.tvDate)
+            tvHost = itemView.findViewById<TextView>(R.id.tvHost)
         }
     }
 
-    static class LoadingViewHolder extends RecyclerView.ViewHolder {
-        public LoadingViewHolder(View itemView) { super(itemView); }
+    internal class LoadingViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+    companion object {
+        private const val TAG = "WorkAdapter"
+        const val LAYOUT_LIST: Int = 846
+        const val LAYOUT_SMALL_GRID: Int = 847
+        const val LAYOUT_BIG_GRID: Int = 848
+        const val LAYOUT_STAGGERED: Int = 849
+
+        private const val TYPE_ITEM = 0
+        private const val TYPE_LOADING = 1
     }
 }

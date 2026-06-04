@@ -1,138 +1,136 @@
-package com.zinhao.kikoeru;
+package com.zinhao.kikoeru
 
-import android.content.Context;
-import android.content.Intent;
-import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.util.Log;
-import android.view.View;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import com.koushikdutta.async.http.AsyncHttpClient;
-import com.koushikdutta.async.http.AsyncHttpResponse;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import android.content.Intent
+import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.util.Log
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
+import androidx.activity.addCallback
+import com.koushikdutta.async.http.AsyncHttpClient.JSONArrayCallback
+import com.koushikdutta.async.http.AsyncHttpResponse
+import com.zinhao.kikoeru.Api.doGetCirclesList
+import com.zinhao.kikoeru.TagsView.TagClickListener
+import com.zinhao.kikoeru.TagsView.TextGet
+import com.zinhao.kikoeru.databinding.LayoutTagsBinding
+import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
 
-public class CirclesActivity extends BaseActivity implements TagsView.TagClickListener<JSONObject> {
-    private static final String TAG = "CirclesActivity";
-    private TagsView<JSONArray> circlesView;
-    private EditText etInput;
-    private JSONArray allCircles;
-    private InputMethodManager imm;
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.layout_tags);
-        setSafeArea(getWindow().getDecorView(),null);
-        imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        circlesView = findViewById(R.id.tagsView);
-        circlesView.setTagClickListener(this);
-        circlesView.setTagBackgroundResource(R.drawable.card_bg_circles);
-        etInput = findViewById(R.id.editText);
-        etInput.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void afterTextChanged(Editable s) {
-                circlesView.setTags(filterTag(s.toString().trim()),textGet);
+class CirclesActivity : BaseActivity(), TagClickListener<JSONObject?> {
+    private lateinit var circlesView: TagsView<Any?>
+    private lateinit var etInput: EditText
+    private var allCircles: JSONArray? = null
+    private var imm: InputMethodManager? = null
+    private lateinit var viewBinding: LayoutTagsBinding
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        viewBinding = LayoutTagsBinding.inflate(layoutInflater)
+        setContentView(viewBinding.root)
+        setSafeArea(viewBinding.root, null)
+        onBackPressedDispatcher.addCallback(this,true){
+            setResult(RESULT_CANCELED)
+            finish()
+        }
+        imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        circlesView = viewBinding.tagsView
+        circlesView.setTagClickListener(this)
+        circlesView.setTagBackgroundResource(R.drawable.card_bg_circles)
+        etInput = viewBinding.editText
+        etInput.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable) {
+                circlesView.setTags(filterTag(s.toString().trim { it <= ' ' }), textGet)
             }
 
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
             }
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
             }
-        });
-        Api.doGetCirclesList(callback);
+        })
+        viewBinding.swipe.setOnRefreshListener {doGetCirclesList(callback)}
+        viewBinding.swipe.isRefreshing = true
+        doGetCirclesList(callback)
     }
 
-    private JSONArray filterTag(@NonNull String text) {
+    private fun filterTag(text: String): JSONArray? {
         if (text.isEmpty()) {
-            return allCircles;
+            return allCircles
         }
-        JSONArray result = new JSONArray();
-        for (int i = 0; i < allCircles.length(); i++) {
-            try {
-                JSONObject tag = allCircles.getJSONObject(i);
-                String tagName = textGet.onGetText(tag);
-                if (tagName.contains(text)) {
-                    result.put(tag);
+        val result = JSONArray()
+        allCircles?.let {
+            for (i in 0..<it.length()) {
+                try {
+                    val tag = it.getJSONObject(i)
+                    val tagName = textGet.onGetText(tag)
+                    if (tagName.contains(text)) {
+                        result.put(tag)
+                    }
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                    continue
                 }
-            } catch (JSONException e) {
-                e.printStackTrace();
-                continue;
             }
         }
-        return result;
+
+        return result
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        etInput.setFocusable(true);
-        etInput.setFocusableInTouchMode(true);
-        etInput.requestFocus();
-        imm.showSoftInput(etInput, 0);
+    override fun onResume() {
+        super.onResume()
+        etInput.setFocusable(true)
+        etInput.setFocusableInTouchMode(true)
+        etInput.requestFocus()
+        imm?.showSoftInput(etInput, 0)
     }
 
-    private final TagsView.TextGet<JSONObject> textGet = new TagsView.TextGet<JSONObject>() {
-        @Override
-        public String onGetText(JSONObject jsonObject) {
-            return jsonObject.opt("name") + "(" + jsonObject.optInt("count") + ")";
+    private val textGet: TextGet<JSONObject?> = object : TextGet<JSONObject?> {
+        override fun onGetText(jsonObject: JSONObject?): String {
+            return jsonObject?.opt("name").toString() + "(" + jsonObject?.optInt("count") + ")"
         }
-    };
+    }
 
-    private final AsyncHttpClient.JSONArrayCallback callback = new AsyncHttpClient.JSONArrayCallback() {
-        @Override
-        public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONArray jsonArray) {
+    private val callback: JSONArrayCallback = object : JSONArrayCallback() {
+        override fun onCompleted(e: Exception?, asyncHttpResponse: AsyncHttpResponse?, jsonArray: JSONArray) {
+            runOnUiThread {viewBinding.swipe.isRefreshing = false}
             if (e != null) {
-                alertException(e);
-                return;
+                alertException(e)
+                return
             }
             if (asyncHttpResponse == null || asyncHttpResponse.code() != 200) {
-                Log.d(TAG, "onCompleted: err");
-                return;
+                Log.d(TAG, "onCompleted: err")
+                return
             }
-            Log.d(TAG, "onCompleted: " + jsonArray.length());
-            allCircles = jsonArray;
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    circlesView.setTags(jsonArray, textGet);
+            Log.d(TAG, "onCompleted: " + jsonArray.length())
+            allCircles = jsonArray
+            runOnUiThread(object : Runnable {
+                override fun run() {
+                    circlesView.setTags(jsonArray, textGet)
                 }
-            });
-
-        }
-    };
-
-    @Override
-    public void onTagClick(JSONObject jsonObject) {
-        try {
-            long tagId = jsonObject.getInt("id");
-            Log.d(TAG, "onTagClick: " + tagId);
-            String tagName = jsonObject.getString("name");
-            setTitle(tagName);
-            Intent intent = new Intent();
-            intent.putExtra("resultType", "circles");
-            intent.putExtra("id", tagId);
-            intent.putExtra("name", tagName);
-            setResult(RESULT_OK, intent);
-            finish();
-        } catch (JSONException e) {
-            e.printStackTrace();
-            alertException(e);
+            })
         }
     }
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        setResult(RESULT_CANCELED);
+    override fun onTagClick(jsonObject: JSONObject?) {
+        try {
+            val tagId = jsonObject?.getInt("id")?.toLong()
+            Log.d(TAG, "onTagClick: " + tagId)
+            val tagName = jsonObject?.getString("name")
+            setTitle(tagName)
+            val intent = Intent()
+            intent.putExtra("resultType", "circles")
+            intent.putExtra("id", tagId)
+            intent.putExtra("name", tagName)
+            setResult(RESULT_OK, intent)
+            finish()
+        } catch (e: JSONException) {
+            e.printStackTrace()
+            alertException(e)
+        }
+    }
+
+    companion object {
+        private const val TAG = "CirclesActivity"
     }
 }
