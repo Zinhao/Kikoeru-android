@@ -52,7 +52,7 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
     private lateinit var works: MutableList<JSONObject>
     private lateinit var scrollListener: RecyclerView.OnScrollListener
     private var page = 1
-    private var currentPage = 0
+    private var currentPage = 1
     private var totalCount = 0
 
     private var bottomLayout: View? = null
@@ -179,7 +179,7 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
             }
         }
         onBackPressedDispatcher.addCallback(this, enabled = true) {
-            // 这里就是你以前的 onBackPressed() 里的逻辑
+            Toast.makeText(this@WorksActivity, "再次返回以退出", Toast.LENGTH_SHORT).show()
             try {
                 App.getInstance().setValue(CONFIG_TYPE, type.toLong())
                 App.getInstance().setValue(CONFIG_PAGE, currentPage.toLong())
@@ -215,6 +215,7 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
                 e.printStackTrace()
             }
             isEnabled = false
+            viewBinding.root.postDelayed({isEnabled = true},2000)
             return@addCallback
         }
     }
@@ -611,7 +612,7 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
         if (layoutManager is GridLayoutManager) {
             layoutManager.setSpanSizeLookup(object : SpanSizeLookup() {
                 override fun getSpanSize(position: Int): Int {
-                    if (position == works!!.size) {
+                    if (position == works.size) {
                         return col
                     }
                     return 1

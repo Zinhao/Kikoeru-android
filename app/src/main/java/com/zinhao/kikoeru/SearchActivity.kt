@@ -58,17 +58,20 @@ class SearchActivity : BaseActivity(), TagClickListener<JSONObject?> {
             }
 
             override fun afterTextChanged(s: Editable) {
-                if (workAdapter != null) {
-                    workAdapter!!.notifyItemRangeRemoved(0, works.size)
-                    workAdapter!!.notifyItemRangeChanged(0, works.size)
-                }
-                works.clear()
                 if (s.toString().length >= 6) {
                     viewBinding.swipe.isRefreshing = true
                     doGetWork(s.toString(), 1, searchWorkCallback)
                 }
             }
         })
+        viewBinding.swipe.setOnRefreshListener {
+            viewBinding.editTextNumber.text.toString().trim().let {
+                if(it.isNotBlank()){
+                    doGetWork(it, 1, searchWorkCallback)
+                }
+            }
+        }
+        initLayout(WorkAdapter.LAYOUT_BIG_GRID)
     }
 
     private fun initLayout(layoutType: Int) {
@@ -83,14 +86,12 @@ class SearchActivity : BaseActivity(), TagClickListener<JSONObject?> {
         workAdapter = WorkAdapter(works, layoutType)
         workAdapter!!.setTagClickListener(this)
         workAdapter!!.setVaClickListener(vaClickListener)
-        workAdapter!!.setItemClickListener(object : View.OnClickListener {
-            override fun onClick(v: View) {
-                val item = v.getTag() as JSONObject
-                val intent = Intent(v.getContext(), WorkTreeActivity::class.java)
-                intent.putExtra("work_json_str", item.toString())
-                ActivityCompat.startActivity(this@SearchActivity, intent, null)
-            }
-        })
+        workAdapter!!.setItemClickListener { v ->
+            val item = v.getTag() as JSONObject
+            val intent = Intent(v.getContext(), WorkTreeActivity::class.java)
+            intent.putExtra("work_json_str", item.toString())
+            ActivityCompat.startActivity(this@SearchActivity, intent, null)
+        }
         recyclerView!!.setLayoutManager(layoutManager)
         recyclerView!!.setAdapter(workAdapter)
     }
@@ -138,6 +139,7 @@ class SearchActivity : BaseActivity(), TagClickListener<JSONObject?> {
                 runOnUiThread(object : Runnable {
                     @SuppressLint("DefaultLocale")
                     override fun run() {
+                        works.clear()
                         setTitle(String.format("%s(%d)", getString(R.string.app_name), totalCount))
                         for (i in 0..<jsonArray.length()) {
                             try {
@@ -147,10 +149,8 @@ class SearchActivity : BaseActivity(), TagClickListener<JSONObject?> {
                                 alertException(jsonException)
                             }
                         }
-                        initLayout(
-                            App.getInstance().getValue(App.CONFIG_LAYOUT_TYPE, WorkAdapter.LAYOUT_SMALL_GRID.toLong())
-                                .toInt()
-                        )
+                        workAdapter!!.notifyDataSetChanged()
+
                     }
                 })
             } catch (jsonException: JSONException) {

@@ -151,7 +151,7 @@ class WorkTreeActivity : BaseActivity(), View.OnClickListener, MusicChangeListen
         super.onCreate(savedInstanceState)
         viewBinding = ActivityWorkBinding.inflate(getLayoutInflater())
         setContentView(viewBinding.getRoot())
-        setSafeArea(viewBinding.toolbar, object : InsetReady {
+        setSafeArea(viewBinding.appBarLayout, object : InsetReady {
             override fun onInsetReady(insets: Insets) {
                 viewBinding.bottomLayout.getRoot().setPadding(
                     insets.left, 0, insets.right, insets.bottom

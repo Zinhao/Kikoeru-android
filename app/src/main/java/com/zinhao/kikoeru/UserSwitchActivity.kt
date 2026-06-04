@@ -23,14 +23,15 @@ import org.json.JSONException
 import org.json.JSONObject
 
 class UserSwitchActivity : BaseActivity() {
-    private var binding: ActivityUserSwitchBinding? = null
+    private lateinit var binding: ActivityUserSwitchBinding
     private var users: MutableList<User>? = null
     private var adapter: UserAdapter? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityUserSwitchBinding.inflate(getLayoutInflater())
-        setContentView(binding!!.getRoot())
+        setContentView(binding.root)
+        setSafeArea(binding.root)
         val app = getApplication() as App
         users = app.getAllUsers()
         binding!!.button5.setOnClickListener(object : View.OnClickListener {

@@ -15,6 +15,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -26,7 +27,10 @@ open class BaseActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             enableEdgeToEdge(
-                statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+                statusBarStyle = SystemBarStyle.auto(
+                    ContextCompat.getColor(this,R.color.main_color),
+                    ContextCompat.getColor(this,R.color.white)
+                    ),
             )
         }
     }
