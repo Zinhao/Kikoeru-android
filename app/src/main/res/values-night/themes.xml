@@ -25,4 +25,12 @@
     <style name="Theme.Kikoeru.TextInputStyle">
         <item name="android:textColor">@color/white</item>
     </style>
+
+    <style name="RoundedAlertDialog" parent="Base.RoundedAlertDialog">
+        <!-- 可选：设置标题样式 -->
+        <item name="android:textColorPrimary">@color/white</item>
+    </style>
+    <style name="NegativeButton" parent="Widget.MaterialComponents.Button.TextButton">
+        <item name="android:textColor">@color/white</item>
+    </style>
 </resources>

@@ -34,7 +34,7 @@ public class LicenseActivity extends BaseActivity {
         projectList.add(new OpenSourceProject("SubsamplingScaleImageView", getString(R.string.project_subsampling_scale_image_view_license)));
 
         listView.setAdapter(new ArrayAdapter<>(this, R.layout.item_open_source_project, projectList));
-        alertDialog = new AlertDialog.Builder(this).create();
+        alertDialog = new AlertDialog.Builder(this,R.style.RoundedAlertDialog).create();
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {

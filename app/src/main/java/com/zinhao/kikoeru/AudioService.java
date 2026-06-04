@@ -37,11 +37,9 @@ import androidx.core.app.NotificationCompat;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.MediaItem;
-import com.google.android.exoplayer2.MediaMetadata;
-import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.*;
 import com.google.android.exoplayer2.metadata.Metadata;
+import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
 import com.zinhao.kikoeru.db.AudioLrcBind;
@@ -193,6 +191,27 @@ public class AudioService extends Service {
         mHandler = new Handler(getMainLooper());
         mediaPlayer = new ExoPlayer.Builder(this).build();
         mediaPlayer.addListener(new Player.Listener() {
+            @Override
+            public void onPlayerError(PlaybackException error) {
+                alertException(error);
+                if (error instanceof ExoPlaybackException) {
+                    ExoPlaybackException exoError = (ExoPlaybackException) error;
+
+                    // 检查是否是源码层面的错误（网络/文件读取）
+                    if (exoError.type == ExoPlaybackException.TYPE_SOURCE) {
+                        IOException cause = exoError.getSourceException();
+
+                        if (cause instanceof HttpDataSource.HttpDataSourceException) {
+                            // 提示用户检查网络或稍后重试
+                            Log.d(TAG, "onPlayerError: "+"网络连接异常，请检查网络设置");
+                            // 可以尝试自动重试，或者让用户手动点击刷新
+                            return;
+                        }
+                    }
+                }
+                // 处理其他类型的错误
+            }
+
             @Override
             public void onIsPlayingChanged(boolean isPlaying) {
                 Log.d(TAG, "onIsPlayingChanged: " + isPlaying);

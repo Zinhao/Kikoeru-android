@@ -229,6 +229,11 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
             timeProgressView!!.setProgress(current.toInt(), buffer.toInt())
         }
         updateSeek()
+        if(ctrlBinder?.lrc== Lrc.NONE){
+            runOnUiThread { imageView?.alpha = 1f }
+        }else{
+            runOnUiThread { imageView?.alpha = 0.5f }
+        }
         setupLrc()
     }
 
@@ -257,6 +262,11 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
     }
 
     override fun onLrcChange(lrc: Lrc?) {
+        if(ctrlBinder?.lrc== Lrc.NONE){
+            runOnUiThread { imageView?.alpha = 1f }
+        }else{
+            runOnUiThread { imageView?.alpha = 0.5f }
+        }
         runOnUiThread {
             setupLrc()
         }

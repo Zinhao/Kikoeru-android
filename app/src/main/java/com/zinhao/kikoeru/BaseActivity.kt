@@ -89,7 +89,7 @@ open class BaseActivity : AppCompatActivity() {
     protected fun requestReadWriteExternalPermission(callback: Runnable?): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (!Environment.isExternalStorageManager()) {
-                val builder = AlertDialog.Builder(this)
+                val builder = AlertDialog.Builder(this,R.style.RoundedAlertDialog)
                 builder.setTitle(R.string.tip)
                 builder.setMessage(R.string.external_storage_tip)
                 builder.setNegativeButton("去授予", object : DialogInterface.OnClickListener {
@@ -136,7 +136,7 @@ open class BaseActivity : AppCompatActivity() {
         }
         runOnUiThread(object : Runnable {
             override fun run() {
-                val builder = AlertDialog.Builder(this@BaseActivity)
+                val builder = AlertDialog.Builder(this@BaseActivity,R.style.RoundedAlertDialog)
                 builder.setTitle(e.javaClass.getSimpleName())
                 val stringBuilder = StringBuilder()
                 stringBuilder.append(String.format("%s: %s", e.javaClass.getSimpleName(), e.message)).append('\n')
@@ -159,7 +159,7 @@ open class BaseActivity : AppCompatActivity() {
         }
         runOnUiThread(object : Runnable {
             override fun run() {
-                val builder = AlertDialog.Builder(this@BaseActivity)
+                val builder = AlertDialog.Builder(this@BaseActivity,R.style.RoundedAlertDialog)
                 builder.setTitle(e.getTitle())
                 builder.setMessage(String.format("%s: %s", e.javaClass.getSimpleName(), e.message) + '\n')
                 builder.setPositiveButton(e.getActionName(), object : DialogInterface.OnClickListener {

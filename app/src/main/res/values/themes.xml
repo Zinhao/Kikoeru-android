@@ -46,4 +46,34 @@
     <style name="Theme.Kikoeru.TextInputStyle" parent="Theme.MaterialComponents.Light">
         <item name="android:textColor">@color/black</item>
     </style>
+<!--    Dialog-->
+    <style name="RoundedAlertDialog" parent="Base.RoundedAlertDialog">
+        <!-- 可选：设置标题样式 -->
+        <item name="android:textColorPrimary">@color/black</item>
+    </style>
+
+    <style name="Base.RoundedAlertDialog" parent="MaterialAlertDialog.Material3">
+        <!-- 圆角背景 -->
+        <item name="android:windowBackground">@drawable/card_bg_work</item>
+
+        <!-- 去掉默认背景 -->
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowNoTitle">true</item>
+
+        <!-- 可选：设置动画 -->
+        <item name="android:windowAnimationStyle">@style/Animation.Material3.BottomSheetDialog</item>
+
+        <!-- 可选：设置按钮颜色 -->
+        <item name="buttonBarPositiveButtonStyle">@style/PositiveButton</item>
+        <item name="buttonBarNegativeButtonStyle">@style/NegativeButton</item>
+    </style>
+
+    <!-- 可选：按钮样式 -->
+    <style name="PositiveButton" parent="Widget.MaterialComponents.Button.TextButton">
+        <item name="android:textColor">@color/main_color</item>
+    </style>
+
+    <style name="NegativeButton" parent="Widget.MaterialComponents.Button.TextButton">
+        <item name="android:textColor">@color/gray</item>
+    </style>
 </resources>

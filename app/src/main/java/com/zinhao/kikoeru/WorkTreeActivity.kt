@@ -4,7 +4,6 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.*
 import android.content.pm.PackageManager
-import android.media.session.PlaybackState
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -342,9 +341,9 @@ class WorkTreeActivity : BaseActivity(), View.OnClickListener, MusicChangeListen
             if (asyncHttpResponse.code() == 200) {
                 try {
                     val message = jsonObject.getString("message")
-                    runOnUiThread(Runnable {
+                    runOnUiThread {
                         Toast.makeText(this@WorkTreeActivity, message, Toast.LENGTH_SHORT).show()
-                    })
+                    }
                 } catch (jsonException: JSONException) {
                     jsonException.printStackTrace()
                     alertException(jsonException)
@@ -543,32 +542,30 @@ class WorkTreeActivity : BaseActivity(), View.OnClickListener, MusicChangeListen
 
     override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
         ctrlBinder = service as CtrlBinder
-        if (ctrlBinder!!.getController().playbackState.state == PlaybackStateCompat.STATE_PLAYING) {
-            bottomLayout.setVisibility(View.VISIBLE)
+        if (ctrlBinder!!.controller.playbackState.state == PlaybackStateCompat.STATE_PLAYING) {
+            bottomLayout.visibility = View.VISIBLE
         }
-        ibStatus.setOnClickListener(View.OnClickListener { v: View? ->
-            if (ctrlBinder!!.controller.getPlaybackState() == null) return@OnClickListener
+        ibStatus.setOnClickListener(View.OnClickListener { _: View? ->
+            if (ctrlBinder!!.controller.playbackState == null) return@OnClickListener
             if (ctrlBinder!!.controller.playbackState.state == PlaybackStateCompat.STATE_PLAYING) {
-                ctrlBinder!!.controller.getTransportControls().pause()
+                ctrlBinder!!.controller.transportControls.pause()
             } else {
-                ctrlBinder!!.controller.getTransportControls().play()
+                ctrlBinder!!.controller.transportControls.play()
             }
         })
-        ibFloatLrc.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(v: View?) {
-                if (ctrlBinder!!.isLrcWindowShow()) {
-                    ctrlBinder!!.hideLrcFloatWindow()
-                } else {
-                    ctrlBinder!!.showLrcFloatWindow()
-                }
+        ibFloatLrc.setOnClickListener {
+            if (ctrlBinder!!.isLrcWindowShow) {
+                ctrlBinder!!.hideLrcFloatWindow()
+            } else {
+                ctrlBinder!!.showLrcFloatWindow()
             }
-        })
-        bottomLayout.setOnClickListener(View.OnClickListener { v: View? ->
+        }
+        bottomLayout.setOnClickListener { v: View? ->
             try {
                 if (ctrlBinder!!.getCurrentTitle().endsWith("mp4")) {
                     startActivity(Intent(this@WorkTreeActivity, VideoPlayerActivity::class.java))
                 } else {
-                    val intent = Intent(v!!.getContext(), AudioPlayerActivity::class.java)
+                    val intent = Intent(v!!.context, AudioPlayerActivity::class.java)
                     val view = v.findViewById<View>(R.id.imageView)
                     val options = ActivityOptionsCompat.makeSceneTransitionAnimation(
                         this@WorkTreeActivity, view, "hero_bottom" // 这里的字符串必须匹配 transitionName
@@ -579,60 +576,58 @@ class WorkTreeActivity : BaseActivity(), View.OnClickListener, MusicChangeListen
                 e.printStackTrace()
                 alertException(e)
             }
-        })
+        }
         ctrlBinder!!.addMusicChangeListener(this)
     }
 
     override fun onServiceDisconnected(name: ComponentName?) {}
 
     override fun onLongClick(v: View): Boolean {
-        val item = v.getTag() as JSONObject?
-        if (item == null) return false
-        if (work == null) return false
+        val item = v.tag as? JSONObject? ?: return false
         try {
             val itemType = item.getString("type")
             if (!item.has(JSONConst.WorkTree.MAP_FILE_PATH)) {
                 return false
             }
             val itemFile = File(item.getString(JSONConst.WorkTree.MAP_FILE_PATH))
-            val builder = AlertDialog.Builder(this)
+            val builder = AlertDialog.Builder(this,R.style.RoundedAlertDialog)
             builder.setMessage(itemFile.getAbsolutePath())
             if (itemFile.exists()) {
                 val mapMission = DownloadUtils.mapMission(item)
                 if (mapMission != null) {
                     builder.setTitle(R.string.downloading)
                     builder.setNegativeButton(
-                        R.string.cancel_download,
-                        DialogInterface.OnClickListener { dialog: DialogInterface?, which: Int -> mapMission.stop() })
+                        R.string.cancel_download
+                    ) { _: DialogInterface?, _: Int -> mapMission.stop() }
                     builder.setPositiveButton(
-                        R.string.check_mission,
-                        DialogInterface.OnClickListener { dialogInterface: DialogInterface?, i: Int ->
-                            startActivity(Intent(this@WorkTreeActivity, DownLoadMissionActivity::class.java))
-                            dialogInterface!!.dismiss()
-                        })
+                        R.string.check_mission
+                    ) { dialogInterface: DialogInterface?, _: Int ->
+                        startActivity(Intent(this@WorkTreeActivity, DownLoadMissionActivity::class.java))
+                        dialogInterface!!.dismiss()
+                    }
                 } else {
                     builder.setNegativeButton(
-                        R.string.open,
-                        DialogInterface.OnClickListener { dialog: DialogInterface?, which: Int ->
-                            try {
-                                if (itemType == "audio") {
-                                    openAudioOrVideo(item)
-                                } else if (itemType == "text") {
-                                    openText(item)
-                                } else if (itemType == "image") {
-                                    openImage(item)
-                                }
-                            } catch (e: JSONException) {
-                                e.printStackTrace()
+                        R.string.open
+                    ) { _: DialogInterface?, _: Int ->
+                        try {
+                            if (itemType == "audio") {
+                                openAudioOrVideo(item)
+                            } else if (itemType == "text") {
+                                openText(item)
+                            } else if (itemType == "image") {
+                                openImage(item)
                             }
-                        })
+                        } catch (e: JSONException) {
+                            e.printStackTrace()
+                        }
+                    }
                     builder.setPositiveButton(
                         "open with",
                         DialogInterface.OnClickListener { dialog: DialogInterface?, which: Int ->
                             val intent = Intent(Intent.ACTION_VIEW)
                             val uri = FileProvider.getUriForFile(
                                 this@WorkTreeActivity,
-                                getPackageName() + ".fileProvider",
+                                packageName + ".fileProvider",
                                 itemFile
                             )
                             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -647,7 +642,7 @@ class WorkTreeActivity : BaseActivity(), View.OnClickListener, MusicChangeListen
                 }
             } else {
                 builder.setTitle(getString(R.string.not_download))
-                builder.setMessage(itemFile.getAbsolutePath())
+                builder.setMessage(itemFile.absolutePath)
                 builder.setNegativeButton(
                     R.string.download,
                     DialogInterface.OnClickListener { dialog: DialogInterface?, which: Int ->
@@ -679,7 +674,7 @@ class WorkTreeActivity : BaseActivity(), View.OnClickListener, MusicChangeListen
                                 }
                             })
                         })
-                        if (App.getInstance().isSaveExternal()) {
+                        if (App.getInstance().isSaveExternal) {
                             havePermission = requestReadWriteExternalPermission(Runnable {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                                     if (!Environment.isExternalStorageManager()) {
@@ -699,35 +694,35 @@ class WorkTreeActivity : BaseActivity(), View.OnClickListener, MusicChangeListen
                         if (havePermission) {
                             saveWorkWithTree()
                             downLoadMission.start()
-                            runOnUiThread(Runnable {
+                            runOnUiThread {
                                 workTreeAdapter?.notifyDataSetChanged()
-                            })
+                            }
                         }
                         dialog!!.dismiss()
                     })
                 val itemStreamUrl = item.getString(JSONConst.WorkTree.MEDIA_STREAM_URL)
                 builder.setPositiveButton(
-                    "open in browser",
-                    DialogInterface.OnClickListener { dialog: DialogInterface?, which: Int ->
-                        val intent = Intent(Intent.ACTION_VIEW)
-                        val readableUrl: String?
-                        if (!itemStreamUrl.startsWith("http")) {
-                            readableUrl = String.format(
-                                "%s%s?token=%s",
-                                App.getInstance().currentUser().getHost(),
-                                itemStreamUrl,
-                                Api.token
-                            )
-                        } else {
-                            readableUrl = String.format("%s?token=%s", itemStreamUrl, Api.token)
-                        }
-                        intent.setData(Uri.parse(readableUrl))
-                        try {
-                            startActivity(intent)
-                        } catch (e: ActivityNotFoundException) {
-                            alertException(e)
-                        }
-                    })
+                    "open in browser"
+                ) { _: DialogInterface?, _: Int ->
+                    val intent = Intent(Intent.ACTION_VIEW)
+                    val readableUrl: String?
+                    if (!itemStreamUrl.startsWith("http")) {
+                        readableUrl = String.format(
+                            "%s%s?token=%s",
+                            App.getInstance().currentUser().getHost(),
+                            itemStreamUrl,
+                            Api.token
+                        )
+                    } else {
+                        readableUrl = String.format("%s?token=%s", itemStreamUrl, Api.token)
+                    }
+                    intent.setData(Uri.parse(readableUrl))
+                    try {
+                        startActivity(intent)
+                    } catch (e: ActivityNotFoundException) {
+                        alertException(e)
+                    }
+                }
             }
             builder.create().show()
         } catch (e: JSONException) {

@@ -25,7 +25,7 @@ public class LrcFloatWindow extends BaseActivity implements ServiceConnection{
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (!Settings.canDrawOverlays(this)) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            AlertDialog.Builder builder = new AlertDialog.Builder(this,R.style.RoundedAlertDialog);
             builder.setMessage("还没有显示悬浮窗口的权限！")
                     .setNegativeButton("取消", new DialogInterface.OnClickListener() {
                         @Override

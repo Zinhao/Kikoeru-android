@@ -46,7 +46,7 @@ class UserSwitchActivity : BaseActivity() {
     }
 
     fun switchUser(user: User) {
-        val builder = AlertDialog.Builder(this)
+        val builder = AlertDialog.Builder(this,R.style.RoundedAlertDialog)
         builder.setTitle("确认切换？")
         builder.setPositiveButton(R.string.confirm, object : DialogInterface.OnClickListener {
             override fun onClick(dialog: DialogInterface, which: Int) {

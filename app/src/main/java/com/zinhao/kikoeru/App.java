@@ -174,7 +174,7 @@ public class App extends Application implements Application.ActivityLifecycleCal
     }
 
     public void alertException(Exception e) {
-        if (activities.size() == 0)
+        if (activities.isEmpty())
             return;
         Activity activity = activities.get(activities.size() - 1);
         if (activity == null) {
