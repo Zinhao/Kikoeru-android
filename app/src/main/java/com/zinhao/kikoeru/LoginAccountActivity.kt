@@ -13,7 +13,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.textfield.TextInputLayout
 import com.zinhao.kikoeru.databinding.ActivityLoginAccountBinding
-import com.zinhao.kikoeru.ui.viewmodel.LoginViewModel
+import com.zinhao.kikoeru.viewmodel.LoginViewModel
 
 class LoginAccountActivity : BaseActivity() {
     private var tilUser: TextInputLayout? = null

@@ -1,4 +1,4 @@
-package com.zinhao.kikoeru.ui.viewmodel;
+package com.zinhao.kikoeru.viewmodel;
 
 import android.util.Log;
 
@@ -7,7 +7,6 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 
-import com.zinhao.kikoeru.App;
 import com.zinhao.kikoeru.data.model.LoginResponse;
 import com.zinhao.kikoeru.data.model.Result;
 import com.zinhao.kikoeru.data.repository.UserRepository;

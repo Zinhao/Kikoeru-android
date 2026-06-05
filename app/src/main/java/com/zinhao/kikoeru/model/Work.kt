@@ -21,7 +21,8 @@ data class Work(
     val tags: List<Tag>,
     val title: String,
     val userRating: Any,
-    val vas: List<Va>
+    val vas: List<Va>,
+    var host: String?
 )
 val gson = Gson()
 fun JSONObject.toWork():Work{

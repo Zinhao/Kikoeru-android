@@ -88,6 +88,7 @@
         </activity>
         <activity android:name=".CirclesActivity"/>
         <activity android:name=".LastWatchActivity" android:exported="false"/>
+        <activity android:name="com.zinhao.kikoeru.ui.WorkPageActivity"/>
 
         <service
                 android:name=".AudioService"
