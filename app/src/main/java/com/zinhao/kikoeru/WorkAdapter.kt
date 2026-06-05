@@ -14,6 +14,7 @@ import com.bumptech.glide.Glide
 import com.zinhao.kikoeru.Api.fullCoverImageUrl
 import com.zinhao.kikoeru.TagsView.TagClickListener
 import com.zinhao.kikoeru.TagsView.TextGet
+import com.zinhao.kikoeru.model.toWork
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -22,17 +23,6 @@ class WorkAdapter(
     private val datas: MutableList<JSONObject>,
     private val layoutType: Int = LAYOUT_SMALL_GRID
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-    class DiffCallback : DiffUtil.ItemCallback<JSONObject>() {
-        override fun areItemsTheSame(oldItem: JSONObject, newItem: JSONObject): Boolean {
-            // 用文件路径作为唯一标识
-            return oldItem.toString() == newItem.toString()
-        }
-
-        override fun areContentsTheSame(oldItem: JSONObject, newItem: JSONObject): Boolean {
-            // data class 自动实现 equals，比较所有字段
-            return oldItem == newItem
-        }
-    }
     private val textGet: TextGet<JSONObject?>?
     private var tagClickListener: TagClickListener<*>? = null
     private var vaClickListener: TagClickListener<*>? = null

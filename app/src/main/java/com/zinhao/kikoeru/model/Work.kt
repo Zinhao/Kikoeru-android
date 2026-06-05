@@ -1,5 +1,9 @@
 package com.zinhao.kikoeru.model
 
+import com.google.gson.Gson
+import com.google.gson.JsonObject
+import org.json.JSONObject
+
 data class Work(
     val circle: Circle,
     val circle_id: Int,
@@ -19,3 +23,7 @@ data class Work(
     val userRating: Any,
     val vas: List<Va>
 )
+val gson = Gson()
+fun JSONObject.toWork():Work{
+    return gson.fromJson(this.toString(), Work::class.java)
+}

@@ -831,6 +831,9 @@ public class AudioService extends Service {
         }
 
         public void insertLrcBind(String lrcPath){
+            if(current==null){
+                return;
+            }
             String audioUrl = current.optString(JSONConst.WorkTree.MEDIA_STREAM_URL);
             long riNumber = currentAlbumId;
             AudioLrcBind audioLrcBind = new AudioLrcBind(riNumber,audioUrl,lrcPath);

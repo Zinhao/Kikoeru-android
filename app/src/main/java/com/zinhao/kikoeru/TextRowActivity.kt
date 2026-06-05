@@ -1,131 +1,118 @@
-package com.zinhao.kikoeru;
+package com.zinhao.kikoeru
 
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
-import android.os.Bundle;
-import android.os.IBinder;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.SubMenu;
-import android.view.View;
-import android.widget.Toast;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.widget.Toolbar;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import com.koushikdutta.async.http.AsyncHttpClient;
-import com.koushikdutta.async.http.AsyncHttpResponse;
-import org.json.JSONException;
-import org.json.JSONObject;
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
+import android.os.Bundle
+import android.os.IBinder
+import android.view.Menu
+import android.view.MenuItem
+import android.widget.Toast
+import androidx.appcompat.widget.Toolbar
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.koushikdutta.async.http.AsyncHttpClient
+import com.koushikdutta.async.http.AsyncHttpResponse
+import com.zinhao.kikoeru.Api.doGetMediaString
+import com.zinhao.kikoeru.AudioService.CtrlBinder
+import com.zinhao.kikoeru.databinding.ActivityLrcShowBinding
+import org.json.JSONException
+import org.json.JSONObject
+import java.io.File
 
-import java.io.File;
-
-public class TextRowActivity extends BaseActivity implements ServiceConnection {
-    private static final String TAG = "TextRowActivity";
-    private AudioService.CtrlBinder ctrlBinder;
-    public static void start(Context context, String jsonStr) {
-        Intent starter = new Intent(context, TextRowActivity.class);
-        starter.putExtra("jsonText", jsonStr);
-        context.startActivity(starter);
-    }
-
-    private final AsyncHttpClient.StringCallback textCallback = new AsyncHttpClient.StringCallback() {
-        @Override
-        public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, String s) {
+class TextRowActivity : BaseActivity(), ServiceConnection {
+    private var ctrlBinder: CtrlBinder? = null
+    private val textCallback: AsyncHttpClient.StringCallback = object : AsyncHttpClient.StringCallback() {
+        override fun onCompleted(e: Exception?, asyncHttpResponse: AsyncHttpResponse?, s: String) {
             if (e != null) {
-                alertException(e);
-                return;
+                alertException(e)
+                return
             }
             if (asyncHttpResponse == null || asyncHttpResponse.code() != 200) {
-                runOnUiThread(() -> init(s));
-                return;
+                runOnUiThread { init(s) }
+                return
             }
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    init(s);
-                }
-            });
+            runOnUiThread { init(s) }
         }
-    };
+    }
 
-    private RecyclerView mRecyclerView;
-    private Text mText;
-    private TextAdapter adapter;
+    private var mRecyclerView: RecyclerView? = null
+    private var mText: Text? = null
+    private var adapter: TextAdapter? = null
 
-    private JSONObject textItem;
-
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_lrc_show);
-        View root = findViewById(R.id.root);
-        setSafeArea(root,null);
-        mRecyclerView = findViewById(R.id.recyclerView);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        String text = getIntent().getStringExtra("jsonText");
-        bindService(new Intent(this, AudioService.class), this, BIND_AUTO_CREATE);
+    private lateinit var fileItem: JSONObject
+    private lateinit var viewBinding: ActivityLrcShowBinding
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        viewBinding  = ActivityLrcShowBinding.inflate(layoutInflater)
+        setContentView(viewBinding.root)
+        setSafeArea(viewBinding.appBarLayout, null)
+        mRecyclerView = findViewById<RecyclerView>(R.id.recyclerView)
+        val toolbar = findViewById<Toolbar?>(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        val text = intent.getStringExtra("jsonText")
+        bindService(Intent(this, AudioService::class.java), this, BIND_AUTO_CREATE)
         if (text == null) {
-            finish();
-            return;
+            finish()
+            return
         }
         try {
-            textItem = new JSONObject(text);
-            setTitle(textItem.getString(JSONConst.WorkTree.TITLE));
-            if (textItem.has(JSONConst.WorkTree.EXISTS)) {
-                boolean exists = textItem.getBoolean(JSONConst.WorkTree.EXISTS);
+            fileItem = JSONObject(text)
+            setTitle(fileItem.optString(JSONConst.WorkTree.TITLE))
+            if (fileItem.has(JSONConst.WorkTree.EXISTS)) {
+                val exists = fileItem.getBoolean(JSONConst.WorkTree.EXISTS)
                 if (exists) {
-                    File mapFile = new File(textItem.getString(JSONConst.WorkTree.MAP_FILE_PATH));
-                    LocalFileCache.getInstance().readText(mapFile, textCallback);
+                    val mapFile = File(fileItem.getString(JSONConst.WorkTree.MAP_FILE_PATH))
+                    LocalFileCache.getInstance().readText(mapFile, textCallback)
                 } else {
-                    String hash = textItem.getString(JSONConst.WorkTree.HASH);
-                    Api.doGetMediaString(hash, textCallback);
+                    val hash = fileItem.getString(JSONConst.WorkTree.HASH)
+                    doGetMediaString(hash, textCallback)
                 }
             }
-        } catch (JSONException e) {
-            init(text);
+        } catch (e: JSONException) {
+            init(e.message.toString())
+            alertException(e)
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        SubMenu subMenu = menu.addSubMenu(0, 0, 0, "load as lrc");
-        subMenu.setIcon(R.drawable.ic_baseline_text_fields_24);
-        subMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-        return super.onCreateOptionsMenu(menu);
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        val subMenu = menu.addSubMenu(0, 0, 0, "load as lrc")
+        subMenu.setIcon(R.drawable.ic_baseline_text_fields_24)
+        subMenu.item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        return super.onCreateOptionsMenu(menu)
     }
 
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if(item.getItemId() == 0){
-            if(ctrlBinder!=null && mText != null){
-                ctrlBinder.setLrc(mText.getText());
-                Toast.makeText(this,"load as lrc success",Toast.LENGTH_SHORT).show();
-                ctrlBinder.insertLrcBind(textItem.optString(JSONConst.WorkTree.HASH));
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == 0 && mText != null) {
+            ctrlBinder?.let { ctrlBinder->
+                ctrlBinder.setLrc(mText!!.text)
+                Toast.makeText(this, "load as lrc success", Toast.LENGTH_SHORT).show()
+                ctrlBinder.insertLrcBind(fileItem.optString(JSONConst.WorkTree.HASH))
             }
         }
-        return super.onOptionsItemSelected(item);
+        return super.onOptionsItemSelected(item)
     }
 
-    private void init(String s) {
-        mText = new Text(s);
-        adapter = new TextAdapter(mText);
-        mRecyclerView.setAdapter(adapter);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+    private fun init(s: String) {
+        mText = Text(s)
+        adapter = TextAdapter(mText)
+        mRecyclerView?.setAdapter(adapter)
+        mRecyclerView?.setLayoutManager(LinearLayoutManager(this))
     }
 
-    @Override
-    public void onServiceConnected(ComponentName name, IBinder service) {
-        ctrlBinder = (AudioService.CtrlBinder) service;
+    override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+        ctrlBinder = service as CtrlBinder?
     }
 
-    @Override
-    public void onServiceDisconnected(ComponentName name) {
+    override fun onServiceDisconnected(name: ComponentName?) {}
 
+    companion object {
+        private const val TAG = "TextRowActivity"
+        fun start(context: Context, jsonStr: String?) {
+            val starter = Intent(context, TextRowActivity::class.java)
+            starter.putExtra("jsonText", jsonStr)
+            context.startActivity(starter)
+        }
     }
 }

@@ -41,6 +41,7 @@
 
     <style name="Theme.Kikoeru.Toolbar" parent="Widget.Material3.Toolbar">
         <item name="titleTextColor">@color/white</item>
+        <item name="titleTextAppearance">@style/TextAppearance.Material3.TitleMedium</item>
     </style>
 
     <style name="Theme.Kikoeru.TextInputStyle" parent="Theme.MaterialComponents.Light">
