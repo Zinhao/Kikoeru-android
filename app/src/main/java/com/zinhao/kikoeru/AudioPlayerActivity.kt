@@ -140,7 +140,11 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
         sleepMenu!!.setOnItemClickListener(AdapterView.OnItemClickListener { parent: AdapterView<*>?, view: View?, position: Int, id: Long ->
             sleepMenu!!.dismiss()
             val minutes= 30*(position+1)
-            ctrlBinder?.stopAfterMinutes(minutes)
+            if(BuildConfig.DEBUG){
+                ctrlBinder?.stopAfterMinutes(minutes/30)
+            }else{
+                ctrlBinder?.stopAfterMinutes(minutes)
+            }
             Toast.makeText(this, "will stop after ${minutes} minutes", Toast.LENGTH_LONG).show()
         })
     }

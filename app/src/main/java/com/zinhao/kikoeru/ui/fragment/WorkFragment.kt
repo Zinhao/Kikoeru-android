@@ -35,7 +35,7 @@ open class WorkFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val viewmodel = ViewModelProvider(requireActivity())[WorksViewModel::class.java]
-        val col = max(getResources().getDisplayMetrics().widthPixels / 395, 3)
+        val col = max(resources.displayMetrics.widthPixels / 395, 2)
         val layoutManager = StaggeredGridLayoutManager(col, StaggeredGridLayoutManager.VERTICAL)
         load(viewmodel,layoutManager)
     }

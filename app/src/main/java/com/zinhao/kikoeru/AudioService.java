@@ -16,6 +16,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.Icon;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Binder;
@@ -449,7 +450,7 @@ public class AudioService extends Service {
                 @Override
                 public void onLoadFailed(@Nullable Drawable errorDrawable) {
                     super.onLoadFailed(errorDrawable);
-                    alertException(new Exception("load notification cover failed!"));
+                    alertException(new Exception("load notification cover failed!"+errorDrawable));
                     startForeground(NOTIFICATION_ID, notificationBuilder.build());
                 }
             });
@@ -602,8 +603,14 @@ public class AudioService extends Service {
                     MediaControllerCompat.TransportControls transportControls = controllerCompat.getTransportControls();
                     if (transportControls == null)
                         return;
-                    transportControls.pause();
-                    stopSelf();
+                    if(App.getInstance().noActiveActivity()){
+                        Log.d(TAG, "timer stop: stop service");
+                        transportControls.stop();
+                        stopSelf();
+                    }else{
+                        Log.d(TAG, "timer stop: pause media");
+                        transportControls.pause();
+                    }
                 }
             };
         }

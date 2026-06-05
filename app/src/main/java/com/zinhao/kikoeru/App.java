@@ -128,6 +128,7 @@ public class App extends Application implements Application.ActivityLifecycleCal
     public void onCreate() {
         super.onCreate();
         instance = this;
+        registerActivityLifecycleCallbacks(this);
         AppDatabase appDatabase = Room.databaseBuilder(getApplicationContext(), AppDatabase.class,"app.db")
                 .addMigrations(AppDatabase.MIGRATION_1_2)
                 .addMigrations(AppDatabase.MIGRATION_2_3)
@@ -171,6 +172,10 @@ public class App extends Application implements Application.ActivityLifecycleCal
 
     private static float dp2px(float dp, DisplayMetrics displayMetrics){
         return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,dp,displayMetrics);
+    }
+
+    public boolean noActiveActivity(){
+        return activities.isEmpty();
     }
 
     public void alertException(Exception e) {
@@ -355,8 +360,5 @@ public class App extends Application implements Application.ActivityLifecycleCal
     @Override
     public void onActivityDestroyed(@NonNull Activity activity) {
         activities.remove(activity);
-        if (activities.isEmpty()) {
-//            helper.close();
-        }
     }
 }
