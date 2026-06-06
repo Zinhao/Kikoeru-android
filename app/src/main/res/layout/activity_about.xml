@@ -15,6 +15,26 @@
         android:layout_height="190dp"
         android:src="@mipmap/ic_launcher_foreground"
         />
+    <TextView
+            android:id="@+id/tvName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="?attr/colorOnPrimary"
+            android:layout_marginBottom="4dp"
+            android:textStyle="bold"
+            android:textSize="24sp"
+            android:text="@string/app_name"
+    />
+
+    <TextView
+            android:id="@+id/tvVer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="?attr/colorOnPrimary"
+            android:layout_marginBottom="22dp"
+            android:textStyle="italic"
+            android:text="Build_20260509_090801"
+    />
 
     <TextView
         android:id="@+id/textView4"
