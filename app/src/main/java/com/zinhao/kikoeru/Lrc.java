@@ -144,6 +144,7 @@ public class Lrc {
                     }
                 } catch (Exception e) {
                     Log.e(TAG, "Lrc: err lrc row:" + timeStr);
+                    App.getInstance().alertException(e);
                 }
             }
         }

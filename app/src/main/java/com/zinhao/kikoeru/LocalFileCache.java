@@ -1,6 +1,8 @@
 package com.zinhao.kikoeru;
 
+import android.content.ContentResolver;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
 import com.koushikdutta.async.http.AsyncHttpClient;
@@ -537,5 +539,23 @@ public class LocalFileCache implements Runnable, Closeable {
     @Override
     public void close() throws IOException {
         running = false;
+    }
+
+    public void readTextFromUri(ContentResolver contentResolver, Uri uri,AsyncHttpClient.StringCallback stringCallback){
+        mission.add(()->{
+            try {
+                InputStream is = contentResolver.openInputStream(uri);
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(is));
+
+                StringBuilder stringBuilder = new StringBuilder();
+                String line;
+                while ((line = bufferedReader.readLine())!=null){
+                    stringBuilder.append(line).append('\n');
+                }
+                stringCallback.onCompleted(null,new LocalResponse(200),stringBuilder.toString());
+            } catch (IOException e) {
+                stringCallback.onCompleted(e,new LocalResponse(400),"");
+            }
+        });
     }
 }

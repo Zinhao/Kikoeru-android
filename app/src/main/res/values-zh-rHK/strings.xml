@@ -63,4 +63,6 @@
     <string name="repeat_one">Repeat One</string>
     <string name="circles">Circles</string>
     <string name="lrc_from_local">Lrc from phone</string>
+    <string name="choose_lrc_file">Choose lrc file</string>
+    <string name="select_lrc_or_vtt">Please select lrc or vtt!</string>
 </resources>

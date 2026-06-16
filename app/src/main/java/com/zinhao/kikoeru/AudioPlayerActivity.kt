@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.support.v4.media.session.PlaybackStateCompat
@@ -13,6 +14,7 @@ import android.util.TypedValue
 import android.view.View
 import android.widget.*
 import android.widget.SeekBar.OnSeekBarChangeListener
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.ListPopupWindow
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -25,6 +27,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomViewTarget
 import com.bumptech.glide.request.transition.Transition
 import com.google.android.exoplayer2.Player
+import com.koushikdutta.async.http.AsyncHttpClient
 import com.koushikdutta.async.http.AsyncHttpClient.JSONObjectCallback
 import com.koushikdutta.async.http.AsyncHttpResponse
 import com.zinhao.kikoeru.Api.doGetWork
@@ -60,6 +63,7 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
         setSafeArea(viewBinding.root)
         imageView = viewBinding.ivCover
         imageView!!.setOnClickListener { doGetWork(ctrlBinder!!.currentAlbumId.toString(), 1, searchWorkCallback) }
+        viewBinding.btLoadLrc.setOnClickListener { loadLocalLrc() }
         ibPrevious =viewBinding.ib1
         ibPause = viewBinding.ib2
         ibNext = viewBinding.ib3
@@ -121,7 +125,6 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
             }
         })
         timeProgressView!!.setOnSeekBarChangeListener(this)
-
         bindService(Intent(this, AudioService::class.java), this, BIND_AUTO_CREATE)
     }
 
@@ -152,6 +155,20 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
     }
 
     var lastScrollIDLE = 0L
+
+    private fun updateLrcUi(lrc: Lrc?){
+        if(lrc == Lrc.NONE || lrc == null || lrc.lrcRows.isNullOrEmpty()){
+            runOnUiThread {
+                imageView?.alpha = 1f
+                viewBinding.btLoadLrc.visibility = View.VISIBLE
+            }
+        }else{
+            runOnUiThread {
+                imageView?.alpha = 0.5f
+                viewBinding.btLoadLrc.visibility = View.GONE
+            }
+        }
+    }
 
     private fun setupLrc() {
         recyclerView = viewBinding.mainRecycler
@@ -235,11 +252,7 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
             timeProgressView!!.setProgress(current.toInt(), buffer.toInt())
         }
         updateSeek()
-        if(ctrlBinder?.lrc== Lrc.NONE){
-            runOnUiThread { imageView?.alpha = 1f }
-        }else{
-            runOnUiThread { imageView?.alpha = 0.5f }
-        }
+        updateLrcUi(ctrlBinder?.lrc)
         setupLrc()
     }
 
@@ -268,11 +281,7 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
     }
 
     override fun onLrcChange(lrc: Lrc?) {
-        if(ctrlBinder?.lrc== Lrc.NONE){
-            runOnUiThread { imageView?.alpha = 1f }
-        }else{
-            runOnUiThread { imageView?.alpha = 0.5f }
-        }
+        updateLrcUi(lrc)
         runOnUiThread {
             setupLrc()
         }
@@ -371,5 +380,59 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
     }
 
     override fun onStopTrackingTouch(seekBar: SeekBar?) {
+    }
+
+    private val launcher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val uri = result.data?.data
+            if (uri != null) {
+                // 确实是 LRC 文件，开始读取
+                var wellFile = false
+                if(uri.toString().endsWith(".lrc", ignoreCase = true) || uri.toString().endsWith(".vtt",ignoreCase = true)) {
+                    wellFile = true
+                }
+                if(!wellFile) {
+                    Toast.makeText(this@AudioPlayerActivity, getString(R.string.select_lrc_or_vtt), Toast.LENGTH_SHORT).show()
+                }
+                LocalFileCache.getInstance().readTextFromUri(contentResolver,uri,localLrcCallback)
+            } else {
+                // 提示用户选择了错误类型的文件
+                Toast.makeText(this, "Lrc is null!", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private val localLrcCallback: AsyncHttpClient.StringCallback = object : AsyncHttpClient.StringCallback(){
+        override fun onCompleted(
+            p0: java.lang.Exception?,
+            p1: AsyncHttpResponse?,
+            p2: String?
+        ) {
+            if(p0 !=null){
+                return
+            }
+            p2?.let {
+                ctrlBinder?.setLrc(it)
+            }
+        }
+    }
+
+    private fun loadLocalLrc(){
+        // 创建文件选择 Intent
+        val intent = Intent(Intent.ACTION_GET_CONTENT)
+        // 设置文件类型为 JSON
+        intent.setType("*/*")
+        // 或者允许所有文件类型
+        // intent.setType("*/*");
+        // 添加类别，确保只能选择文件
+        intent.addCategory(Intent.CATEGORY_OPENABLE)
+        // 对于 Android 7.0+，需要使用 FileProvider
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        // 可选：设置标题
+        intent.putExtra(Intent.EXTRA_TITLE, getString(R.string.choose_lrc_file))
+
+        launcher.launch(intent)
     }
 }

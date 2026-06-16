@@ -63,4 +63,6 @@
     <string name="repeat_one">单曲循环</string>
     <string name="circles">社团</string>
     <string name="lrc_from_local">从本地加载</string>
+    <string name="choose_lrc_file">选择剧本</string>
+    <string name="select_lrc_or_vtt">Please select lrc or vtt!</string>
 </resources>

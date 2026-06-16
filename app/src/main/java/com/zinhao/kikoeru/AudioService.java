@@ -643,11 +643,11 @@ public class AudioService extends Service {
             public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject lrcResult) {
                 boolean findLrc = false;
                 if (e != null) {
-                    mLrc = Lrc.NONE;
+                    setLrc(null);
                     alertException(e);
                     Log.i(TAG,"LRC RESULT: ERR");
                 }else if (lrcResult == null) {
-                    mLrc = Lrc.NONE;
+                    setLrc(null);
                     Log.i(TAG,"LRC RESULT: NULL");
                 }else{
                     Log.i(TAG,"LRC RESULT:"+ lrcResult);
@@ -657,12 +657,12 @@ public class AudioService extends Service {
                             findLrc = true;
                             Api.doGetMediaString(lrcResult.getString(JSONConst.WorkTree.HASH), lrcCallBack);
                         } else {
-                            mLrc = Lrc.NONE;
+                            setLrc(null);
                         }
                     } catch (JSONException jsonException) {
                         jsonException.printStackTrace();
                         alertException(jsonException);
-                        mLrc = Lrc.NONE;
+                        setLrc(null);
                     }
                 }
                 if(!findLrc){
@@ -675,16 +675,9 @@ public class AudioService extends Service {
                                 Log.d(TAG, "onCompleted: find bind:"+lrcBind.getAudioPath() +", lrc_hash:"+ lrcBind.getLrcPath());
                                 Api.doGetMediaString(lrcBind.getLrcPath(), lrcCallBack);
                             }
-
                         }
                     });
                 }
-                lrcRowChangeListeners.forEach(new Consumer<LrcRowChangeListener>() {
-                    @Override
-                    public void accept(LrcRowChangeListener listener) {
-                        listener.onLrcChange(mLrc);
-                    }
-                });
             }
         };
 
@@ -692,7 +685,7 @@ public class AudioService extends Service {
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, String s) {
                 if (e != null) {
-                    mLrc = Lrc.NONE;
+                    setLrc(null);
                     alertException(e);
                     return;
                 }
@@ -700,17 +693,11 @@ public class AudioService extends Service {
                     return;
                 }
                 if (asyncHttpResponse.code() == 200) {
-                    mLrc = new Lrc(s);
+                    setLrc(s);
                 } else {
-                    mLrc = Lrc.NONE;
+                    setLrc(null);
                     Log.e(TAG, "onCompleted: " + asyncHttpResponse.code());
                 }
-                lrcRowChangeListeners.forEach(new Consumer<LrcRowChangeListener>() {
-                    @Override
-                    public void accept(LrcRowChangeListener listener) {
-                        listener.onLrcChange(mLrc);
-                    }
-                });
             }
         };
 
@@ -833,7 +820,17 @@ public class AudioService extends Service {
         }
 
         public void setLrc(String lrcText){
-            mLrc = new Lrc(lrcText);
+            if(lrcText == null){
+                mLrc = Lrc.NONE;
+            }else {
+                mLrc = new Lrc(lrcText);
+            }
+            lrcRowChangeListeners.forEach(new Consumer<LrcRowChangeListener>() {
+                @Override
+                public void accept(LrcRowChangeListener listener) {
+                    listener.onLrcChange(mLrc);
+                }
+            });
         }
 
         public void insertLrcBind(String lrcPath){
