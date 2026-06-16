@@ -15,14 +15,13 @@ import androidx.annotation.Nullable;
 import androidx.room.Room;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
-import com.koushikdutta.async.http.AsyncHttpClient;
-import com.koushikdutta.async.http.AsyncHttpResponse;
 import com.zinhao.kikoeru.db.*;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -140,8 +139,6 @@ public class App extends Application implements Application.ActivityLifecycleCal
         currentUserId = getValue(App.CONFIG_USER_DATABASE_ID, -1);
         appDebug = getValue(App.CONFIG_DEBUG, 0) == 1;
         saveExternal = getValue(App.CONFIG_SAVE_EXTERNAL, 0) == 1;
-
-        getAllUsers();
         loadLocalHis();
         User user = App.getInstance().currentUser();
         if (user != null) {
@@ -288,11 +285,16 @@ public class App extends Application implements Application.ActivityLifecycleCal
         });
     }
 
-    public List<User> getAllUsers() {
+    public void getAllUsersAsync(DatabaseResultCallback databaseResultCallback) {
         LocalFileCache.getInstance().doSomething(()->{
+            List<User> result = userDao.getAllUser();
             allUsers.clear();
-            allUsers.addAll(userDao.getAllUser());
+            allUsers.addAll(result);
+            databaseResultCallback.onResult(result);
         });
+    }
+
+    public List<User> getAllUsers(){
         return allUsers;
     }
 

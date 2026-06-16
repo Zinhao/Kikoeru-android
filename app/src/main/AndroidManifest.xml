@@ -79,6 +79,7 @@
         <activity android:name=".VasActivity"/>
         <activity
                 android:name=".LauncherActivity"
+                android:theme="@style/Theme.Kikoeru.Launcher"
                 android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

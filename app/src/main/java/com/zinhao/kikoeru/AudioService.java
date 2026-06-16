@@ -522,7 +522,6 @@ public class AudioService extends Service {
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
                 if (e != null) {
-                    alertException(e);
                     return;
                 }
                 if (asyncHttpResponse.code() == 200) {

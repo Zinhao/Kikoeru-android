@@ -315,9 +315,9 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
                     lastOpenWorksArray: JSONArray?
                 ) {
                     if (e != null) {
-                        e.printStackTrace(System.err)
-                        alertException(e)
-                        loadFromNetWork(type)
+                        runOnUiThread {
+                            loadFromNetWork(type)
+                        }
                         return
                     }
                     if (asyncHttpResponse == null || asyncHttpResponse.code() != 200) {
@@ -788,6 +788,9 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
             if (e != null) {
                 e.printStackTrace(System.err)
                 alertException(e)
+                runOnUiThread {
+                    Toast.makeText(this@WorksActivity,e.message, Toast.LENGTH_SHORT).show()
+                }
                 return
             }
             if (asyncHttpResponse == null || asyncHttpResponse.code() != 200) {

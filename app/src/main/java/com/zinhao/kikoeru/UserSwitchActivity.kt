@@ -43,6 +43,10 @@ class UserSwitchActivity : BaseActivity() {
         adapter = UserAdapter()
         binding!!.recyclerView.setAdapter(adapter)
         binding!!.recyclerView.setLayoutManager(LinearLayoutManager(this@UserSwitchActivity))
+        if(users.isNullOrEmpty()){
+            startActivity(Intent(this@UserSwitchActivity, LoginAccountActivity::class.java))
+            finish()
+        }
     }
 
     fun switchUser(user: User) {

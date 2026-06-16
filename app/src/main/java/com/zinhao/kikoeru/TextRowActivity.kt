@@ -24,16 +24,19 @@ import java.io.File
 class TextRowActivity : BaseActivity(), ServiceConnection {
     private var ctrlBinder: CtrlBinder? = null
     private val textCallback: AsyncHttpClient.StringCallback = object : AsyncHttpClient.StringCallback() {
-        override fun onCompleted(e: Exception?, asyncHttpResponse: AsyncHttpResponse?, s: String) {
+        override fun onCompleted(e: Exception?, asyncHttpResponse: AsyncHttpResponse?, s: String?) {
             if (e != null) {
                 alertException(e)
                 return
             }
-            if (asyncHttpResponse == null || asyncHttpResponse.code() != 200) {
-                runOnUiThread { init(s) }
-                return
+            s?.let {
+                if (asyncHttpResponse == null || asyncHttpResponse.code() != 200) {
+                    runOnUiThread { init(it) }
+                    return
+                }
+                runOnUiThread { init(it) }
             }
-            runOnUiThread { init(s) }
+
         }
     }
 

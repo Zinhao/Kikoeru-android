@@ -23,7 +23,30 @@
 
         <item name="colorSurface">@color/main_color</item>
         <item name="colorOnSurface">@color/white</item>
+    </style>
 
+    <style name="Theme.Kikoeru.Launcher" parent="Theme.SplashScreen">
+        <item name="android:windowBackground">@color/main_color</item>
+        <!-- 使用 windowSplashScreenBackground 以特定的单色填充背景： -->
+        <item name="android:windowSplashScreenBackground">@color/main_color</item>
+        <!-- 使用 windowSplashScreenAnimatedIcon 替换起始窗口中心的图标。
+        对于仅以 Android 12（API 级别 32）为目标平台的应用，请执行以下操作：
+        如果对象可通过 AnimationDrawable 和 AnimatedVectorDrawable 呈现动画效果且可绘制，
+        请设置 windowSplashScreenAnimationDuration 以在显示起始窗口的同时播放动画。
+        Android 13 不需要这样做，因为系统会直接从 AnimatedVectorDrawable 推断时长-->
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <!--使用 windowSplashScreenAnimationDuration 指示启动画面图标动画的时长。设置该时长对显示启动画面的实际时间不会产生任何影响，
+        但您可以在自定义启动画面退出动画时使用 SplashScreenView.getIconAnimationDuration 检索图标动画的时长。
+        如需了解详情，请参阅下文有关让启动画面在屏幕上显示更长时间的部分。-->
+        <item name="android:windowSplashScreenAnimationDuration">1000</item>
+        <!-- 使用 windowSplashScreenIconBackgroundColor 设置启动画面图标后面的背景。当窗口背景与图标之间的对比度不够高时，这很有用。-->
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/main_color</item>
+        <!-- 您可以使用 windowSplashScreenBehavior 指定应用是否始终在 Android 13 及更高版本中的启动画面上显示该图标。
+        默认值为 0，如果启动 activity 将 splashScreenStyle 设置为 SPLASH_SCREEN_STYLE_ICON，则在启动画面上显示图标；
+        如果启动 activity 未指定样式，则遵循系统行为。
+        如果您希望永远不显示空白启动画面，并始终显示动画图标，请将此属性设置为值 icon_preferred。-->
+        <item name="android:windowSplashScreenBehavior">icon_preferred</item>
+        <item name="postSplashScreenTheme">@style/Theme.Kikoeru</item>
     </style>
 
     <style name="Theme.Kikoeru.NoActionBar">

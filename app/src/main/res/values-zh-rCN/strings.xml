@@ -62,4 +62,5 @@
     <string name="repeat_off">关闭循环</string>
     <string name="repeat_one">单曲循环</string>
     <string name="circles">社团</string>
+    <string name="lrc_from_local">从本地加载</string>
 </resources>

@@ -504,7 +504,7 @@ public class LocalFileCache implements Runnable, Closeable {
                     JSONObject jsonObject = new JSONObject(result);
                     callback.onCompleted(null, new LocalResponse(200), jsonObject);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    e.printStackTrace(System.err);
                     callback.onCompleted(e, new LocalResponse(404), null);
                 }
             }

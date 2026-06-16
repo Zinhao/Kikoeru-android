@@ -31,6 +31,7 @@ import com.zinhao.kikoeru.Api.doGetWork
 import com.zinhao.kikoeru.Api.formatGetUrl
 import com.zinhao.kikoeru.AudioService.CtrlBinder
 import com.zinhao.kikoeru.Lrc.LrcRow
+import com.zinhao.kikoeru.databinding.ActivityPlayerBinding
 import org.json.JSONException
 import org.json.JSONObject
 import java.util.*
@@ -50,22 +51,23 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
     private var timeProgressView: TimeProgressView? = null
     private var needShowLrcWhenDestroy = false
     private var lrcAdapter: LrcAdapter? = null
+    private lateinit var viewBinding: ActivityPlayerBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_player)
-        rootView = findViewById(R.id.root)
-        setSafeArea(rootView)
-        imageView = findViewById<ImageView>(R.id.ivCover)
+        viewBinding = ActivityPlayerBinding.inflate(layoutInflater)
+        setContentView(viewBinding.root)
+        setSafeArea(viewBinding.root)
+        imageView = viewBinding.ivCover
         imageView!!.setOnClickListener { doGetWork(ctrlBinder!!.currentAlbumId.toString(), 1, searchWorkCallback) }
-        ibPrevious = findViewById<ImageButton>(R.id.ib1)
-        ibPause = findViewById<ImageButton>(R.id.ib2)
-        ibNext = findViewById<ImageButton>(R.id.ib3)
-        ibSleep = findViewById<ImageButton>(R.id.imageButton2)
-        ibLoop = findViewById<ImageButton>(R.id.ibLoop)
-        tvTitle = findViewById(R.id.textView13)
+        ibPrevious =viewBinding.ib1
+        ibPause = viewBinding.ib2
+        ibNext = viewBinding.ib3
+        ibSleep = viewBinding.imageButton2
+        ibLoop = viewBinding.ibLoop
+        tvTitle = viewBinding.textView13
         setupSleepMenu()
-        timeProgressView = findViewById<TimeProgressView>(R.id.time_view)
+        timeProgressView = viewBinding.timeView
         timeProgressView!!.setColor(ContextCompat.getColor(this, R.color.play_control_icon_color))
         ibPause!!.setOnClickListener(object : View.OnClickListener {
             override fun onClick(v: View?) {
@@ -152,7 +154,7 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
     var lastScrollIDLE = 0L
 
     private fun setupLrc() {
-        recyclerView = findViewById(R.id.mainRecycler)
+        recyclerView = viewBinding.mainRecycler
         ctrlBinder?.lrc?.let {
             lrcAdapter = LrcAdapter(it)
             lrcAdapter?.setOnToHereClickListener { v->
@@ -252,7 +254,7 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
     }
 
     private fun scrollToLrcPosition(){
-        if(System.currentTimeMillis() - lastScrollIDLE > 5000) {
+        if(System.currentTimeMillis() - lastScrollIDLE > 3000) {
             val manger = recyclerView?.layoutManager
             if(manger is LinearLayoutManager) {
                 val index = manger.findLastCompletelyVisibleItemPosition()

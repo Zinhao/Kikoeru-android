@@ -77,4 +77,5 @@
     <string name="repeat_off">Repeat Off</string>
     <string name="repeat_one">Repeat One</string>
     <string name="circles">Circles</string>
+    <string name="lrc_from_local">Lrc from phone</string>
 </resources>
