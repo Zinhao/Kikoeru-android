@@ -45,9 +45,17 @@
                     android:text="@string/listened"/>
         </com.google.android.material.tabs.TabLayout>
     </com.google.android.material.appbar.AppBarLayout>
-    <androidx.viewpager2.widget.ViewPager2
-            android:id="@+id/vp"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+
+    <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent">
+        <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/vp"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                />
+        <include layout="@layout/layout_current_play"
+                 android:id="@+id/bottomLayout"/>
+    </FrameLayout>
+
+
 
 </LinearLayout>

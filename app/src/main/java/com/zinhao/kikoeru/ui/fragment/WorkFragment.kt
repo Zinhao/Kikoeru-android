@@ -1,49 +1,69 @@
 package com.zinhao.kikoeru.ui.fragment
 
-import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
+import com.zinhao.kikoeru.WorksActivity.Companion.TAG
 import com.zinhao.kikoeru.databinding.LayoutWorkFragmentBinding
-import com.zinhao.kikoeru.model.Work
 import com.zinhao.kikoeru.ui.adapter.WorksAdapter
 import com.zinhao.kikoeru.viewmodel.WorksViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlin.collections.count
 import kotlin.math.max
 
-open class WorkFragment : Fragment() {
+open class WorkFragment : Fragment(){
     lateinit var binding: LayoutWorkFragmentBinding
 //    var oldDataList = ArrayList<Work>()
     var worksAdapter: WorksAdapter? = null
+    val viewModel : WorksViewModel by lazy {
+        ViewModelProvider(requireActivity())[WorksViewModel::class.java]
+    }
 //    val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         binding = LayoutWorkFragmentBinding.inflate(inflater, container, false)
         return binding.root
     }
 
+    var scrollListener: RecyclerView.OnScrollListener = object : RecyclerView.OnScrollListener() {
+        override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+            super.onScrollStateChanged(recyclerView, newState)
+            onScrollBottom(newState)
+        }
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val viewmodel = ViewModelProvider(requireActivity())[WorksViewModel::class.java]
         val col = max(resources.displayMetrics.widthPixels / 395, 2)
         val layoutManager = StaggeredGridLayoutManager(col, StaggeredGridLayoutManager.VERTICAL)
-        load(viewmodel,layoutManager)
+        load(viewModel,layoutManager)
+        binding.recyclerView.addOnScrollListener(scrollListener)
+    }
+
+    open fun onScrollBottom(newState: Int) {
+        viewModel.allWorksList.value?.size?.let {
+            if (it >= viewModel.allTotalCount.value!!) {
+                return
+            }
+            if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                worksAdapter?.let {
+                    if(!it.isLoading()){
+                        if (!binding.recyclerView.canScrollVertically(1)) {
+//                            loadFromNetWork(type)
+                        }
+                    }
+                }
+            }
+        }
+
     }
 
     open fun load(viewmodel: WorksViewModel, layoutManager: RecyclerView.LayoutManager){
-        viewmodel.worksList.observe(viewLifecycleOwner, { works ->
+        viewmodel.allWorksList.observe(viewLifecycleOwner, { works ->
             works?.let {
-                binding.text.setText(works.count().toString())
                 if(worksAdapter == null){
                     worksAdapter = WorksAdapter()
                     worksAdapter?.submitList(works)
@@ -54,7 +74,7 @@ open class WorkFragment : Fragment() {
                 }
             }
         })
-        if(viewmodel.worksList.value.isNullOrEmpty()){
+        if(viewmodel.allWorksList.value.isNullOrEmpty()){
             viewmodel.loadAllWorks()
         }
     }
@@ -64,7 +84,6 @@ class ListeningFragment : WorkFragment() {
     override fun load(viewmodel: WorksViewModel, layoutManager: RecyclerView.LayoutManager) {
         viewmodel.listeningWorksList.observe(viewLifecycleOwner, { works ->
             works?.let {
-                binding.text.setText(works.count().toString())
                 if(worksAdapter == null){
                     worksAdapter = WorksAdapter()
                     worksAdapter?.submitList(works)
@@ -85,7 +104,6 @@ class ListenedFragment : WorkFragment() {
     override fun load(viewmodel: WorksViewModel, layoutManager: RecyclerView.LayoutManager) {
         viewmodel.listenedWorksList.observe(viewLifecycleOwner, { works ->
             works?.let {
-                binding.text.setText(works.count().toString())
                 if(worksAdapter == null){
                     worksAdapter = WorksAdapter()
                     binding.recyclerView.adapter = worksAdapter
@@ -105,7 +123,6 @@ class MarkedFragment : WorkFragment() {
     override fun load(viewmodel: WorksViewModel, layoutManager: RecyclerView.LayoutManager) {
         viewmodel.markedWorksList.observe(viewLifecycleOwner, { works ->
             works?.let {
-                binding.text.setText(works.count().toString())
                 if(worksAdapter == null){
                     worksAdapter = WorksAdapter()
                     binding.recyclerView.adapter = worksAdapter
@@ -125,7 +142,6 @@ class ReplayFragment : WorkFragment() {
     override fun load(viewmodel: WorksViewModel, layoutManager: RecyclerView.LayoutManager) {
         viewmodel.replayWorksList.observe(viewLifecycleOwner, { works ->
             works?.let {
-                binding.text.setText(works.count().toString())
                 if(worksAdapter == null){
                     worksAdapter = WorksAdapter()
                     worksAdapter?.submitList(works)
@@ -148,7 +164,6 @@ class PostponedFragment : WorkFragment() {
     override fun load(viewmodel: WorksViewModel, layoutManager: RecyclerView.LayoutManager) {
         viewmodel.postponedWorksList.observe(viewLifecycleOwner, { works ->
             works?.let {
-                binding.text.setText(works.count().toString())
                 if(worksAdapter == null){
                     worksAdapter = WorksAdapter()
                     worksAdapter?.submitList(works)

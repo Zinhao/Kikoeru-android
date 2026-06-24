@@ -79,7 +79,7 @@ public class MoreActivity extends BaseActivity implements CompoundButton.OnCheck
             }
         });
 
-        itemDebug = findViewById(R.id.debug);
+        itemDebug = viewBinding.debug;
         itemDebug.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -90,6 +90,15 @@ public class MoreActivity extends BaseActivity implements CompoundButton.OnCheck
         cbDebug.setChecked(App.getInstance().isAppDebug());
         cbDebug.setOnCheckedChangeListener(this);
 
+
+        viewBinding.rlHomeTab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                viewBinding.cbHomeTab.toggle();
+            }
+        });
+        viewBinding.cbHomeTab.setChecked(App.getInstance().isUseNewLayout());
+        viewBinding.cbHomeTab.setOnCheckedChangeListener(this);
     }
 
     @Override
@@ -102,6 +111,13 @@ public class MoreActivity extends BaseActivity implements CompoundButton.OnCheck
 
         if (compoundButton == cbDebug) {
             App.getInstance().setAppDebug(b);
+        }
+
+        if( compoundButton == viewBinding.cbHomeTab ){
+            App.getInstance().setUseNewLayout(b);
+            startActivity(new Intent(this, LauncherActivity.class));
+            finish();
+            return;
         }
 
         if (cbSaveExternal == compoundButton) {

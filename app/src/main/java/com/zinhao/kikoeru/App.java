@@ -21,7 +21,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -36,6 +35,7 @@ public class App extends Application implements Application.ActivityLifecycleCal
     public static final String CONFIG_SORT = "sort";
     public static final String CONFIG_ORDER = "order";
     public static final String CONFIG_DEBUG = "debug";
+    public static final String CONFIG_NEW_LAYOUT = "new_layout";
     public static final String CONFIG_SAVE_EXTERNAL = "save_at_external_dir";
 
 
@@ -45,6 +45,7 @@ public class App extends Application implements Application.ActivityLifecycleCal
 
     private boolean saveExternal = false;
     private boolean appDebug = false;
+    private boolean useNewLayout = false;
 
 
     private final List<User> allUsers = new ArrayList<>();
@@ -63,6 +64,15 @@ public class App extends Application implements Application.ActivityLifecycleCal
     public void setAppDebug(boolean appDebug) {
         this.appDebug = appDebug;
         setValue(CONFIG_DEBUG, appDebug ? 1 : 0);
+    }
+
+    public boolean isUseNewLayout() {
+        return useNewLayout;
+    }
+
+    public void setUseNewLayout(boolean useNewLayout) {
+        this.useNewLayout = useNewLayout;
+        setValue(CONFIG_NEW_LAYOUT,useNewLayout ? 1:0);
     }
 
     public boolean isAppDebug() {
@@ -138,6 +148,7 @@ public class App extends Application implements Application.ActivityLifecycleCal
 
         currentUserId = getValue(App.CONFIG_USER_DATABASE_ID, -1);
         appDebug = getValue(App.CONFIG_DEBUG, 0) == 1;
+        useNewLayout = getValue(App.CONFIG_NEW_LAYOUT,0) == 1;
         saveExternal = getValue(App.CONFIG_SAVE_EXTERNAL, 0) == 1;
         loadLocalHis();
         User user = App.getInstance().currentUser();

@@ -5,6 +5,7 @@ import android.os.Build;
 import android.os.Bundle;
 import androidx.core.splashscreen.SplashScreen;
 import com.zinhao.kikoeru.db.User;
+import com.zinhao.kikoeru.ui.WorkPageActivity;
 
 import java.util.List;
 
@@ -35,7 +36,12 @@ public class LauncherActivity extends BaseActivity {
                 startActivity(new Intent(LauncherActivity.this, UserSwitchActivity.class));
             } else {
                 Api.init(user.getToken(), user.getHost());
-                startActivity(new Intent(LauncherActivity.this, WorksActivity.class));
+                if(App.getInstance().isUseNewLayout()){
+                    startActivity(new Intent(LauncherActivity.this, WorkPageActivity.class));
+                }else{
+                    startActivity(new Intent(LauncherActivity.this, WorksActivity.class));
+                }
+
             }
             finish();
         });

@@ -5,6 +5,7 @@
                                                    android:background="@drawable/card_bg_current_play"
                                                    android:paddingRight="15dp"
                                                    android:paddingLeft="15dp"
+                                                   android:layout_gravity="bottom"
                                                    android:layout_height="wrap_content">
 
     <ImageView

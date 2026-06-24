@@ -38,6 +38,7 @@ import com.zinhao.kikoeru.Api.setOrder
 import com.zinhao.kikoeru.AudioService.CtrlBinder
 import com.zinhao.kikoeru.TagsView.TagClickListener
 import com.zinhao.kikoeru.databinding.ActivityMainBinding
+import com.zinhao.kikoeru.ui.WorkPageActivity
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -81,6 +82,11 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
     private lateinit var viewBinding: ActivityMainBinding
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if(App.getInstance().isUseNewLayout){
+            startActivity(Intent(this@WorksActivity, WorkPageActivity::class.java))
+            finish()
+            return
+        }
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setSupportActionBar(viewBinding.toolbar)
         setContentView(viewBinding.root)

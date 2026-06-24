@@ -12,6 +12,4 @@
             android:fadeScrollbars="true"
             android:scrollbarSize="6dp"
             />
-    <TextView android:id="@+id/text" android:layout_width="match_parent" android:layout_height="match_parent" android:textSize="26sp"
-              android:text="content" android:gravity="center"/>
 </FrameLayout>
