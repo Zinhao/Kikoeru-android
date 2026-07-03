@@ -38,13 +38,13 @@ import com.zinhao.kikoeru.Lrc.LrcRow
 import com.zinhao.kikoeru.databinding.ActivityPlayerBinding
 import org.json.JSONException
 import org.json.JSONObject
+import java.io.File
 import java.util.*
 
 class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListener, LrcRowChangeListener,
     OnSeekBarChangeListener {
     private var ctrlBinder: CtrlBinder? = null
     private var imageView: ImageView? = null
-    private lateinit var rootView: View
     private lateinit var tvTitle: TextView
     private var ibPrevious: ImageButton? = null
     private var ibPause: ImageButton? = null
@@ -305,7 +305,7 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
                                         R.color.main_color
                                     )
                                 )
-                                rootView.setBackgroundColor(mainColor)
+                                viewBinding.root.setBackgroundColor(mainColor)
                                 window.setNavigationBarColor(mainColor)
                                 window.setStatusBarColor(mainColor)
                                 val actionBar = getSupportActionBar()
@@ -416,6 +416,9 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
             }
             p2?.let {
                 ctrlBinder?.setLrc(it)
+                val saveLrcFile = File(filesDir,System.currentTimeMillis().toString() + ".lrc")
+                LocalFileCache.getInstance().writeTextSync(saveLrcFile,it)
+                ctrlBinder?.insertLrcBind(saveLrcFile.path,true)
             }
         }
     }

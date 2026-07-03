@@ -11,12 +11,15 @@ public class AudioLrcBind {
     private Long id;
     private long rjNumber;
     private String audioPath;
+    //新增
+    private final boolean isLocalFile;
     private String lrcPath;
 
-    public AudioLrcBind(long rjNumber, String audioPath, String lrcPath) {
+    public AudioLrcBind(long rjNumber, String audioPath, String lrcPath, boolean isLocalFile) {
         this.rjNumber = rjNumber;
         this.audioPath = audioPath;
         this.lrcPath = lrcPath;
+        this.isLocalFile = isLocalFile;
     }
 
     public Long getId() {
@@ -50,4 +53,6 @@ public class AudioLrcBind {
     public void setLrcPath(String lrcPath) {
         this.lrcPath = lrcPath;
     }
+
+    public boolean isLocalFile() {  return isLocalFile;  }
 }

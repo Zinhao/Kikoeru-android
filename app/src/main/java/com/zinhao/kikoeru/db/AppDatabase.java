@@ -6,7 +6,7 @@ import androidx.room.RoomDatabase;
 import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
-@Database(entities = {User.class,LocalWorkHistory.class,AudioLrcBind.class}, version = 3)
+@Database(entities = {User.class,LocalWorkHistory.class,AudioLrcBind.class}, version = 4)
 public abstract class AppDatabase extends RoomDatabase{
     public abstract UserDao userDao();
     public abstract LocalWorkHistoryDao historyDao();
@@ -42,6 +42,16 @@ public abstract class AppDatabase extends RoomDatabase{
             database.execSQL(
                     "CREATE UNIQUE INDEX IF NOT EXISTS `index_audio_lrc_bind_audioPath` " +
                             "ON `audio_lrc_bind` (`audioPath`)"
+            );
+        }
+    };
+
+    public static final Migration MIGRATION_3_4 = new Migration(3, 4) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL(
+                    "ALTER TABLE `audio_lrc_bind` " +
+                            "ADD COLUMN `isLocalFile` INTEGER NOT NULL DEFAULT 0"
             );
         }
     };

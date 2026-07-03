@@ -672,8 +672,14 @@ public class AudioService extends Service {
                         public void onResult(Object result) {
                             if(result instanceof AudioLrcBind){
                                 AudioLrcBind lrcBind = (AudioLrcBind) result;
-                                Log.d(TAG, "onCompleted: find bind:"+lrcBind.getAudioPath() +", lrc_hash:"+ lrcBind.getLrcPath());
-                                Api.doGetMediaString(lrcBind.getLrcPath(), lrcCallBack);
+                                if(lrcBind.isLocalFile()){
+                                    Log.d(TAG, "onCompleted: find bind:"+lrcBind.getAudioPath() +", file:"+ lrcBind.getLrcPath());
+                                    LocalFileCache.getInstance().readText(new File(lrcBind.getLrcPath()),lrcCallBack);
+                                }else{
+                                    Log.d(TAG, "onCompleted: find bind:"+lrcBind.getAudioPath() +", lrc_hash:"+ lrcBind.getLrcPath());
+                                    Api.doGetMediaString(lrcBind.getLrcPath(), lrcCallBack);
+                                }
+
                             }
                         }
                     });
@@ -833,13 +839,13 @@ public class AudioService extends Service {
             });
         }
 
-        public void insertLrcBind(String lrcPath){
+        public void insertLrcBind(String lrcPath,boolean isLocalFile){
             if(current==null){
                 return;
             }
             String audioUrl = current.optString(JSONConst.WorkTree.MEDIA_STREAM_URL);
             long riNumber = currentAlbumId;
-            AudioLrcBind audioLrcBind = new AudioLrcBind(riNumber,audioUrl,lrcPath);
+            AudioLrcBind audioLrcBind = new AudioLrcBind(riNumber,audioUrl,lrcPath, isLocalFile);
             App.getInstance().insertLrcBind(audioLrcBind);
         }
 

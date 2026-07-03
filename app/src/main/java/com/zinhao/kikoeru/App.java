@@ -141,6 +141,7 @@ public class App extends Application implements Application.ActivityLifecycleCal
         AppDatabase appDatabase = Room.databaseBuilder(getApplicationContext(), AppDatabase.class,"app.db")
                 .addMigrations(AppDatabase.MIGRATION_1_2)
                 .addMigrations(AppDatabase.MIGRATION_2_3)
+                .addMigrations(AppDatabase.MIGRATION_3_4)
                 .build();
         userDao = appDatabase.userDao();
         historyDao = appDatabase.historyDao();

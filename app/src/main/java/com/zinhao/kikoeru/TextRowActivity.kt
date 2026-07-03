@@ -91,7 +91,7 @@ class TextRowActivity : BaseActivity(), ServiceConnection {
             ctrlBinder?.let { ctrlBinder->
                 ctrlBinder.setLrc(mText!!.text)
                 Toast.makeText(this, "load as lrc success", Toast.LENGTH_SHORT).show()
-                ctrlBinder.insertLrcBind(fileItem.optString(JSONConst.WorkTree.HASH))
+                ctrlBinder.insertLrcBind(fileItem.optString(JSONConst.WorkTree.HASH),false)
             }
         }
         return super.onOptionsItemSelected(item)
