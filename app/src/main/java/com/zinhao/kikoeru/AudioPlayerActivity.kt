@@ -1,5 +1,6 @@
 package com.zinhao.kikoeru
 
+import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
@@ -432,7 +433,8 @@ class AudioPlayerActivity : BaseActivity(), ServiceConnection, MusicChangeListen
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         // 可选：设置标题
         intent.putExtra(Intent.EXTRA_TITLE, getString(R.string.choose_lrc_file))
-
-        launcher.launch(intent)
+        try {
+            launcher.launch(intent)
+        }catch (e: ActivityNotFoundException){}
     }
 }

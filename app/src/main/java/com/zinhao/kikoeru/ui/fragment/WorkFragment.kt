@@ -1,7 +1,6 @@
 package com.zinhao.kikoeru.ui.fragment
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,7 +8,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
-import com.zinhao.kikoeru.WorksActivity.Companion.TAG
 import com.zinhao.kikoeru.databinding.LayoutWorkFragmentBinding
 import com.zinhao.kikoeru.ui.adapter.WorksAdapter
 import com.zinhao.kikoeru.viewmodel.WorksViewModel
@@ -17,14 +15,14 @@ import kotlin.math.max
 
 open class WorkFragment : Fragment(){
     lateinit var binding: LayoutWorkFragmentBinding
-//    var oldDataList = ArrayList<Work>()
     var worksAdapter: WorksAdapter? = null
+    lateinit var layoutManager: RecyclerView.LayoutManager
     val viewModel : WorksViewModel by lazy {
         ViewModelProvider(requireActivity())[WorksViewModel::class.java]
     }
-//    val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         binding = LayoutWorkFragmentBinding.inflate(inflater, container, false)
+        binding.swipe.isRefreshing = false
         return binding.root
     }
 
@@ -38,31 +36,23 @@ open class WorkFragment : Fragment(){
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val col = max(resources.displayMetrics.widthPixels / 395, 2)
-        val layoutManager = StaggeredGridLayoutManager(col, StaggeredGridLayoutManager.VERTICAL)
-        load(viewModel,layoutManager)
+        layoutManager = StaggeredGridLayoutManager(col, StaggeredGridLayoutManager.VERTICAL)
+        setupObserve()
         binding.recyclerView.addOnScrollListener(scrollListener)
     }
 
     open fun onScrollBottom(newState: Int) {
-        viewModel.allWorksList.value?.size?.let {
-            if (it >= viewModel.allTotalCount.value!!) {
-                return
-            }
-            if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                worksAdapter?.let {
-                    if(!it.isLoading()){
-                        if (!binding.recyclerView.canScrollVertically(1)) {
-//                            loadFromNetWork(type)
-                        }
-                    }
+        if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+            if (!binding.recyclerView.canScrollVertically(1)) {
+                if(!binding.swipe.isRefreshing){
+                    loadMore()
                 }
             }
         }
-
     }
 
-    open fun load(viewmodel: WorksViewModel, layoutManager: RecyclerView.LayoutManager){
-        viewmodel.allWorksList.observe(viewLifecycleOwner, { works ->
+    open fun setupObserve(){
+        viewModel.allWorksList.observe(viewLifecycleOwner, { works ->
             works?.let {
                 if(worksAdapter == null){
                     worksAdapter = WorksAdapter()
@@ -73,16 +63,23 @@ open class WorkFragment : Fragment(){
                     worksAdapter?.submitList(works)
                 }
             }
+            binding.swipe.isRefreshing = false
         })
-        if(viewmodel.allWorksList.value.isNullOrEmpty()){
-            viewmodel.loadAllWorks()
+        if(viewModel.allWorksList.value.isNullOrEmpty()){
+            loadMore()
         }
     }
+
+    open fun loadMore(){
+        val loading = viewModel.loadAllWorks()
+        binding.swipe.isRefreshing = loading
+    }
+
 }
 
 class ListeningFragment : WorkFragment() {
-    override fun load(viewmodel: WorksViewModel, layoutManager: RecyclerView.LayoutManager) {
-        viewmodel.listeningWorksList.observe(viewLifecycleOwner, { works ->
+    override fun setupObserve() {
+        viewModel.listeningWorksList.observe(viewLifecycleOwner, { works ->
             works?.let {
                 if(worksAdapter == null){
                     worksAdapter = WorksAdapter()
@@ -93,16 +90,22 @@ class ListeningFragment : WorkFragment() {
                     worksAdapter?.submitList(works)
                 }
             }
+            binding.swipe.isRefreshing = false
         })
-        if(viewmodel.listeningWorksList.value.isNullOrEmpty()){
-            viewmodel.loadListeningWorks()
+        if(viewModel.listeningWorksList.value.isNullOrEmpty()){
+            loadMore()
         }
+    }
+
+    override fun loadMore() {
+        val loading = viewModel.loadListeningWorks()
+        binding.swipe.isRefreshing = loading
     }
 }
 
 class ListenedFragment : WorkFragment() {
-    override fun load(viewmodel: WorksViewModel, layoutManager: RecyclerView.LayoutManager) {
-        viewmodel.listenedWorksList.observe(viewLifecycleOwner, { works ->
+    override fun setupObserve() {
+        viewModel.listenedWorksList.observe(viewLifecycleOwner, { works ->
             works?.let {
                 if(worksAdapter == null){
                     worksAdapter = WorksAdapter()
@@ -113,15 +116,20 @@ class ListenedFragment : WorkFragment() {
                 }
             }
         })
-        if(viewmodel.listenedWorksList.value.isNullOrEmpty()){
-            viewmodel.loadListenedWorks()
+        if(viewModel.listenedWorksList.value.isNullOrEmpty()){
+            loadMore()
         }
+    }
+
+    override fun loadMore() {
+        val loading = viewModel.loadListenedWorks()
+        binding.swipe.isRefreshing = loading
     }
 }
 
 class MarkedFragment : WorkFragment() {
-    override fun load(viewmodel: WorksViewModel, layoutManager: RecyclerView.LayoutManager) {
-        viewmodel.markedWorksList.observe(viewLifecycleOwner, { works ->
+    override fun setupObserve() {
+        viewModel.markedWorksList.observe(viewLifecycleOwner, { works ->
             works?.let {
                 if(worksAdapter == null){
                     worksAdapter = WorksAdapter()
@@ -132,15 +140,20 @@ class MarkedFragment : WorkFragment() {
                 }
             }
         })
-        if(viewmodel.markedWorksList.value.isNullOrEmpty()){
-            viewmodel.loadMarkedWorks()
+        if(viewModel.markedWorksList.value.isNullOrEmpty()){
+            loadMore()
         }
+    }
+
+    override fun loadMore() {
+        val loading = viewModel.loadMarkedWorks()
+        binding.swipe.isRefreshing = loading
     }
 }
 
 class ReplayFragment : WorkFragment() {
-    override fun load(viewmodel: WorksViewModel, layoutManager: RecyclerView.LayoutManager) {
-        viewmodel.replayWorksList.observe(viewLifecycleOwner, { works ->
+    override fun setupObserve() {
+        viewModel.replayWorksList.observe(viewLifecycleOwner, { works ->
             works?.let {
                 if(worksAdapter == null){
                     worksAdapter = WorksAdapter()
@@ -152,17 +165,22 @@ class ReplayFragment : WorkFragment() {
                 }
             }
         })
-        if(viewmodel.replayWorksList.value.isNullOrEmpty()){
-            viewmodel.loadReplayWorks()
+        if(viewModel.replayWorksList.value.isNullOrEmpty()){
+            loadMore()
         }
 
+    }
+
+    override fun loadMore() {
+        val loading = viewModel.loadReplayWorks()
+        binding.swipe.isRefreshing = loading
     }
 }
 
 class PostponedFragment : WorkFragment() {
 
-    override fun load(viewmodel: WorksViewModel, layoutManager: RecyclerView.LayoutManager) {
-        viewmodel.postponedWorksList.observe(viewLifecycleOwner, { works ->
+    override fun setupObserve() {
+        viewModel.postponedWorksList.observe(viewLifecycleOwner, { works ->
             works?.let {
                 if(worksAdapter == null){
                     worksAdapter = WorksAdapter()
@@ -174,10 +192,15 @@ class PostponedFragment : WorkFragment() {
                 }
             }
         })
-        if(viewmodel.postponedWorksList.value.isNullOrEmpty()){
-            viewmodel.loadPostponedWorks()
+        if(viewModel.postponedWorksList.value.isNullOrEmpty()){
+            loadMore()
         }
 
+    }
+
+    override fun loadMore() {
+        val loading = viewModel.loadPostponedWorks()
+        binding.swipe.isRefreshing = loading
     }
 }
 

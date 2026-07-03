@@ -9,6 +9,7 @@ import com.koushikdutta.async.http.AsyncHttpClient
 import com.koushikdutta.async.http.AsyncHttpResponse
 import com.zinhao.kikoeru.Api
 import com.zinhao.kikoeru.Api.doGetReview
+import com.zinhao.kikoeru.model.Pagination
 import com.zinhao.kikoeru.model.Work
 import com.zinhao.kikoeru.model.WorksGetPage
 import org.json.JSONException
@@ -16,41 +17,44 @@ import org.json.JSONObject
 
 class WorksViewModel: ViewModel() {
     private val TAG = "WorksViewModel"
-    private val _allWorksList = MutableLiveData<List<Work>>(arrayListOf())
-    val allWorksList = _allWorksList
-    private val _allTotalCount = MutableLiveData<Int>(0)
-    val allTotalCount: LiveData<Int> = _allTotalCount
+
+    private val _allWorksList = MutableLiveData<List<Work>>()
+    val allWorksList: LiveData<List<Work>> = _allWorksList
+    private var _allPagination: Pagination? = null
 
     private val _listeningWorksList = MutableLiveData<List<Work>>(arrayListOf())
     val listeningWorksList: LiveData<List<Work>> = _listeningWorksList
-    private val _listeningTotalCount = MutableLiveData<Int>(0)
-    val listeningTotalCount: LiveData<Int> = _listeningTotalCount
+    private var _listeningPagination: Pagination? = null
 
     private val _listenedWorksList = MutableLiveData<List<Work>>(arrayListOf())
     val listenedWorksList: LiveData<List<Work>> = _listenedWorksList
-    private val _listenedTotalCount = MutableLiveData<Int>(0)
-    val listenedTotalCount: LiveData<Int> = _listenedTotalCount
+    private var _listenedPagination: Pagination? = null
 
 
     private val _markedWorksList = MutableLiveData<List<Work>>(arrayListOf())
     val markedWorksList: LiveData<List<Work>> = _markedWorksList
-    private val _markedTotalCount = MutableLiveData<Int>(0)
-    val markedTotalCount: LiveData<Int> = _markedTotalCount
+    private var _markedPagination: Pagination? = null
 
     private val _replayWorksList = MutableLiveData<List<Work>>(arrayListOf())
     val replayWorksList: LiveData<List<Work>> = _replayWorksList
-    private val _replayTotalCount = MutableLiveData<Int>(0)
-    val replayTotalCount: LiveData<Int> = _replayTotalCount
+    private var _replayPagination: Pagination? = null
 
     private val _postponedWorksList = MutableLiveData<List<Work>>(arrayListOf())
     val postponedWorksList: LiveData<List<Work>> = _postponedWorksList
-    private val _postponedTotalCount = MutableLiveData<Int>(0)
-    val postponedTotalCount: LiveData<Int> = _postponedTotalCount
+    private var _postponedPagination: Pagination? = null
 
     private val gson = Gson()
 
-    fun loadAllWorks() {
-        Api.doGetWorks(1,object : AsyncHttpClient.JSONObjectCallback(){
+    fun loadAllWorks(): Boolean {
+        var page = 1
+        _allPagination?.let {
+            if(it.currentPage >= it.pageSize){
+                return false
+            }else{
+                page = it.currentPage+1
+            }
+        }
+        Api.doGetWorks(page,object : AsyncHttpClient.JSONObjectCallback(){
             override fun onCompleted(
                 e: Exception?,
                 asyncHttpResponse: AsyncHttpResponse?,
@@ -69,20 +73,31 @@ class WorksViewModel: ViewModel() {
                 }
                 try {
                     val worksGetPage: WorksGetPage = gson.fromJson(jsonObject.toString(), WorksGetPage::class.java)
-                    val mutableListOfWorks = _allWorksList.value?.toMutableList()
-                    mutableListOfWorks?.addAll(worksGetPage.works)
-                    _allTotalCount.value = worksGetPage.pagination.totalCount
-                    _allWorksList.postValue(mutableListOfWorks)
+                    val mutableListOfWorks = _allWorksList.value?.toMutableList()?: arrayListOf()
+                    mutableListOfWorks.addAll(worksGetPage.works)
+                    mutableListOfWorks.let {
+                        _allWorksList.postValue(it)
+                    }
+                    _allPagination = worksGetPage.pagination
                 } catch (jsonException: JSONException) {
                     jsonException.printStackTrace(System.err)
                 }
             }
 
         })
+        return true
     }
 
-    fun loadListeningWorks() {
-        doGetReview(Api.FILTER_LISTENING,1,object : AsyncHttpClient.JSONObjectCallback(){
+    fun loadListeningWorks() : Boolean{
+        var page = 1
+        _listeningPagination?.let {
+            if(it.currentPage >= it.pageSize){
+                return false
+            }else{
+                page = it.currentPage+1
+            }
+        }
+        doGetReview(Api.FILTER_LISTENING,page,object : AsyncHttpClient.JSONObjectCallback(){
             override fun onCompleted(
                 e: Exception?,
                 asyncHttpResponse: AsyncHttpResponse?,
@@ -101,20 +116,31 @@ class WorksViewModel: ViewModel() {
                 }
                 try {
                     val worksGetPage: WorksGetPage = gson.fromJson(jsonObject.toString(), WorksGetPage::class.java)
-                    val mutableListOfWorks = _allWorksList.value?.toMutableList()
-                    mutableListOfWorks?.addAll(worksGetPage.works)
-                    _listeningTotalCount.value = worksGetPage.pagination.totalCount
-                    _listeningWorksList.postValue(mutableListOfWorks)
+                    val mutableListOfWorks = _allWorksList.value?.toMutableList()?: arrayListOf()
+                    mutableListOfWorks.addAll(worksGetPage.works)
+                   _listeningPagination = worksGetPage.pagination
+                    mutableListOfWorks.let {
+                        _listeningWorksList.postValue(it)
+                    }
                 } catch (jsonException: JSONException) {
                     jsonException.printStackTrace(System.err)
                 }
             }
 
         })
+        return true
     }
 
-    fun loadListenedWorks() {
-        doGetReview(Api.FILTER_LISTENED,1,object : AsyncHttpClient.JSONObjectCallback(){
+    fun loadListenedWorks(): Boolean {
+        var page = 1
+        _listenedPagination?.let {
+            if(it.currentPage >= it.pageSize){
+                return false
+            }else{
+                page = it.currentPage+1
+            }
+        }
+        doGetReview(Api.FILTER_LISTENED,page,object : AsyncHttpClient.JSONObjectCallback(){
             override fun onCompleted(
                 e: Exception?,
                 asyncHttpResponse: AsyncHttpResponse?,
@@ -133,20 +159,31 @@ class WorksViewModel: ViewModel() {
                 }
                 try {
                     val worksGetPage: WorksGetPage = gson.fromJson(jsonObject.toString(), WorksGetPage::class.java)
-                    val mutableListOfWorks = _allWorksList.value?.toMutableList()
+                    val mutableListOfWorks = _allWorksList.value?.toMutableList()?: arrayListOf()
                     mutableListOfWorks?.addAll(worksGetPage.works)
-                    _listenedTotalCount.value = worksGetPage.pagination.totalCount
-                    _listenedWorksList.postValue(mutableListOfWorks)
+                    _listenedPagination = worksGetPage.pagination
+                    mutableListOfWorks?.let {
+                        _listenedWorksList.postValue(it)
+                    }
                 } catch (jsonException: JSONException) {
                     jsonException.printStackTrace(System.err)
                 }
             }
 
         })
+        return true
     }
 
-    fun loadMarkedWorks() {
-        doGetReview(Api.FILTER_MARKED,1,object : AsyncHttpClient.JSONObjectCallback(){
+    fun loadMarkedWorks(): Boolean {
+        var page = 1
+        _markedPagination?.let {
+            if(it.currentPage >= it.pageSize){
+                return false
+            }else{
+                page = it.currentPage+1
+            }
+        }
+        doGetReview(Api.FILTER_MARKED,page,object : AsyncHttpClient.JSONObjectCallback(){
             override fun onCompleted(
                 e: Exception?,
                 asyncHttpResponse: AsyncHttpResponse?,
@@ -165,20 +202,31 @@ class WorksViewModel: ViewModel() {
                 }
                 try {
                     val worksGetPage: WorksGetPage = gson.fromJson(jsonObject.toString(), WorksGetPage::class.java)
-                    val mutableListOfWorks = _allWorksList.value?.toMutableList()
+                    val mutableListOfWorks = _allWorksList.value?.toMutableList()?: arrayListOf()
                     mutableListOfWorks?.addAll(worksGetPage.works)
-                    _markedTotalCount.value = worksGetPage.pagination.totalCount
-                    _markedWorksList.postValue(mutableListOfWorks)
+                    _markedPagination = worksGetPage.pagination
+                    mutableListOfWorks?.let {
+                        _markedWorksList.postValue(it)
+                    }
                 } catch (jsonException: JSONException) {
                     jsonException.printStackTrace(System.err)
                 }
             }
 
         })
+        return true
     }
 
-    fun loadReplayWorks() {
-        doGetReview(Api.FILTER_REPLAY,1,object : AsyncHttpClient.JSONObjectCallback(){
+    fun loadReplayWorks() : Boolean{
+        var page = 1
+        _replayPagination?.let {
+            if(it.currentPage >= it.pageSize){
+                return false
+            }else{
+                page = it.currentPage+1
+            }
+        }
+        doGetReview(Api.FILTER_REPLAY,page,object : AsyncHttpClient.JSONObjectCallback(){
             override fun onCompleted(
                 e: Exception?,
                 asyncHttpResponse: AsyncHttpResponse?,
@@ -197,20 +245,30 @@ class WorksViewModel: ViewModel() {
                 }
                 try {
                     val worksGetPage: WorksGetPage = gson.fromJson(jsonObject.toString(), WorksGetPage::class.java)
-                    val mutableListOfWorks = _allWorksList.value?.toMutableList()
+                    val mutableListOfWorks = _allWorksList.value?.toMutableList()?: arrayListOf()
                     mutableListOfWorks?.addAll(worksGetPage.works)
-                    _replayWorksList.postValue(mutableListOfWorks)
-                    _replayTotalCount.value = worksGetPage.pagination.totalCount
+                    mutableListOfWorks?.let {
+                        _replayWorksList.postValue(it)
+                    }
+                    _replayPagination = worksGetPage.pagination
                 } catch (jsonException: JSONException) {
                     jsonException.printStackTrace(System.err)
                 }
             }
-
         })
+        return true
     }
 
-    fun loadPostponedWorks() {
-        doGetReview(Api.FILTER_POSTPONED,1,object : AsyncHttpClient.JSONObjectCallback(){
+    fun loadPostponedWorks(): Boolean {
+        var page = 1
+        _postponedPagination?.let {
+            if(it.currentPage >= it.pageSize){
+                return false
+            }else{
+                page = it.currentPage+1
+            }
+        }
+        doGetReview(Api.FILTER_POSTPONED,page,object : AsyncHttpClient.JSONObjectCallback(){
             override fun onCompleted(
                 e: Exception?,
                 asyncHttpResponse: AsyncHttpResponse?,
@@ -229,13 +287,17 @@ class WorksViewModel: ViewModel() {
                 }
                 try {
                     val worksGetPage: WorksGetPage = gson.fromJson(jsonObject.toString(), WorksGetPage::class.java)
-                    _postponedWorksList.postValue(worksGetPage.works)
-                    _postponedTotalCount.value = worksGetPage.pagination.totalCount
+                    val mutableListOfWorks = _postponedWorksList.value?.toMutableList()?: arrayListOf()
+                    mutableListOfWorks?.addAll(worksGetPage.works)
+                    mutableListOfWorks?.let {
+                        _postponedWorksList.postValue(it)
+                    }
+                    _postponedPagination = worksGetPage.pagination
                 } catch (jsonException: JSONException) {
                     jsonException.printStackTrace(System.err)
                 }
             }
         })
-
+        return true
     }
 }
