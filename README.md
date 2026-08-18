@@ -17,7 +17,7 @@ Kikoeru-android 根据 Kikoeru-project V0.6.2 的Api进行适配开发，建议�
 - [x] 本地历史记录
 - [ ] 自定义播放列表
 ## 常见问题以及交流反馈
-- Q群: 705475321
+- 请直接在 Github 提 Issues
 
 
 
