@@ -1,6 +1,8 @@
 package com.zinhao.kikoeru;
 
+import android.content.ContentResolver;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
 import com.koushikdutta.async.http.AsyncHttpClient;
@@ -19,6 +21,9 @@ public class LocalFileCache implements Runnable, Closeable {
     private static final String TAG = "LocalFileCache";
     private static final String CONFIG_PLAY_LIST = "playList.json";
     private static final String CONFIG_USERS = "users.json";
+    private static final String SAVE_WORKS_INFO_DIR = "json_work";
+    private static final String SAVE_WORKS_TREE_DIR = "json_work_tree";
+    private static final String LAST_OPEN_WORKS_FILE = "last_open_works.json";
     private static LocalFileCache instance;
     private Thread workThread;
     private final List<Runnable> mission;
@@ -95,25 +100,34 @@ public class LocalFileCache implements Runnable, Closeable {
     public boolean getLrcText(File audioFile, AsyncHttpClient.StringCallback callback) {
         File dir = audioFile.getParentFile();
         String name = audioFile.getName();
-        String beforeName = name.substring(0, name.lastIndexOf("."));
-        File lrcFile = new File(dir, beforeName + ".lrc");
-        if (lrcFile.exists()) {
-            mission.add(new Runnable() {
-                @Override
-                public void run() {
-                    String lrcText = null;
-                    try {
-                        lrcText = readTextSync(lrcFile);
-                        callback.onCompleted(null, new LocalResponse(200), lrcText);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        callback.onCompleted(e, new LocalResponse(404), null);
-                    }
-                }
-            });
-            return true;
+        String audioContentName = name.substring(0, name.lastIndexOf("."));
+
+        File lrcFile = new File(dir, audioContentName + ".lrc");
+
+        if(!lrcFile.exists()){
+            lrcFile = new File(dir,audioContentName + ".vtt");
+            if(!lrcFile.exists()){
+                lrcFile = new File(dir,name + ".vtt");
+            }
         }
-        return false;
+        if(!lrcFile.exists()){
+            return false;
+        }
+        File finalLrcFile = lrcFile;
+        mission.add(new Runnable() {
+            @Override
+            public void run() {
+                String lrcText = null;
+                try {
+                    lrcText = readTextSync(finalLrcFile);
+                    callback.onCompleted(null, new LocalResponse(200), lrcText);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    callback.onCompleted(e, new LocalResponse(404), null);
+                }
+            }
+        });
+        return true;
     }
 
     public void removeWork(int id) {
@@ -125,8 +139,8 @@ public class LocalFileCache implements Runnable, Closeable {
             App.getInstance().alertException(e);
             return;
         }
-        final File workJsonDir = new File(cacheDir, "json_work");
-        final File workTreeDir = new File(cacheDir, "json_work_tree");
+        final File workJsonDir = new File(cacheDir, SAVE_WORKS_INFO_DIR);
+        final File workTreeDir = new File(cacheDir, SAVE_WORKS_TREE_DIR);
 
         File workJsonFile = new File(workJsonDir, String.format(Locale.US, "%d.json", id));
         File workJsonTreeFile = new File(workTreeDir, String.format(Locale.US, "%d.json", id));
@@ -188,8 +202,8 @@ public class LocalFileCache implements Runnable, Closeable {
             return;
         }
         int id = work.getInt("id");
-        File workJsonDir = new File(cacheDir, "json_work");
-        File workTreeDir = new File(cacheDir, "json_work_tree");
+        File workJsonDir = new File(cacheDir, SAVE_WORKS_INFO_DIR);
+        File workTreeDir = new File(cacheDir, SAVE_WORKS_TREE_DIR);
         if (!workJsonDir.exists()) {
             if (!workJsonDir.mkdirs()) {
                 Log.e(TAG, "getCacheDir: mkdir failed！");
@@ -213,7 +227,7 @@ public class LocalFileCache implements Runnable, Closeable {
         }
     }
 
-    public void readLocalWorks(Context context, AsyncHttpClient.JSONObjectCallback callback) throws JSONException {
+    public void readLocalDownloadWorks(AsyncHttpClient.JSONObjectCallback callback) {
         mission.add(new Runnable() {
             @Override
             public void run() {
@@ -221,11 +235,11 @@ public class LocalFileCache implements Runnable, Closeable {
                 try {
                     cacheDir = getExternalAppRootDir();
                 } catch (FileNotFoundException e) {
-                    e.printStackTrace();
+                    callback.onCompleted(e,null,null);
                     App.getInstance().alertException(e);
                     return;
                 }
-                File workJsonDir = new File(cacheDir, "json_work");
+                File workJsonDir = new File(cacheDir, SAVE_WORKS_INFO_DIR);
                 if (workJsonDir.exists()) {
                     File[] workFiles = workJsonDir.listFiles(new FileFilter() {
                         @Override
@@ -274,6 +288,45 @@ public class LocalFileCache implements Runnable, Closeable {
         });
     }
 
+    public void readLastOpenWorks(AsyncHttpClient.JSONArrayCallback callback){
+        mission.add(() -> {
+            File cacheDir = null;
+            try {
+                cacheDir = getExternalAppRootDir();
+            } catch (FileNotFoundException e) {
+                callback.onCompleted(e,null,null);
+                App.getInstance().alertException(e);
+                return;
+            }
+            File lastOpenWorks = new File(cacheDir, LAST_OPEN_WORKS_FILE);
+            try {
+                String text = readTextSync(lastOpenWorks);
+                JSONArray jsonArray = new JSONArray(text);
+                callback.onCompleted(null,new LocalResponse(200),jsonArray);
+            } catch (IOException | JSONException e) {
+                callback.onCompleted(e,null,null);
+            }
+        });
+    }
+
+    public void saveLastOpenWorks(JSONArray jsonArray){
+        mission.add(()->{
+            File cacheDir = null;
+            try {
+                cacheDir = getExternalAppRootDir();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace(System.err);
+                return;
+            }
+            File lastOpenWorks = new File(cacheDir, LAST_OPEN_WORKS_FILE);
+            try {
+                writeTextSync(lastOpenWorks,jsonArray.toString());
+            } catch (IOException e) {
+                e.printStackTrace(System.err);
+            }
+        });
+    }
+
     public void readLocalWorkById(int id, AsyncHttpClient.JSONObjectCallback callback) {
         mission.add(new Runnable() {
             @Override
@@ -286,7 +339,7 @@ public class LocalFileCache implements Runnable, Closeable {
                     App.getInstance().alertException(e);
                     return;
                 }
-                File workJsonDir = new File(cacheDir, "json_work");
+                File workJsonDir = new File(cacheDir, SAVE_WORKS_INFO_DIR);
                 File workJsonFile = new File(workJsonDir, String.format("%d.json", id));
                 if (workJsonFile.exists()) {
                     String workStr = null;
@@ -319,7 +372,7 @@ public class LocalFileCache implements Runnable, Closeable {
                     App.getInstance().alertException(e);
                     return;
                 }
-                File workJsonDir = new File(cacheDir, "json_work_tree");
+                File workJsonDir = new File(cacheDir, SAVE_WORKS_TREE_DIR);
                 File workTreeFile = new File(workJsonDir, String.format(Locale.US, "%d.json", id));
                 if (workTreeFile.exists()) {
                     try {
@@ -403,28 +456,28 @@ public class LocalFileCache implements Runnable, Closeable {
             jsonObject.put(JSONConst.LastPlayList.LIST_AUDIO, jsonArray);
             jsonObject.put(JSONConst.LastPlayList.INDEX, index);
             jsonObject.put(JSONConst.LastPlayList.SEEK, seek);
-            saveJSONObject(context, jsonObject, CONFIG_PLAY_LIST);
+            savePrivateJSONObject(context, jsonObject, CONFIG_PLAY_LIST);
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
     public void readLastPlayList(Context context, AsyncHttpClient.JSONObjectCallback callback) {
-        readJSONObject(context, CONFIG_PLAY_LIST, callback);
+        readPrivateJSONObject(context, CONFIG_PLAY_LIST, callback);
     }
 
     public void saveUsers(Context context, JSONObject users) {
-        saveJSONObject(context, users, CONFIG_USERS);
+        savePrivateJSONObject(context, users, CONFIG_USERS);
     }
 
     public void readUsers(Context context, AsyncHttpClient.JSONObjectCallback callback) {
-        readJSONObject(context, CONFIG_USERS, callback);
+        readPrivateJSONObject(context, CONFIG_USERS, callback);
     }
 
     /**
      * 保存JSONObject到内部私有目录
      */
-    private void saveJSONObject(Context context, JSONObject jsonObject, String name) {
+    private void savePrivateJSONObject(Context context, JSONObject jsonObject, String name) {
         if (jsonObject == null)
             return;
         mission.add(new Runnable() {
@@ -443,7 +496,7 @@ public class LocalFileCache implements Runnable, Closeable {
     /**
      * 从内部私有目录读取JSONObject
      */
-    private void readJSONObject(Context context, String name, AsyncHttpClient.JSONObjectCallback callback) {
+    private void readPrivateJSONObject(Context context, String name, AsyncHttpClient.JSONObjectCallback callback) {
         File file = new File(context.getCacheDir(), name);
         mission.add(new Runnable() {
             @Override
@@ -453,12 +506,16 @@ public class LocalFileCache implements Runnable, Closeable {
                     JSONObject jsonObject = new JSONObject(result);
                     callback.onCompleted(null, new LocalResponse(200), jsonObject);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    e.printStackTrace(System.err);
                     callback.onCompleted(e, new LocalResponse(404), null);
                 }
             }
         });
     }
+    public void doSomething(Runnable runnable){
+        mission.add(runnable);
+    }
+
 
     @Override
     public void run() {
@@ -482,5 +539,23 @@ public class LocalFileCache implements Runnable, Closeable {
     @Override
     public void close() throws IOException {
         running = false;
+    }
+
+    public void readTextFromUri(ContentResolver contentResolver, Uri uri,AsyncHttpClient.StringCallback stringCallback){
+        mission.add(()->{
+            try {
+                InputStream is = contentResolver.openInputStream(uri);
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(is));
+
+                StringBuilder stringBuilder = new StringBuilder();
+                String line;
+                while ((line = bufferedReader.readLine())!=null){
+                    stringBuilder.append(line).append('\n');
+                }
+                stringCallback.onCompleted(null,new LocalResponse(200),stringBuilder.toString());
+            } catch (IOException e) {
+                stringCallback.onCompleted(e,new LocalResponse(400),"");
+            }
+        });
     }
 }

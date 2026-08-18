@@ -2,10 +2,7 @@ package com.zinhao.kikoeru;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.RectF;
+import android.graphics.*;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -104,10 +101,11 @@ public class TagsView<T> extends View {
 
     public TagsView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        MIN_WIDTH = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 300, context.getResources().getDisplayMetrics());
-        MIN_HEIGHT = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 300, context.getResources().getDisplayMetrics());
+        MIN_WIDTH = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, context.getResources().getDisplayMetrics());
+        MIN_HEIGHT = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, context.getResources().getDisplayMetrics());
         textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         textPaint.setTextAlign(Paint.Align.CENTER);
+        textPaint.setTypeface(Typeface.MONOSPACE);
         setTextSize(12);
         textPaint.setColor(Color.WHITE);
         Paint.FontMetrics fontMetrics = textPaint.getFontMetrics();
@@ -158,13 +156,10 @@ public class TagsView<T> extends View {
             }
 
             @Override
-            public void onLongPress(MotionEvent e) {
-                Log.d(TAG, "onLongPress: ");
-            }
+            public void onLongPress(MotionEvent e) {}
 
             @Override
             public boolean onDown(MotionEvent e) {
-                Log.d(TAG, "onDown: ");
                 if (tagClickListener == null)
                     return false;
                 for (int i = 0; i < tagsRectFs.size(); i++) {
@@ -308,7 +303,7 @@ public class TagsView<T> extends View {
             float rectH = rectFH + textPadding;
 
             if (x + rectW > w) {
-                y += rectH + getPaddingTop() + getPaddingBottom();
+                y += rectH+getPaddingBottom();
                 x = 0;
             }
             tagsRectFs.get(i).set(x, y, x + rectW, y + rectH);

@@ -1,72 +1,86 @@
 package com.zinhao.kikoeru;
 
-import android.content.Context;
-import android.content.res.TypedArray;
-import android.graphics.Color;
-import android.util.TypedValue;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class LrcAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    private Lrc lrc;
-    private View.OnClickListener onClickListener;
-    private int unCacheItemBackgroundColor = -1;
-    private int cachedItemBackgroundColor = -1;
+    private static final String TAG = "LrcAdapter";
+    private Lrc mLrc;
+    private int oldIndex = -1;
 
-    public void setOnClickListener(View.OnClickListener onClickListener) {
-        this.onClickListener = onClickListener;
-    }
+    private View.OnClickListener onToHereClickListener;
 
-    public LrcAdapter(Lrc lrc) {
-        this.lrc = lrc;
+    public LrcAdapter(Lrc mText) {
+        this.mLrc = mText;
     }
 
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        if (unCacheItemBackgroundColor == -1 || cachedItemBackgroundColor == -1) {
-            Context context = parent.getContext();
-            TypedValue typedValue = new TypedValue();
-            context.getTheme().resolveAttribute(android.R.attr.textAppearanceLarge, typedValue, true);
-            int[] attribute = new int[]{R.attr.colorOnPrimary, R.attr.colorOnSecondary};
-            TypedArray array = context.obtainStyledAttributes(typedValue.resourceId, attribute);
-            unCacheItemBackgroundColor = array.getColor(0, Color.WHITE);
-            cachedItemBackgroundColor = array.getColor(1, Color.WHITE);
-            array.recycle();
+        return new TextRowHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_lrc_row, parent, false));
+    }
+
+    private static final int ALPHA_COUNT = 3;
+
+    public void update(){
+        int index = mLrc.getCurrentIndex();
+        if(Math.abs(index - oldIndex) > ALPHA_COUNT){
+            notifyRange(oldIndex);
         }
-        return new LrcRowHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_lrc_row, parent, false));
+        notifyRange(index);
+        oldIndex = index;
+    }
+
+    private void notifyRange(int index){
+        int startIndex = Math.max(0,index - ALPHA_COUNT);
+        int minCount = getItemCount() - startIndex;
+        int updateCount = Math.min(minCount,ALPHA_COUNT*2-1);
+        notifyItemRangeChanged(startIndex, updateCount);
     }
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        Lrc.LrcRow lrcRow = lrc.getLrcRows().get(position);
-        if (holder instanceof LrcRowHolder) {
-            ((LrcRowHolder) holder).textView.setText(String.format("[%s] %s", lrcRow.strTime, lrcRow.content));
-            holder.itemView.setTag(lrcRow);
-            holder.itemView.setOnClickListener(onClickListener);
-            if (lrc.getCurrentIndex() == position) {
-                holder.itemView.setBackgroundColor(cachedItemBackgroundColor);
-            } else {
-                holder.itemView.setBackgroundColor(unCacheItemBackgroundColor);
+        Lrc.LrcRow lrcRow = mLrc.getLrcRows().get(position);
+        if (holder instanceof TextRowHolder) {
+            ((TextRowHolder) holder).textView.setText(lrcRow.content);
+            if(oldIndex == position){
+                ((TextRowHolder) holder).textView.setAlpha(1.0f);
+                ((TextRowHolder) holder).textView.setTextSize(36);
+                ((TextRowHolder) holder).ivToHere.setVisibility(View.GONE);
+            }else{
+                ((TextRowHolder) holder).textView.setAlpha(0.3f);
+                ((TextRowHolder) holder).textView.setTextSize(15);
+                ((TextRowHolder) holder).ivToHere.setVisibility(View.VISIBLE);
+                ((TextRowHolder) holder).ivToHere.setTag(lrcRow);
+                ((TextRowHolder) holder).ivToHere.setAlpha(0.3f);
+                ((TextRowHolder) holder).ivToHere.setOnClickListener(onToHereClickListener);
             }
         }
     }
 
     @Override
     public int getItemCount() {
-        return lrc.getLrcRows().size();
+        return mLrc.getLrcRows().size();
     }
 
-    static class LrcRowHolder extends RecyclerView.ViewHolder {
-        private TextView textView;
+    public void setOnToHereClickListener(View.OnClickListener onToHereClickListener) {
+        this.onToHereClickListener = onToHereClickListener;
+    }
 
-        public LrcRowHolder(@NonNull View itemView) {
+    static class TextRowHolder extends RecyclerView.ViewHolder {
+        private TextView textView;
+        private ImageView ivToHere;
+
+        public TextRowHolder(@NonNull View itemView) {
             super(itemView);
             textView = itemView.findViewById(R.id.textView3);
+            ivToHere = itemView.findViewById(R.id.toHere);
         }
     }
 }

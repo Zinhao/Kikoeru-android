@@ -6,20 +6,22 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.util.TypedValue;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.room.Room;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
-import com.zinhao.kikoeru.db.DaoMaster;
-import com.zinhao.kikoeru.db.DaoSession;
-import com.zinhao.kikoeru.db.UserDao;
+import com.zinhao.kikoeru.db.*;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class App extends Application implements Application.ActivityLifecycleCallbacks {
@@ -33,6 +35,7 @@ public class App extends Application implements Application.ActivityLifecycleCal
     public static final String CONFIG_SORT = "sort";
     public static final String CONFIG_ORDER = "order";
     public static final String CONFIG_DEBUG = "debug";
+    public static final String CONFIG_NEW_LAYOUT = "new_layout";
     public static final String CONFIG_SAVE_EXTERNAL = "save_at_external_dir";
 
 
@@ -42,20 +45,34 @@ public class App extends Application implements Application.ActivityLifecycleCal
 
     private boolean saveExternal = false;
     private boolean appDebug = false;
+    private boolean useNewLayout = false;
 
 
-    private List<User> allUsers;
+    private final List<User> allUsers = new ArrayList<>();
+    private final List<LocalWorkHistory> localWorkHistoryList = new ArrayList<>();
     private long currentUserId;
 
-    private RequestOptions defaultPic;
+    private RequestOptions radius15Pic;
+    private RequestOptions radius5Pic;
     private UserDao userDao;
-    private DaoMaster.OpenHelper helper;
+    private LocalWorkHistoryDao historyDao;
+    private AudioLrcBindDao  audioLrcBindDao ;
 
     private final List<Activity> activities = new ArrayList<>();
+    private final HashMap<String,Long> circlesIdMap = new HashMap<>();
 
     public void setAppDebug(boolean appDebug) {
         this.appDebug = appDebug;
         setValue(CONFIG_DEBUG, appDebug ? 1 : 0);
+    }
+
+    public boolean isUseNewLayout() {
+        return useNewLayout;
+    }
+
+    public void setUseNewLayout(boolean useNewLayout) {
+        this.useNewLayout = useNewLayout;
+        setValue(CONFIG_NEW_LAYOUT,useNewLayout ? 1:0);
     }
 
     public boolean isAppDebug() {
@@ -79,32 +96,75 @@ public class App extends Application implements Application.ActivityLifecycleCal
         this.currentUserId = currentUserId;
     }
 
-    public RequestOptions getDefaultPic() {
-        return defaultPic;
+    public long mapCirclesId(String circlesName){
+        if(circlesIdMap.containsKey(circlesName)){
+            final Long id = circlesIdMap.get(circlesName);
+            if(id == null){
+                return -1;
+            }
+            return id;
+        }
+        return -1;
+    }
+
+    public void initCirclesIdMap(JSONArray circlesList) throws JSONException {
+        /***
+         *  {
+         *         "id": 54978,
+         *         "name": "#ハチゼロニ",
+         *         "count": 2
+         *     },
+         */
+        for (int i = 0; i < circlesList.length(); i++) {
+            JSONObject j = circlesList.getJSONObject(i);
+            circlesIdMap.put(j.getString("name"),j.getLong("id"));
+        }
+    }
+
+    public HashMap<String, Long> getCirclesIdMap() {
+        return circlesIdMap;
+    }
+
+    public RequestOptions getRadius15Pic() {
+        return radius15Pic;
+    }
+
+    public RequestOptions getRadius5Pic() {
+        return radius5Pic;
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
         instance = this;
-        helper = new DaoMaster.OpenHelper(App.instance, "app.db") {
-        };
-        SQLiteDatabase database = helper.getWritableDatabase();
-        DaoMaster daoMaster = new DaoMaster(database);
-        DaoSession daoSession = daoMaster.newSession();
-        userDao = daoSession.getUserDao();
+        registerActivityLifecycleCallbacks(this);
+        AppDatabase appDatabase = Room.databaseBuilder(getApplicationContext(), AppDatabase.class,"app.db")
+                .addMigrations(AppDatabase.MIGRATION_1_2)
+                .addMigrations(AppDatabase.MIGRATION_2_3)
+                .addMigrations(AppDatabase.MIGRATION_3_4)
+                .build();
+        userDao = appDatabase.userDao();
+        historyDao = appDatabase.historyDao();
+        audioLrcBindDao = appDatabase.audioLrcBindDao();
 
         currentUserId = getValue(App.CONFIG_USER_DATABASE_ID, -1);
         appDebug = getValue(App.CONFIG_DEBUG, 0) == 1;
+        useNewLayout = getValue(App.CONFIG_NEW_LAYOUT,0) == 1;
         saveExternal = getValue(App.CONFIG_SAVE_EXTERNAL, 0) == 1;
-
-        getAllUsers();
+        loadLocalHis();
         User user = App.getInstance().currentUser();
         if (user != null) {
             Api.init(user.getToken(), user.getHost());
         }
 
-        defaultPic = new RequestOptions().placeholder(R.drawable.ic_no_cover).apply(RequestOptions.bitmapTransform(new RoundedCorners(10)));
+
+
+        radius15Pic = new RequestOptions().placeholder(R.drawable.ic_no_cover).apply(RequestOptions.bitmapTransform(
+                new RoundedCorners((int) dp2px(15.0f,getResources().getDisplayMetrics()))
+        ));
+        radius5Pic = new RequestOptions().placeholder(R.drawable.ic_no_cover).apply(RequestOptions.bitmapTransform(
+                new RoundedCorners((int) dp2px(5.0f,getResources().getDisplayMetrics()))
+        ));
 
         DownloadUtils.getInstance().init(this);
         NotificationChannel channelMusicService =
@@ -119,8 +179,16 @@ public class App extends Application implements Application.ActivityLifecycleCal
         notificationManager.createNotificationChannel(channelMusicService);
     }
 
+    private static float dp2px(float dp, DisplayMetrics displayMetrics){
+        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,dp,displayMetrics);
+    }
+
+    public boolean noActiveActivity(){
+        return activities.isEmpty();
+    }
+
     public void alertException(Exception e) {
-        if (activities.size() == 0)
+        if (activities.isEmpty())
             return;
         Activity activity = activities.get(activities.size() - 1);
         if (activity == null) {
@@ -179,34 +247,98 @@ public class App extends Application implements Application.ActivityLifecycleCal
         return position;
     }
 
-    public long insertUser(User user) {
-        allUsers.add(user);
-        currentUserId = userDao.insert(user);
-        return currentUserId;
+    public void insertLocalHis(LocalWorkHistory history, Runnable callback){
+        LocalFileCache.getInstance().doSomething(()->{
+            historyDao.insertOrReplace(history);
+            boolean sameWorkRj = false;
+            if(!localWorkHistoryList.isEmpty()){
+                if(history.getRjNumber() == localWorkHistoryList.get(0).getRjNumber()){
+                    sameWorkRj = true;
+                }
+            }
+            if(!sameWorkRj){
+                localWorkHistoryList.add(0,history);
+            }
+            callback.run();
+        });
+    }
+
+    public void loadLocalHis(){
+        LocalFileCache.getInstance().doSomething(()->{
+            localWorkHistoryList.clear();
+            localWorkHistoryList.addAll(historyDao.getAllHis());
+            Log.i("App","getLocalWorkHistoryList:" + localWorkHistoryList.size());
+        });
+    }
+
+    public List<LocalWorkHistory> getLocalWorkHistoryList() {
+        return localWorkHistoryList;
+    }
+
+    public void insertUser(User user, Runnable callback) {
+        LocalFileCache.getInstance().doSomething(()->{
+            currentUserId = userDao.insert(user);
+            user.setId(currentUserId);
+            allUsers.add(user);
+            callback.run();
+        });
     }
 
     public void deleteUser(User user) {
         allUsers.remove(user);
-        userDao.delete(user);
+        LocalFileCache.getInstance().doSomething(()->{
+            userDao.delete(user);
+        });
     }
 
     public void updateUser(User user) {
-        userDao.update(user);
+        LocalFileCache.getInstance().doSomething(()->{
+            userDao.update(user);
+        });
     }
 
-    public List<User> getAllUsers() {
-        if (allUsers == null)
-            allUsers = userDao.loadAll();
+    public void getAllUsersAsync(DatabaseResultCallback databaseResultCallback) {
+        LocalFileCache.getInstance().doSomething(()->{
+            List<User> result = userDao.getAllUser();
+            allUsers.clear();
+            allUsers.addAll(result);
+            databaseResultCallback.onResult(result);
+        });
+    }
+
+    public List<User> getAllUsers(){
         return allUsers;
     }
 
     public User currentUser() {
         for (User user : allUsers) {
+            if(user.getId() == null){
+                continue;
+            }
             if (user.getId().equals(currentUserId)) {
                 return user;
             }
         }
         return null;
+    }
+
+    public void insertLrcBind(AudioLrcBind lrcBind) {
+        LocalFileCache.getInstance().doSomething(()->{
+            audioLrcBindDao.insertLrcBind(lrcBind);
+        });
+    }
+
+    public void getLrcBind(long rjNumber,String audioPath,DatabaseResultCallback callback) {
+        LocalFileCache.getInstance().doSomething(()->{
+            List<AudioLrcBind> rl = audioLrcBindDao.getLrcBind(rjNumber,audioPath);
+            if(!rl.isEmpty()){
+                callback.onResult(rl.get(0));
+            }
+        });
+    }
+
+    public interface DatabaseResultCallback {
+        void onResult(Object result);
     }
 
     @Override
@@ -242,8 +374,5 @@ public class App extends Application implements Application.ActivityLifecycleCal
     @Override
     public void onActivityDestroyed(@NonNull Activity activity) {
         activities.remove(activity);
-        if (activities.isEmpty()) {
-            helper.close();
-        }
     }
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="channel_description">play control</string>
+    <string name="channel_description">player control</string>
     <string name="action_settings">設定</string>
     <string name="sign_out">サインアウト</string>
     <string name="my_progress">進捗</string>
@@ -44,11 +44,25 @@
     <string name="user_name">ユーザー名</string>
     <string name="user_password">パスワード</string>
     <string name="user_guest">ゲスト</string>
-    <string name="user_sigin_in">サインイン</string>
+    <string name="user_sign_in">サインイン</string>
     <string name="user_sign_up">登録</string>
-    <string name="cover_image">cover image</string>
+    <string name="cover_image">Cover image</string>
     <string name="external_storage_tip">
         存储到自定义外部目录，即使应用被删除，你缓存的内容也不会被删除，检测到权限未打开，需要权限。
     </string>
     <string name="tip">Tip</string>
+    <string name="extra_path">Public dir</string>
+    <string name="private_path">private dir</string>
+    <string name="no_lrc">no lrc</string>
+    <string name="stop_delay">stop delay</string>
+    <string name="delete_cache">delete cache</string>
+    <string name="local_history">history view</string>
+    <string name="staggered">staggered</string>
+    <string name="all_repeat">All Repeat</string>
+    <string name="repeat_off">Repeat Off</string>
+    <string name="repeat_one">Repeat One</string>
+    <string name="circles">Circles</string>
+    <string name="lrc_from_local">Lrc from phone</string>
+    <string name="choose_lrc_file">Choose lrc file</string>
+    <string name="select_lrc_or_vtt">Please select lrc or vtt!</string>
 </resources>

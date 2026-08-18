@@ -16,9 +16,11 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.Icon;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.provider.Settings;
@@ -27,10 +29,7 @@ import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.KeyEvent;
-import android.view.View;
-import android.view.WindowManager;
+import android.view.*;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -39,13 +38,12 @@ import androidx.core.app.NotificationCompat;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.MediaItem;
-import com.google.android.exoplayer2.MediaMetadata;
-import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.*;
 import com.google.android.exoplayer2.metadata.Metadata;
+import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
+import com.zinhao.kikoeru.db.AudioLrcBind;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -167,7 +165,7 @@ public class AudioService extends Service {
                     isActionPause = true;
                     return;
                 }
-                if (bluetoothAdapter != null && bluetoothAdapter.getProfileConnectionState(BluetoothProfile.HEADSET) == BluetoothProfile.STATE_DISCONNECTED) {
+                if (bluetoothAdapter != null && bluetoothAdapter.getProfileConnectionState(BluetoothProfile.HEADSET) == BluetoothAdapter.STATE_DISCONNECTED) {
                     mediaSession.getController().getTransportControls().pause();
                     isActionPause = true;
                 }
@@ -194,6 +192,27 @@ public class AudioService extends Service {
         mHandler = new Handler(getMainLooper());
         mediaPlayer = new ExoPlayer.Builder(this).build();
         mediaPlayer.addListener(new Player.Listener() {
+            @Override
+            public void onPlayerError(PlaybackException error) {
+                alertException(error);
+                if (error instanceof ExoPlaybackException) {
+                    ExoPlaybackException exoError = (ExoPlaybackException) error;
+
+                    // 检查是否是源码层面的错误（网络/文件读取）
+                    if (exoError.type == ExoPlaybackException.TYPE_SOURCE) {
+                        IOException cause = exoError.getSourceException();
+
+                        if (cause instanceof HttpDataSource.HttpDataSourceException) {
+                            // 提示用户检查网络或稍后重试
+                            Log.d(TAG, "onPlayerError: "+"网络连接异常，请检查网络设置");
+                            // 可以尝试自动重试，或者让用户手动点击刷新
+                            return;
+                        }
+                    }
+                }
+                // 处理其他类型的错误
+            }
+
             @Override
             public void onIsPlayingChanged(boolean isPlaying) {
                 Log.d(TAG, "onIsPlayingChanged: " + isPlaying);
@@ -241,7 +260,7 @@ public class AudioService extends Service {
 
             @Override
             public void onMediaMetadataChanged(@NonNull MediaMetadata mediaMetadata) {
-                Log.d(TAG, "onMediaMetadataChanged: " + mediaMetadata.title);
+                Log.d(TAG, "onMediaMetadataChanged: " + mediaMetadata.title + ", play state:"+mediaPlayer.getPlaybackState());
                 ctrlBinder.current = ctrlBinder.playList.get(mediaPlayer.getCurrentMediaItemIndex());
 
                 MediaMetadataCompat metadata = new MediaMetadataCompat.Builder()
@@ -257,24 +276,13 @@ public class AudioService extends Service {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-
-                try {
-                    String path = ctrlBinder.current.getString(JSONConst.WorkTree.MAP_FILE_PATH);
-                    File audioFile = new File(path);
-                    if (!LocalFileCache.getInstance().getLrcText(audioFile, ctrlBinder.lrcCallBack)) {
-                        // Local lrc file not exist
-                        Api.checkLrc(ctrlBinder.current.getString(JSONConst.WorkTree.HASH), ctrlBinder.checkLrcCallBack);
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
                 ctrlBinder.musicChangeListeners.forEach(new Consumer<MusicChangeListener>() {
                     @Override
                     public void accept(MusicChangeListener listener) {
                         listener.onAudioChange(ctrlBinder.current);
                     }
                 });
+                loadLrc();
             }
 
             @Override
@@ -282,12 +290,74 @@ public class AudioService extends Service {
                 Log.d(TAG, "onMetadata: " + metadata.toString());
             }
         });
-        registerReceiver(headsetActionReceiver, headsetActionReceiver.intentFilter);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(headsetActionReceiver, headsetActionReceiver.intentFilter, Context.RECEIVER_NOT_EXPORTED);
+        }else{
+            registerReceiver(headsetActionReceiver, headsetActionReceiver.intentFilter);
+        }
         ctrlBinder = new CtrlBinder();
         try {
             updateNotificationState();
         } catch (JSONException e) {
             throw new RuntimeException(e);
+        }
+        setupFloatLrc();
+    }
+
+    private void setupFloatLrc(){
+        if (ctrlBinder.getLrcFloatView() == null) {
+            TextView view = (TextView) LayoutInflater.from(this).inflate(R.layout.lrc_layout, null, false);
+            view.setOnTouchListener(new View.OnTouchListener() {
+                private float downX, downY;
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    // 歌词手势
+                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                        downX = event.getRawX();
+                        downY = event.getRawY();
+                    } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                        if (ctrlBinder != null)
+                            App.getInstance().savePosition(ctrlBinder.getLrcWindowParams().x, ctrlBinder.getLrcWindowParams().y);
+                    } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
+
+                        float nowX = event.getRawX();
+                        float nowY = event.getRawY();
+                        float moveX = nowX - downX;
+                        float moveY = nowY - downY;
+                        if (ctrlBinder != null) {
+                            ctrlBinder.getLrcWindowParams().x += moveX;
+                            ctrlBinder.getLrcWindowParams().y += moveY;
+                            ctrlBinder.windowManager.updateViewLayout(ctrlBinder.getLrcFloatView(), ctrlBinder.getLrcWindowParams());
+                        }
+                        downX = nowX;
+                        downY = nowY;
+                    }
+                    return true;
+                }
+            });
+            ctrlBinder.setLrcView(view);
+        }
+    }
+
+    private void loadLrc(){
+        Log.d(TAG, "loadLrc: " + ctrlBinder.current.optString(JSONConst.WorkTree.TITLE));
+        try {
+            String path = ctrlBinder.current.getString(JSONConst.WorkTree.MAP_FILE_PATH);
+            File audioFile = new File(path);
+            if (!LocalFileCache.getInstance().getLrcText(audioFile, ctrlBinder.lrcCallBack)) {
+                // Local lrc file not exist
+                if(ctrlBinder.current.has("lrc_info")){
+                    JSONObject lrcInfo = ctrlBinder.current.getJSONObject(JSONConst.WorkTree.LRC_INFO);
+                    Log.d(TAG, "loadLrc: local check:" + lrcInfo.optString(JSONConst.WorkTree.HASH));
+                    Api.doGetMediaString(lrcInfo.getString(JSONConst.WorkTree.HASH),ctrlBinder.lrcCallBack);
+                }else{
+                    Log.d(TAG, "loadLrc: server check:" + ctrlBinder.current.optString(JSONConst.WorkTree.HASH));
+                    String hash = ctrlBinder.current.optString(JSONConst.WorkTree.HASH);
+                    Api.checkLrc(hash, ctrlBinder.checkLrcCallBack);
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace(System.err);
         }
     }
 
@@ -370,7 +440,7 @@ public class AudioService extends Service {
             notificationBuilder.setContentTitle(ctrlBinder.current.getString("title"));
             notificationBuilder.setContentText(ctrlBinder.current.getString("title"));
             notificationBuilder.setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, AudioPlayerActivity.class), PendingIntent.FLAG_IMMUTABLE));
-            Glide.with(this).asBitmap().load(App.getInstance().currentUser().getHost() + String.format("/api/cover/%d?type=sam&token=%s", ctrlBinder.currentAlbumId, Api.token)).into(new SimpleTarget<Bitmap>() {
+            Glide.with(this).asBitmap().load(Api.minCoverImageUrl(ctrlBinder.currentAlbumId)).into(new SimpleTarget<Bitmap>() {
                 @Override
                 public void onResourceReady(@NonNull Bitmap bitmap, @Nullable Transition<? super Bitmap> transition) {
                     notificationBuilder.setLargeIcon(bitmap);
@@ -380,7 +450,7 @@ public class AudioService extends Service {
                 @Override
                 public void onLoadFailed(@Nullable Drawable errorDrawable) {
                     super.onLoadFailed(errorDrawable);
-                    alertException(new Exception("load notification cover failed!"));
+                    alertException(new Exception("load notification cover failed!"+errorDrawable));
                     startForeground(NOTIFICATION_ID, notificationBuilder.build());
                 }
             });
@@ -438,19 +508,20 @@ public class AudioService extends Service {
         private final List<JSONObject> playList = new ArrayList<>();
         private JSONObject current;
         private int currentIndex;
-        private int currentAlbumId;
+        //和 rjNumber 相同
+        private long currentAlbumId;
         private Lrc mLrc = Lrc.NONE;
-        private Timer mLrcUpdateTimer;
-        private WindowManager windowManager;
+        private final Timer mLrcUpdateTimer;
+        private final WindowManager windowManager;
         private boolean lrcWindowShow = false;
         private View lrcView;
-        private Runnable stopTask;
-        private Runnable updateLrcTask;
-        private AsyncHttpClient.JSONObjectCallback lastPlayListCallback = new AsyncHttpClient.JSONObjectCallback() {
+        private Lrc.LrcRow currentLrcRow = null;
+        private final Runnable stopTask;
+        private final Runnable updateLrcTask;
+        private final AsyncHttpClient.JSONObjectCallback lastPlayListCallback = new AsyncHttpClient.JSONObjectCallback() {
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject jsonObject) {
                 if (e != null) {
-                    alertException(e);
                     return;
                 }
                 if (asyncHttpResponse.code() == 200) {
@@ -494,29 +565,34 @@ public class AudioService extends Service {
             mLrcUpdateTimer = new Timer();
             windowManager = getSystemService(WindowManager.class);
             LocalFileCache.getInstance().readLastPlayList(AudioService.this, lastPlayListCallback);
+            updateLrcTask = new Runnable() {
+                @Override
+                public void run() {
+                    if (mediaPlayer != null && mediaPlayer.getPlaybackState() == Player.STATE_READY && mLrc!=null) {
+                        Lrc.LrcRow lrcRow = mLrc.update(mediaPlayer.getCurrentPosition());
+                        if (currentLrcRow != lrcRow) {
+                            currentLrcRow = lrcRow;
+                            if (lrcView instanceof TextView) {
+                                ((TextView) lrcView).setText(currentLrcRow.content);
+                            }
+                            lrcRowChangeListeners.forEach(new Consumer<LrcRowChangeListener>() {
+                                @Override
+                                public void accept(LrcRowChangeListener listener) {
+                                    listener.onSeekChange(currentLrcRow);
+                                }
+                            });
+                        }
+
+                    }
+                }
+            };
             mLrcUpdateTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
                     mHandler.post(updateLrcTask);
-                    lrcRowChangeListeners.forEach(new Consumer<LrcRowChangeListener>() {
-                        @Override
-                        public void accept(LrcRowChangeListener listener) {
-                            listener.onChange(mLrc.getCurrent());
-                        }
-                    });
                 }
-            }, 0, 500);
-            updateLrcTask = new Runnable() {
-                @Override
-                public void run() {
-                    if (mediaPlayer != null && mediaPlayer.isPlaying()) {
-                        ctrlBinder.mLrc.update(mediaPlayer.getCurrentPosition());
-                        if (lrcView instanceof TextView) {
-                            ((TextView) lrcView).setText(mLrc.getCurrent().content);
-                        }
-                    }
-                }
-            };
+            }, 0, 200);
+
             stopTask = new Runnable() {
                 @Override
                 public void run() {
@@ -526,8 +602,14 @@ public class AudioService extends Service {
                     MediaControllerCompat.TransportControls transportControls = controllerCompat.getTransportControls();
                     if (transportControls == null)
                         return;
-                    Log.d(TAG, "run: is time to Stop!");
-                    transportControls.stop();
+                    if(App.getInstance().noActiveActivity()){
+                        Log.d(TAG, "timer stop: stop service");
+                        transportControls.stop();
+                        stopSelf();
+                    }else{
+                        Log.d(TAG, "timer stop: pause media");
+                        transportControls.pause();
+                    }
                 }
             };
         }
@@ -555,29 +637,52 @@ public class AudioService extends Service {
             this.lrcWindowShow = lrcWindowShow;
         }
 
-        private AsyncHttpClient.JSONObjectCallback checkLrcCallBack = new AsyncHttpClient.JSONObjectCallback() {
+        private final AsyncHttpClient.JSONObjectCallback checkLrcCallBack = new AsyncHttpClient.JSONObjectCallback() {
 
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, JSONObject lrcResult) {
+                boolean findLrc = false;
                 if (e != null) {
-                    mLrc = Lrc.NONE;
+                    setLrc(null);
                     alertException(e);
-                    return;
-                }
-                if (lrcResult == null) {
-                    mLrc = Lrc.NONE;
-                    return;
-                }
-                try {
-                    boolean exist = lrcResult.getBoolean("result");
-                    if (exist) {
-                        Api.doGetMediaString(lrcResult.getString(JSONConst.WorkTree.HASH), lrcCallBack);
-                    } else {
-                        mLrc = Lrc.NONE;
+                    Log.i(TAG,"LRC RESULT: ERR");
+                }else if (lrcResult == null) {
+                    setLrc(null);
+                    Log.i(TAG,"LRC RESULT: NULL");
+                }else{
+                    Log.i(TAG,"LRC RESULT:"+ lrcResult);
+                    try {
+                        boolean exist = lrcResult.optBoolean("result");
+                        if (exist) {
+                            findLrc = true;
+                            Api.doGetMediaString(lrcResult.getString(JSONConst.WorkTree.HASH), lrcCallBack);
+                        } else {
+                            setLrc(null);
+                        }
+                    } catch (JSONException jsonException) {
+                        jsonException.printStackTrace();
+                        alertException(jsonException);
+                        setLrc(null);
                     }
-                } catch (JSONException jsonException) {
-                    jsonException.printStackTrace();
-                    alertException(jsonException);
+                }
+                if(!findLrc){
+                    Log.d(TAG, "onCompleted: use audio lrc bind");
+                    App.getInstance().getLrcBind(currentAlbumId, current.optString(JSONConst.WorkTree.MEDIA_STREAM_URL), new App.DatabaseResultCallback() {
+                        @Override
+                        public void onResult(Object result) {
+                            if(result instanceof AudioLrcBind){
+                                AudioLrcBind lrcBind = (AudioLrcBind) result;
+                                if(lrcBind.isLocalFile()){
+                                    Log.d(TAG, "onCompleted: find bind:"+lrcBind.getAudioPath() +", file:"+ lrcBind.getLrcPath());
+                                    LocalFileCache.getInstance().readText(new File(lrcBind.getLrcPath()),lrcCallBack);
+                                }else{
+                                    Log.d(TAG, "onCompleted: find bind:"+lrcBind.getAudioPath() +", lrc_hash:"+ lrcBind.getLrcPath());
+                                    Api.doGetMediaString(lrcBind.getLrcPath(), lrcCallBack);
+                                }
+
+                            }
+                        }
+                    });
                 }
             }
         };
@@ -586,7 +691,7 @@ public class AudioService extends Service {
             @Override
             public void onCompleted(Exception e, AsyncHttpResponse asyncHttpResponse, String s) {
                 if (e != null) {
-                    mLrc = Lrc.NONE;
+                    setLrc(null);
                     alertException(e);
                     return;
                 }
@@ -594,9 +699,9 @@ public class AudioService extends Service {
                     return;
                 }
                 if (asyncHttpResponse.code() == 200) {
-                    mLrc = new Lrc(s);
+                    setLrc(s);
                 } else {
-                    mLrc = Lrc.NONE;
+                    setLrc(null);
                     Log.e(TAG, "onCompleted: " + asyncHttpResponse.code());
                 }
             }
@@ -649,17 +754,17 @@ public class AudioService extends Service {
             musicChangeListeners.remove(listener);
         }
 
-        public void addLrcRowChangeListener(LrcRowChangeListener listener) {
+        public void addLrcChangeListener(LrcRowChangeListener listener) {
             lrcRowChangeListeners.add(listener);
         }
 
-        public void removeLrcRowChangeListener(LrcRowChangeListener listener) {
+        public void removeLrcChangeListener(LrcRowChangeListener listener) {
             lrcRowChangeListeners.remove(listener);
         }
 
-        private void setCurrentAlbumId(int currentAlbumId) {
+        private void setCurrentAlbumId(long currentAlbumId) {
             this.currentAlbumId = currentAlbumId;
-            ctrlBinder.musicChangeListeners.forEach(new Consumer<MusicChangeListener>() {
+            musicChangeListeners.forEach(new Consumer<MusicChangeListener>() {
                 @Override
                 public void accept(MusicChangeListener listener) {
                     listener.onAlbumChange(currentAlbumId);
@@ -668,7 +773,7 @@ public class AudioService extends Service {
         }
 
         public void play(List<JSONObject> playList, int index) throws JSONException {
-            if (playList.size() == 0)
+            if (playList.isEmpty())
                 return;
             this.playList.clear();
             this.playList.addAll(playList);
@@ -702,6 +807,7 @@ public class AudioService extends Service {
 
                 mediaItemList.add(mediaItem);
             }
+
             mediaPlayer.setMediaItems(mediaItemList, index, 0);
             mediaPlayer.prepare();
             mediaPlayer.play();
@@ -711,12 +817,36 @@ public class AudioService extends Service {
             return current;
         }
 
-        public int getCurrentAlbumId() {
+        public long getCurrentAlbumId() {
             return currentAlbumId;
         }
 
         public Lrc getLrc() {
             return mLrc;
+        }
+
+        public void setLrc(String lrcText){
+            if(lrcText == null){
+                mLrc = Lrc.NONE;
+            }else {
+                mLrc = new Lrc(lrcText);
+            }
+            lrcRowChangeListeners.forEach(new Consumer<LrcRowChangeListener>() {
+                @Override
+                public void accept(LrcRowChangeListener listener) {
+                    listener.onLrcChange(mLrc);
+                }
+            });
+        }
+
+        public void insertLrcBind(String lrcPath,boolean isLocalFile){
+            if(current==null){
+                return;
+            }
+            String audioUrl = current.optString(JSONConst.WorkTree.MEDIA_STREAM_URL);
+            long riNumber = currentAlbumId;
+            AudioLrcBind audioLrcBind = new AudioLrcBind(riNumber,audioUrl,lrcPath, isLocalFile);
+            App.getInstance().insertLrcBind(audioLrcBind);
         }
 
         public WindowManager.LayoutParams getLrcWindowParams() {

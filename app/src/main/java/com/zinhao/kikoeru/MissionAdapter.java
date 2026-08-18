@@ -33,7 +33,12 @@ public class MissionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             simpleViewHolder.ivCover.setImageResource(item.getTypeCover());
             simpleViewHolder.pbProgress.setMax(100);
             simpleViewHolder.pbProgress.setProgress(item.getProgress());
-            simpleViewHolder.tvProgress.setText(item.getFormatProgressText());
+            if(item.getMissionException()!=null){
+                simpleViewHolder.tvProgress.setText(item.getMissionException().getMessage());
+            }else{
+                simpleViewHolder.tvProgress.setText(item.getFormatProgressText());
+            }
+
             simpleViewHolder.itemView.setTag(item);
             if (item.isCompleted()) {
                 simpleViewHolder.itemView.setOnLongClickListener(this);
@@ -54,7 +59,7 @@ public class MissionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     }
                 });
             }
-            simpleViewHolder.ibPause.setImageResource(item.isDownloading() ? R.drawable.ic_baseline_pause_24 : R.drawable.ic_baseline_play_arrow_24);
+            simpleViewHolder.ibPause.setImageResource(item.isDownloading() ? R.drawable.ic_baseline_pause_black_24 : R.drawable.ic_baseline_play_arrow_black_24);
         }
     }
 

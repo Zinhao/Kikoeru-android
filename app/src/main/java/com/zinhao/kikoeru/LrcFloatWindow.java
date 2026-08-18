@@ -18,15 +18,14 @@ import androidx.annotation.Nullable;
 
 import java.util.Locale;
 
-public class LrcFloatWindow extends BaseActivity implements ServiceConnection, View.OnTouchListener {
+public class LrcFloatWindow extends BaseActivity implements ServiceConnection{
     private AudioService.CtrlBinder ctrlBinder;
-    private AlertDialog askDrawOverlaysDialog;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (!Settings.canDrawOverlays(this)) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            AlertDialog.Builder builder = new AlertDialog.Builder(this,R.style.RoundedAlertDialog);
             builder.setMessage("还没有显示悬浮窗口的权限！")
                     .setNegativeButton("取消", new DialogInterface.OnClickListener() {
                         @Override
@@ -40,7 +39,7 @@ public class LrcFloatWindow extends BaseActivity implements ServiceConnection, V
                             startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse(String.format(Locale.US, "package:%s", getPackageName()))), 1);
                         }
                     }).setCancelable(false);
-            askDrawOverlaysDialog = builder.create();
+            AlertDialog askDrawOverlaysDialog = builder.create();
             askDrawOverlaysDialog.show();
         }
         bindService(new Intent(this, AudioService.class), this, BIND_AUTO_CREATE);
@@ -50,11 +49,6 @@ public class LrcFloatWindow extends BaseActivity implements ServiceConnection, V
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         ctrlBinder = (AudioService.CtrlBinder) service;
-        if (ctrlBinder.getLrcFloatView() == null) {
-            TextView view = (TextView) LayoutInflater.from(this).inflate(R.layout.lrc_layout, null, false);
-            view.setOnTouchListener(this);
-            ctrlBinder.setLrcView(view);
-        }
         if (Settings.canDrawOverlays(this)) {
             // 有权限
             ctrlBinder.showLrcFloatWindow();
@@ -73,42 +67,14 @@ public class LrcFloatWindow extends BaseActivity implements ServiceConnection, V
         unbindService(this);
     }
 
-    private float downX, downY;
-    private float nowX, nowY;
-
-    @Override
-    public boolean onTouch(View v, MotionEvent event) {
-        // 歌词手势
-        if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            downX = event.getRawX();
-            downY = event.getRawY();
-        } else if (event.getAction() == MotionEvent.ACTION_UP) {
-            if (ctrlBinder != null)
-                App.getInstance().savePosition(ctrlBinder.getLrcWindowParams().x, ctrlBinder.getLrcWindowParams().y);
-        } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
-
-            nowX = event.getRawX();
-            nowY = event.getRawY();
-
-            float moveX = nowX - downX;
-            float moveY = nowY - downY;
-            if (ctrlBinder != null) {
-                ctrlBinder.getLrcWindowParams().x += moveX;
-                ctrlBinder.getLrcWindowParams().y += moveY;
-                getWindowManager().updateViewLayout(ctrlBinder.getLrcFloatView(), ctrlBinder.getLrcWindowParams());
-            }
-            downX = nowX;
-            downY = nowY;
-        }
-        return true;
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (Settings.canDrawOverlays(this)) {
-            ctrlBinder.showLrcFloatWindow();
+        if(ctrlBinder!=null){
+            if (Settings.canDrawOverlays(this)) {
+                ctrlBinder.showLrcFloatWindow();
+            }
+            finishAndRemoveTask();
         }
-        finishAndRemoveTask();
     }
 }

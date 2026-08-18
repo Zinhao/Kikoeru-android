@@ -5,146 +5,200 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="5dp"
     tools:context=".MoreActivity">
+    <com.google.android.material.appbar.AppBarLayout android:layout_width="match_parent"
+                                                     android:layout_height="wrap_content"
+                                                     app:layout_constraintStart_toStartOf="parent"
+                                                     app:layout_constraintEnd_toEndOf="parent"
+                                                     app:layout_constraintTop_toTopOf="parent"
+                                                     android:background="?attr/colorSurface"
+                                                     android:id="@+id/appBarLayout">
+        <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                style="@style/Theme.Kikoeru.Toolbar"
+        />
+    </com.google.android.material.appbar.AppBarLayout>
 
-    <RelativeLayout
-        android:id="@+id/relativeLayout"
-        android:layout_width="match_parent"
-        android:layout_height="70dp"
-        android:background="@drawable/item_bg">
+    <ScrollView android:layout_width="match_parent" android:layout_height="match_parent">
+        <LinearLayout android:id="@+id/content" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+            <RelativeLayout
+                    android:id="@+id/relativeLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="@drawable/item_bg">
 
-        <TextView
-            android:id="@+id/textView6"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_marginStart="20dp"
-            android:gravity="center"
-            android:text="@string/only_load_has_lrc"
-            android:textSize="20sp" />
+                <TextView
+                        android:id="@+id/textView6"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="20dp"
+                        android:gravity="center"
+                        android:text="@string/only_load_has_lrc"
+                        android:textSize="16sp" />
 
-        <CheckBox
-            android:id="@+id/checkBox"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:layout_marginEnd="20dp"
-            android:text="" />
+                <CheckBox
+                        android:id="@+id/checkBox"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginEnd="20dp"
+                        android:text="" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_alignParentBottom="true"
-            android:background="@color/black_tran" />
-    </RelativeLayout>
+                <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginStart="16dp"
+                        android:layout_alignParentBottom="true"
+                        android:background="@color/gray_80" />
+            </RelativeLayout>
 
-    <RelativeLayout
-        android:id="@+id/license"
-        android:layout_width="match_parent"
-        android:layout_height="70dp"
-        android:background="@drawable/item_bg">
+            <RelativeLayout
+                    android:id="@+id/saveExternal"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="@drawable/item_bg">
 
-        <TextView
-            android:id="@+id/textView10"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_marginStart="20dp"
-            android:text="@string/opensource_license"
-            android:textSize="20sp" />
+                <TextView
+                        android:id="@+id/textView16"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="20dp"
+                        android:gravity="center"
+                        android:text="@string/saveAtExternal"
+                        android:textSize="16sp" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_alignParentBottom="true"
-            android:background="@color/black_tran" />
-    </RelativeLayout>
+                <CheckBox
+                        android:id="@+id/checkBox3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginEnd="20dp"
+                        android:text="" />
 
-    <RelativeLayout
-        android:id="@+id/saveExternal"
-        android:layout_width="match_parent"
-        android:layout_height="70dp"
-        android:background="@drawable/item_bg">
+                <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginStart="16dp"
+                        android:layout_alignParentBottom="true"
+                        android:background="@color/gray_80" />
+            </RelativeLayout>
 
-        <TextView
-            android:id="@+id/textView16"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_marginStart="20dp"
-            android:gravity="center"
-            android:text="@string/saveAtExternal"
-            android:textSize="20sp" />
+            <RelativeLayout
+                    android:id="@+id/debug"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="@drawable/item_bg">
 
-        <CheckBox
-            android:id="@+id/checkBox3"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:layout_marginEnd="20dp"
-            android:text="" />
+                <TextView
+                        android:id="@+id/textView12"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="20dp"
+                        android:gravity="center"
+                        android:text="@string/debug_mode"
+                        android:textSize="16sp" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_alignParentBottom="true"
-            android:background="@color/black_tran" />
-    </RelativeLayout>
+                <CheckBox
+                        android:id="@+id/checkBox1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginEnd="20dp"
+                        android:text="" />
 
-    <RelativeLayout
-        android:id="@+id/about"
-        android:layout_width="match_parent"
-        android:layout_height="70dp"
-        android:background="@drawable/item_bg">
+                <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginStart="16dp"
+                        android:layout_alignParentBottom="true"
+                        android:background="@color/gray_80" />
+            </RelativeLayout>
 
-        <TextView
-            android:id="@+id/textView11"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_marginStart="20dp"
-            android:text="@string/about"
-            android:textSize="20sp" />
+            <RelativeLayout
+                    android:id="@+id/license"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="@drawable/item_bg">
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_alignParentBottom="true"
-            android:background="@color/black_tran" />
-    </RelativeLayout>
+                <TextView
+                        android:id="@+id/textView10"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="20dp"
+                        android:text="@string/opensource_license"
+                        android:textSize="16sp" />
 
-    <RelativeLayout
-        android:id="@+id/debug"
-        android:layout_width="match_parent"
-        android:layout_height="70dp"
-        android:background="@drawable/item_bg">
+                <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginStart="16dp"
+                        android:layout_alignParentBottom="true"
+                        android:background="@color/gray_80" />
+            </RelativeLayout>
 
-        <TextView
-            android:id="@+id/textView12"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_marginStart="20dp"
-            android:gravity="center"
-            android:text="@string/debug_mode"
-            android:textSize="20sp" />
+            <RelativeLayout
+                    android:id="@+id/rlHomeTab"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="@drawable/item_bg">
 
-        <CheckBox
-            android:id="@+id/checkBox1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:layout_marginEnd="20dp"
-            android:text="" />
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="20dp"
+                        android:text="Home Tab Mode"
+                        android:textSize="16sp" />
+                <CheckBox
+                        android:id="@+id/cbHomeTab"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginEnd="20dp"
+                        android:text="" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_alignParentBottom="true"
-            android:background="@color/black_tran" />
-    </RelativeLayout>
+                <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginStart="16dp"
+                        android:layout_alignParentBottom="true"
+                        android:background="@color/gray_80" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                    android:id="@+id/about"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="@drawable/item_bg">
+
+                <TextView
+                        android:id="@+id/textView11"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="20dp"
+                        android:text="@string/about"
+                        android:textSize="16sp" />
+
+                <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginStart="16dp"
+                        android:layout_alignParentBottom="true"
+                        android:background="@color/gray_80" />
+            </RelativeLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    
 </LinearLayout>

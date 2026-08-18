@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+    <com.google.android.material.appbar.AppBarLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/appBarLayout"
+    >
+        <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tabLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="16dp"
+                android:paddingTop="0dp"
+                app:tabIndicator="@drawable/card_bg_tab"
+                app:tabIndicatorColor="@color/forth_color"
+                app:tabIndicatorHeight="35dp"
+                app:tabIndicatorFullWidth="true"
+                app:tabIndicatorGravity="center"
+                app:tabTextColor="@color/forth_color"
+                app:tabSelectedTextColor="@color/white"
+                app:tabMode="scrollable"
+                app:tabGravity="start"
+                app:tabPaddingEnd="10dp"
+                app:tabPaddingStart="10dp"
+
+        >
+
+            <com.google.android.material.tabs.TabItem
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/all_works"/>
+
+            <com.google.android.material.tabs.TabItem
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/listening"/>
+
+            <com.google.android.material.tabs.TabItem
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/listened"/>
+        </com.google.android.material.tabs.TabLayout>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent">
+        <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/vp"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                />
+        <include layout="@layout/layout_current_play"
+                 android:id="@+id/bottomLayout"/>
+    </FrameLayout>
+
+
+
+</LinearLayout>

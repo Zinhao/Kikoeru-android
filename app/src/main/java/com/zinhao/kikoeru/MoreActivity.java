@@ -9,6 +9,10 @@ import android.os.Environment;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.Insets;
+import com.zinhao.kikoeru.databinding.ActivityMoreBinding;
+import org.jetbrains.annotations.NotNull;
 
 public class MoreActivity extends BaseActivity implements CompoundButton.OnCheckedChangeListener {
     private View itemOnlyLoadLrc;
@@ -23,20 +27,27 @@ public class MoreActivity extends BaseActivity implements CompoundButton.OnCheck
 
     private View itemDebug;
     private CheckBox cbDebug;
-
+    private ActivityMoreBinding viewBinding;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_more);
-
-        itemOnlyLoadLrc = findViewById(R.id.relativeLayout);
+        viewBinding = ActivityMoreBinding.inflate(getLayoutInflater());
+        setContentView(viewBinding.getRoot());
+        setSupportActionBar(viewBinding.toolbar);
+        setSafeArea(viewBinding.appBarLayout, new InsetReady() {
+            @Override
+            public void onInsetReady(@NotNull Insets insets) {
+                viewBinding.content.setPadding(insets.left, 0, insets.right, insets.bottom);
+            }
+        });
+        itemOnlyLoadLrc = viewBinding.relativeLayout;
         itemOnlyLoadLrc.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 cbOnlyLrcWork.toggle();
             }
         });
-        cbOnlyLrcWork = findViewById(R.id.checkBox);
+        cbOnlyLrcWork = viewBinding.checkBox;
         long onlyLrcFlag = App.getInstance().getValue(App.CONFIG_ONLY_DISPLAY_LRC, 1);
         cbOnlyLrcWork.setChecked(onlyLrcFlag == 1);
         cbOnlyLrcWork.setOnCheckedChangeListener(this);
@@ -68,7 +79,7 @@ public class MoreActivity extends BaseActivity implements CompoundButton.OnCheck
             }
         });
 
-        itemDebug = findViewById(R.id.debug);
+        itemDebug = viewBinding.debug;
         itemDebug.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -79,6 +90,15 @@ public class MoreActivity extends BaseActivity implements CompoundButton.OnCheck
         cbDebug.setChecked(App.getInstance().isAppDebug());
         cbDebug.setOnCheckedChangeListener(this);
 
+
+        viewBinding.rlHomeTab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                viewBinding.cbHomeTab.toggle();
+            }
+        });
+        viewBinding.cbHomeTab.setChecked(App.getInstance().isUseNewLayout());
+        viewBinding.cbHomeTab.setOnCheckedChangeListener(this);
     }
 
     @Override
@@ -91,6 +111,13 @@ public class MoreActivity extends BaseActivity implements CompoundButton.OnCheck
 
         if (compoundButton == cbDebug) {
             App.getInstance().setAppDebug(b);
+        }
+
+        if( compoundButton == viewBinding.cbHomeTab ){
+            App.getInstance().setUseNewLayout(b);
+            startActivity(new Intent(this, LauncherActivity.class));
+            finish();
+            return;
         }
 
         if (cbSaveExternal == compoundButton) {

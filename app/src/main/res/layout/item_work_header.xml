@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                                                   xmlns:app="http://schemas.android.com/apk/res-auto"
+                                                   xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+                                                   android:layout_height="wrap_content"
+                                                   android:layout_marginBottom="8dp"
+                                                   android:layout_marginTop="8dp"
+                                                   android:layout_marginStart="8dp"
+                                                   android:layout_marginEnd="8dp"
+                                                   android:padding="12dp"
+                                                   android:background="@drawable/card_bg_work"
+                                                   android:elevation="5dp">
+
+    <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/ivCover"
+            android:layout_width="160dp"
+            android:layout_height="120dp"
+            android:adjustViewBounds="true"
+            android:transitionName="hero_image"
+            android:src="@drawable/ic_no_cover"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
+
+    <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:maxLines="2"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:text="ドン引きしながらもご奉仕してくれる押しに弱いえちえちカノジョ【フォーリ"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/ivCover" app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="8dp" android:layout_marginTop="4dp"/>
+
+
+    <TextView
+            android:id="@+id/tvDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/card_bg_text"
+            android:padding="5dp"
+            android:text="2022-01-02"
+            android:textColor="@color/white"
+            android:textSize="10sp"
+            app:layout_constraintTop_toBottomOf="@+id/tvCircles" app:layout_constraintStart_toStartOf="@+id/tvCircles"
+            android:layout_marginTop="8dp"/>
+    <TextView
+            android:id="@+id/tvPrice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1210 日元"
+            android:visibility="gone"
+            android:textColor="@android:color/holo_red_dark"
+            app:layout_constraintTop_toBottomOf="@+id/tvArt" app:layout_constraintStart_toStartOf="@+id/tvArt"
+            android:layout_marginTop="4dp"/>
+    <com.zinhao.kikoeru.TagsView
+            android:id="@+id/tvTags"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:padding="4dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:tagBackground="@drawable/card_bg_tag"
+            app:tags="健全 青春"
+            app:layout_constraintStart_toStartOf="@+id/ivCover" app:layout_constraintTop_toBottomOf="@+id/ivCover"
+            android:layout_marginTop="8dp"/>
+
+    <com.zinhao.kikoeru.TagsView
+            android:id="@+id/tvCircles"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:padding="4dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/tvTags"
+            app:layout_constraintTop_toBottomOf="@+id/tvTags"
+            app:tagBackground="@drawable/card_bg_circles"
+            app:tags="アゲハ蝶" android:layout_marginTop="8dp"/>
+
+    <com.zinhao.kikoeru.TagsView
+            android:id="@+id/tvArt"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:padding="4dp"
+            android:text="こやまはる"
+            android:textColor="@color/white"
+            app:tagBackground="@drawable/card_bg_va"
+            app:tags="Kikoeru Kikoeru  "
+            app:layout_constraintTop_toBottomOf="@+id/tvTitle" app:layout_constraintStart_toStartOf="@+id/tvTitle"
+            app:layout_constraintEnd_toEndOf="parent" android:layout_marginTop="8dp"/>
+
+<!--    todo 文字遮挡tag-->
+    <TextView
+            android:id="@+id/tvSaleCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="售出数: 2247"
+            android:visibility="gone"
+            app:layout_constraintStart_toEndOf="@+id/tvPrice"
+            android:layout_marginStart="8dp" app:layout_constraintBottom_toBottomOf="@+id/tvPrice"/>
+    <TextView
+            android:text="https://api.asmr.net"
+            android:layout_width="wrap_content"
+            android:background="@drawable/card_bg_text"
+            android:textColor="@color/white"
+            android:padding="5dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/tvHost"
+            android:textSize="10sp"
+            app:layout_constraintStart_toEndOf="@+id/tvDate"
+            app:layout_constraintTop_toTopOf="@+id/tvDate"
+            android:layout_marginStart="8dp"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

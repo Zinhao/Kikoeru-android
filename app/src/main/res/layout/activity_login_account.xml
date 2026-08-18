@@ -20,6 +20,7 @@
         <com.google.android.material.textfield.TextInputEditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            style="@style/Theme.Kikoeru.TextInputStyle"
             android:hint="@string/user_name" />
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -38,6 +39,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textPassword"
+            style="@style/Theme.Kikoeru.TextInputStyle"
             android:hint="@string/user_password" />
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -56,6 +58,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="https://www.asmr.one"
+            style="@style/Theme.Kikoeru.TextInputStyle"
             android:hint="Kikoeru server host" />
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -64,7 +67,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="@string/user_sigin_in"
+        android:text="@string/user_sign_in"
         app:layout_constraintEnd_toEndOf="@+id/textInputLayout2"
         app:layout_constraintStart_toStartOf="@+id/textInputLayout2"
         app:layout_constraintTop_toBottomOf="@+id/textInputLayout3" />

@@ -1,66 +1,83 @@
 <resources>
     <string name="app_name" translatable="false">Kikoeru</string>
     <string name="project_kikoeru_android_url" translatable="false">https://github.com/Zinhao/Kikoeru-android</string>
-    <string name="project_glide_license" translatable="false">https://github.com/bumptech/glide/blob/master/LICENSE</string>
-    <string name="project_exo_player_license" translatable="false">https://github.com/google/ExoPlayer/blob/release-v2/LICENSE</string>
-    <string name="project_android_async_license" translatable="false">https://github.com/koush/AndroidAsync/blob/master/LICENSE</string>
-    <string name="project_subsampling_scale_image_view_license" translatable="false">https://github.com/davemorrissey/subsampling-scale-image-view/blob/master/LICENSE</string>
+    <string name="project_glide_license" translatable="false">https://github.com/bumptech/glide/blob/master/LICENSE
+    </string>
+    <string name="project_exo_player_license" translatable="false">
+        https://github.com/google/ExoPlayer/blob/release-v2/LICENSE
+    </string>
+    <string name="project_android_async_license" translatable="false">
+        https://github.com/koush/AndroidAsync/blob/master/LICENSE
+    </string>
+    <string name="project_subsampling_scale_image_view_license" translatable="false">
+        https://github.com/davemorrissey/subsampling-scale-image-view/blob/master/LICENSE
+    </string>
     <string name="file_provider" translatable="false">com.zinhao.kikoeru.fileProvider</string>
 
-    <string name="channel_description">play control</string>
+    <string name="channel_description">Player control</string>
     <string name="action_settings">Settings</string>
-    <string name="sign_out">sign out</string>
-    <string name="my_progress">self progress</string>
-    <string name="about">about</string>
-    <string name="all_works">all works</string>
-    <string name="works_layout">layout</string>
-    <string name="list_layout">list layout</string>
-    <string name="cover_layout">cover gird</string>
-    <string name="detail_layout">detail gird</string>
-    <string name="tag">tag</string>
-    <string name="local_works">cache</string>
-    <string name="sort">sort</string>
-    <string name="release_date">release date</string>
+    <string name="sign_out">Sign out</string>
+    <string name="my_progress">Self progress</string>
+    <string name="about">About</string>
+    <string name="all_works">All works</string>
+    <string name="works_layout">Layout</string>
+    <string name="list_layout">List layout</string>
+    <string name="cover_layout">Cover gird</string>
+    <string name="detail_layout">Detail gird</string>
+    <string name="tag">Tag</string>
+    <string name="local_works">Cache</string>
+    <string name="sort">Sort</string>
+    <string name="release_date">Release date</string>
     <string name="rj_number">RJ number</string>
-    <string name="prize">prize</string>
-    <string name="last_in_lib">last in lib</string>
-    <string name="va_voicer">va</string>
-    <string name="download_mission">download mission</string>
-    <string name="only_load_has_lrc">only load have lrc</string>
-    <string name="more">more</string>
-    <string name="this_is_a_open_source_project">this is a open source project!</string>
+    <string name="prize">Prize</string>
+    <string name="last_in_lib">Last in lib</string>
+    <string name="va_voicer">Va</string>
+    <string name="download_mission">Download mission</string>
+    <string name="only_load_has_lrc">Only load have lrc</string>
+    <string name="more">More</string>
+    <string name="this_is_a_open_source_project">This is a open source project!</string>
     <string name="marked">MARKED</string>
     <string name="listening">LISTENING</string>
     <string name="listened">LISTENED</string>
     <string name="replay">REPLAY</string>
     <string name="postponed">POSTPONED</string>
     <string name="confirm">OK</string>
-    <string name="view">view</string>
-    <string name="mark_action">action</string>
-    <string name="downloading">downloading</string>
-    <string name="cancel_download">cancel download</string>
-    <string name="check_mission">view mission</string>
+    <string name="view">View</string>
+    <string name="mark_action">Action</string>
+    <string name="downloading">Downloading</string>
+    <string name="cancel_download">Cancel Download</string>
+    <string name="check_mission">View Mission</string>
     <string name="open">open</string>
     <string name="not_download">have not download</string>
-    <string name="download">download</string>
-    <string name="debug_mode">debug mode</string>
-    <string name="savePath">save position</string>
-    <string name="saveAtExternal">save at external storage</string>
-    <string name="search">search</string>
+    <string name="download">Download</string>
+    <string name="debug_mode">Debug mode</string>
+    <string name="savePath">Save position</string>
+    <string name="saveAtExternal">Save at external storage</string>
+    <string name="search">Search</string>
     <string name="opensource_license">Open Source License</string>
     <string name="user_name">User Name</string>
     <string name="user_password">Password</string>
     <string name="user_guest">Guest</string>
-    <string name="user_sigin_in">Sign In</string>
+    <string name="user_sign_in">Sign In</string>
     <string name="user_sign_up">Sign Up</string>
-    <string name="cover_image">cover image</string>
-    <string name="rj23435" translatable="false">RJ23435</string>
-    <string name="_2022_01_02" translatable="false">2022-01-02</string>
+    <string name="cover_image">Cover image</string>
     <string name="https_api_asmr_net" translatable="false">https://api.asmr.net</string>
     <string name="external_storage_tip">
-        存储到自定义外部目录，即使应用被删除，你缓存的内容也不会被删除，检测到权限未打开，需要权限。
+       Store in a custom external directory, even if the application is deleted, the content you downloaded will not be deleted. Permission has been detected as not open and is required.
     </string>
     <string name="tip">Tip</string>
-
-
+    <string name="extra_path">Public dir</string>
+    <string name="private_path">Private dir</string>
+    <string name="no_lrc">No lrc</string>
+    <string name="stop_delay">Stop delay</string>
+    <string name="delete_cache">Delete cache</string>
+    <string name="local_history">History view</string>
+    <string name="staggered">Staggered</string>
+    <string name="all_repeat">All Repeat</string>
+    <string name="repeat_off">Repeat Off</string>
+    <string name="repeat_one">Repeat One</string>
+    <string name="circles">Circles</string>
+    <string name="lrc_from_local">Lrc from phone</string>
+    <string name="choose_lrc_file">Choose lrc file</string>
+    <string name="select_lrc_or_vtt">Please select lrc or vtt!</string>
 </resources>

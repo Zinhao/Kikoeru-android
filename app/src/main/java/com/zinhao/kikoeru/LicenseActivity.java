@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 
 import java.util.ArrayList;
@@ -22,16 +23,18 @@ public class LicenseActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_license);
+        setSafeArea(getWindow().getDecorView(),null);
         listView = findViewById(R.id.listview);
 
         projectList = new ArrayList<>();
         projectList.add(new OpenSourceProject("Glide", getString(R.string.project_glide_license)));
         projectList.add(new OpenSourceProject("ExoPlayer", getString(R.string.project_exo_player_license)));
         projectList.add(new OpenSourceProject("AndroidAsync", getString(R.string.project_android_async_license)));
+        projectList.add(new OpenSourceProject("OkHttp", "https://github.com/square/okhttp/blob/master/LICENSE.txt"));
         projectList.add(new OpenSourceProject("SubsamplingScaleImageView", getString(R.string.project_subsampling_scale_image_view_license)));
 
         listView.setAdapter(new ArrayAdapter<>(this, R.layout.item_open_source_project, projectList));
-        alertDialog = new AlertDialog.Builder(this).create();
+        alertDialog = new AlertDialog.Builder(this,R.style.RoundedAlertDialog).create();
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -48,7 +51,12 @@ public class LicenseActivity extends BaseActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         Uri uri = Uri.parse(projectList.get(position).getLicenseUrl());
                         Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                        startActivity(intent);
+                        try {
+                            startActivity(intent);
+                        }catch (Exception e) {
+                            Toast.makeText(LicenseActivity.this,"No Activity found to handle！",Toast.LENGTH_SHORT).show();
+                        }
+
                     }
                 });
                 alertDialog.show();
