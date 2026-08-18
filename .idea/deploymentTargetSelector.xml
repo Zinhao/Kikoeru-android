@@ -15,6 +15,14 @@
       </SelectionState>
       <SelectionState runConfigName="Kikoeru-android.Kikoeru.app">
         <option name="selectionMode" value="DROPDOWN" />
+        <DropdownSelection timestamp="2026-07-22T08:59:13.033522Z">
+          <Target type="DEFAULT_BOOT">
+            <handle>
+              <DeviceId pluginId="LocalEmulator" identifier="path=/Users/jinhaoli/.android/avd/Pixel_8_API_34.avd" />
+            </handle>
+          </Target>
+        </DropdownSelection>
+        <DialogSelection />
       </SelectionState>
     </selectionStates>
   </component>
