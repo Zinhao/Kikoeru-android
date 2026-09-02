@@ -25,18 +25,23 @@ android {
         }
     }
     signingConfigs {
-        create("release") {
-            storeFile file("C:/Users/q1521/OneDrive/Jks/kikoeru-android-key")
-            storePassword System.getenv("KEYSTORE_PASSWORD")
-            keyAlias System.getenv("KEY_ALIAS")
-            keyPassword System.getenv("KEY_PASSWORD")
+        if (System.getenv("KEYSTORE_PASSWORD") != null &&
+                System.getenv("KEY_ALIAS") != null &&
+                System.getenv("KEY_PASSWORD") != null) {
+            release {
+                // CI / 本地如果给了环境变量就用；否则这段根本不执行
+                storeFile file(System.getenv("KEYSTORE_FILE") ?: "C:/Users/q1521/OneDrive/Jks/kikoeru-android-key")
+                storePassword System.getenv("KEYSTORE_PASSWORD")
+                keyAlias System.getenv("KEY_ALIAS")
+                keyPassword System.getenv("KEY_PASSWORD")
+            }
         }
     }
 
     buildTypes {
         release {
-            minifyEnabled false
-            signingConfig signingConfigs.getByName("release")
+            minifyEnabled true
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.debug
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             // 禁用 Lint 检查
             lintOptions {
@@ -54,6 +59,10 @@ android {
                     outputFileName = fileName
                 }
             }
+        }
+        debug {
+            minifyEnabled false
+            signingConfig signingConfigs.debug
         }
     }
     compileOptions {
