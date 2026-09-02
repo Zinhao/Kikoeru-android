@@ -1,4 +1,4 @@
-name: Android CI
+name: Package Debug Apk
 
 on:
   push:
