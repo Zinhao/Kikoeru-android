@@ -1,4 +1,4 @@
-name: Package Debug Apk
+name: Package Kikoeru Debug Apk
 
 on:
   push:
