@@ -21,14 +21,14 @@ jobs:
       run: chmod +x gradlew
 
     - name: Decode keystore
-      run: echo "${{ secrets.KIKOERUKEY }}" | base64 -d > release-keystore.jks
+      run: printf "%s" "${{ secrets.KIKOERUKEY }}" | base64 -d > app/release-keystore.jks
 
     - name: Check keystore
       run: ls -la app/release-keystore.jks
 
     - name: Build signed release APK
       env:
-        KEYSTORE_FILE: release-keystore.jks
+        KEYSTORE_FILE: app/release-keystore.jks
         KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
