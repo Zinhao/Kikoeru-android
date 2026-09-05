@@ -21,15 +21,22 @@ jobs:
       run: chmod +x gradlew
 
     - name: Decode keystore
-      run: echo "${{ secrets.KIKOERUKEY }}" | base64 -d > app/release-keystore.jks
+      run: echo "${{ secrets.KIKOERUKEY }}" | base64 -d > release-keystore.jks
+
+    - name: Check keystore
+      run: ls -la app/release-keystore.jks
 
     - name: Build signed release APK
       env:
-        KEYSTORE_FILE: app/release-keystore.jks
+        KEYSTORE_FILE: release-keystore.jks
         KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
       run: ./gradlew assembleRelease
+
+    - name: Cleanup keystore
+      if: always()
+      run: rm -f app/release-keystore.jks
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
@@ -37,6 +44,4 @@ jobs:
         name: kikoeru-release
         path: app/build/outputs/apk/release/*.apk
 
-    - name: Cleanup keystore
-      if: always()
-      run: rm -f app/release-keystore.jks
+
