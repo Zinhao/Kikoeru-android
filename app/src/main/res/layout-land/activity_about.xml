@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:background="@drawable/player_bg"
+              android:orientation="horizontal"
+              android:gravity="center"
+    android:layout_height="match_parent">
+    <ImageView
+            android:id="@+id/imageView2"
+            android:layout_width="290dp"
+            android:layout_height="290dp"
+            android:src="@mipmap/ic_launcher_foreground"
+    />
+
+    <LinearLayout android:layout_width="0dp"
+                  android:layout_height="match_parent"
+                  android:layout_weight="1"
+                  android:gravity="center"
+                  android:orientation="vertical">
+        <TextView
+                android:id="@+id/tvName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/colorOnPrimary"
+                android:layout_marginBottom="4dp"
+                android:textStyle="bold"
+                android:textSize="36sp"
+                android:text="@string/app_name"
+        />
+
+        <TextView
+                android:id="@+id/tvVer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/colorOnPrimary"
+                android:layout_marginBottom="22dp"
+                android:textStyle="italic"
+                android:text="Build_20260509_090801"
+        />
+
+        <TextView
+                android:id="@+id/textView4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:autoLink="web"
+                android:layout_marginBottom="12dp"
+                android:text="@string/project_kikoeru_android_url"
+        />
+
+        <TextView
+                android:id="@+id/textView5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:text="@string/this_is_a_open_source_project"
+                android:textColor="?attr/colorOnPrimary"
+                android:autoLink="web"
+        />
+    </LinearLayout>
+
+</LinearLayout>

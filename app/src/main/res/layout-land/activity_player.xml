@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                                                   xmlns:app="http://schemas.android.com/apk/res-auto"
+                                                   android:layout_width="match_parent"
+                                                   android:layout_height="match_parent"
+                                                   xmlns:tools="http://schemas.android.com/tools"
+                                                    android:id="@+id/root"
+                                                   android:background="@drawable/player_bg"
+android:orientation="horizontal">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical">
+        <androidx.recyclerview.widget.RecyclerView android:layout_width="match_parent"
+                                                   android:layout_height="0dp"
+                                                   android:layout_weight="1"
+                                                   android:visibility="visible"
+                                                   android:id="@+id/mainRecycler"
+                                                   tools:itemCount="90"
+                                                   tools:listitem="@layout/item_lrc_row"
+                                                   android:layout_margin="15dp"
+                                                   tools:ignore="NestedWeights"/>
+        <Button android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/btLoadLrc"
+                android:text="@string/lrc_from_local"
+                android:layout_marginBottom="16dp"
+                android:layout_gravity="bottom|center"/>
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical">
+        <FrameLayout android:layout_width="match_parent"
+                     android:layout_height="match_parent"
+                     android:paddingTop="15dp"
+                     android:paddingRight="15dp"
+                     android:paddingLeft="15dp"
+                     android:layout_weight="1">
+
+            <ImageView
+                    android:id="@+id/ivCover"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:adjustViewBounds="true"
+                    android:scaleType="fitCenter"
+                    android:transitionName="hero_bottom"
+                    android:src="@drawable/ic_no_cover"
+            />
+
+        </FrameLayout>
+        <TextView
+                android:text="TextView"
+                android:layout_width="match_parent"
+                android:gravity="center"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                android:shadowRadius="5"
+                android:shadowDy="3"
+                android:shadowDx="3"
+                android:shadowColor="@color/black"
+                android:layout_height="wrap_content" android:id="@+id/textView13"/>
+
+
+        <com.zinhao.kikoeru.TimeProgressView
+                android:id="@+id/time_view"
+                android:layout_width="match_parent"
+                android:layout_height="45dp"
+                android:layout_marginBottom="8dp"
+
+                android:layout_marginStart="16dp" android:layout_marginEnd="16dp"/>
+
+
+
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                      android:orientation="horizontal"
+                      android:gravity="center"
+                      android:id="@+id/linearLayout3"
+                      android:layout_marginBottom="16dp"
+        >
+            <ImageButton
+                    android:id="@+id/ibLoop"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="24dp"
+                    android:background="@drawable/ripple_white_bg"
+                    android:src="@drawable/ic_baseline_loop_24"
+            />
+
+            <ImageButton
+                    android:id="@+id/ib1"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="24dp"
+                    android:background="@drawable/ripple_white_bg"
+                    app:srcCompat="@drawable/ic_baseline_skip_previous_24"
+            />
+
+            <ImageButton
+                    android:id="@+id/ib2"
+                    android:layout_width="68dp"
+                    android:layout_height="68dp"
+                    android:background="@drawable/ripple_white_bg"
+                    android:scaleType="centerCrop"
+                    app:srcCompat="@drawable/ic_baseline_pause_24"
+            />
+
+            <ImageButton
+                    android:id="@+id/ib3"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="24dp"
+                    android:background="@drawable/ripple_white_bg"
+                    app:srcCompat="@drawable/ic_baseline_skip_next_24"
+            />
+
+            <ImageButton
+                    android:id="@+id/imageButton2"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="24dp"
+                    android:background="@drawable/ripple_white_bg"
+                    app:srcCompat="@drawable/sleep_svgrepo_com"
+            />
+
+        </LinearLayout>
+    </LinearLayout>
+
+
+
+</LinearLayout>
