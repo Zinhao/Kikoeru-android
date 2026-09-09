@@ -1,105 +1,84 @@
 package com.zinhao.kikoeru
 
-import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
 import android.support.v4.media.session.PlaybackStateCompat
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.view.View.OnLongClickListener
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.*
-import android.widget.AdapterView.OnItemClickListener
 import androidx.activity.addCallback
 import androidx.appcompat.widget.ListPopupWindow
 import androidx.core.app.ActivityOptionsCompat
 import androidx.core.graphics.Insets
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.*
-import androidx.recyclerview.widget.GridLayoutManager.SpanSizeLookup
-import androidx.recyclerview.widget.RecyclerView.ItemDecoration
 import com.bumptech.glide.Glide
-import com.koushikdutta.async.http.AsyncHttpClient.JSONArrayCallback
-import com.koushikdutta.async.http.AsyncHttpClient.JSONObjectCallback
+import com.koushikdutta.async.http.AsyncHttpClient
 import com.koushikdutta.async.http.AsyncHttpResponse
-import com.zinhao.kikoeru.Api.doGetCirclesList
-import com.zinhao.kikoeru.Api.doGetReview
-import com.zinhao.kikoeru.Api.doGetWorkByCircles
-import com.zinhao.kikoeru.Api.doGetWorkByVa
-import com.zinhao.kikoeru.Api.doGetWorks
-import com.zinhao.kikoeru.Api.doGetWorksByTag
-import com.zinhao.kikoeru.Api.minCoverImageUrl
 import com.zinhao.kikoeru.Api.setOrder
-import com.zinhao.kikoeru.AudioService.CtrlBinder
-import com.zinhao.kikoeru.TagsView.TagClickListener
 import com.zinhao.kikoeru.databinding.ActivityMainBinding
 import com.zinhao.kikoeru.ui.WorkPageActivity
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-import java.io.IOException
-import java.util.*
 import kotlin.math.max
-import kotlin.math.min
 
-class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, TagClickListener<JSONObject?> {
-    private lateinit var recyclerView: RecyclerView
+class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, TagsView.TagClickListener<JSONObject?> {
+
+    private lateinit var binding: ActivityMainBinding
+    private lateinit var viewModel: MainViewModel
     private var workAdapter: WorkAdapter? = null
-    private lateinit var works: MutableList<JSONObject>
-    private lateinit var scrollListener: RecyclerView.OnScrollListener
-    private var page = 1
-    private var currentPage = 1
-    private var totalCount = 0
+    private var ctrlBinder: AudioService.CtrlBinder? = null
 
-    private var bottomLayout: View? = null
+    // 底部播放栏控件
+    private lateinit var ivCover: ImageView
+    private lateinit var tvTitle: TextView
+    private lateinit var tvWorkTitle: TextView
+    private lateinit var ibStatus: ImageButton
+    private lateinit var ibFloatLrcWindow: ImageButton
+
+    // 动画
     private var outAnim: Animation? = null
     private var inAnim: Animation? = null
     private var shouldShowAnim = true
-    private var ivCover: ImageView? = null
-    private var tvTitle: TextView? = null
-    private var tvWorkTitle: TextView? = null
-    private var ibStatus: ImageButton? = null
-    private var ibFloatLrcWindow: ImageButton? = null
-    private var tagId = -1
-    private var tagStr: String? = ""
-    private var vaId = ""
-    private var vaName: String? = ""
-    private var circlesName: String? = ""
-    private var circlesId: Long = -1
 
-    private lateinit var lastOpenTitle: String
-
-    private var type: Int = TYPE_ALL_WORK
-    private var ctrlBinder: CtrlBinder? = null
+    // 弹出菜单
     private var progressMenu: ListPopupWindow? = null
     private var moreMenu: ListPopupWindow? = null
-    private var itemDecoration: ItemDecoration? = null
-    private lateinit var viewBinding: ActivityMainBinding
+
+    // 分割线装饰
+    private var itemDecoration: RecyclerView.ItemDecoration? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if(App.getInstance().isUseNewLayout){
-            startActivity(Intent(this@WorksActivity, WorkPageActivity::class.java))
+        if (App.getInstance().isUseNewLayout) {
+            startActivity(Intent(this, WorkPageActivity::class.java))
             finish()
             return
         }
-        viewBinding = ActivityMainBinding.inflate(layoutInflater)
-        setSupportActionBar(viewBinding.toolbar)
-        setContentView(viewBinding.root)
-        setupView()
 
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setSupportActionBar(binding.toolbar)
+        setContentView(binding.root)
+
+        viewModel = ViewModelProvider(this)[MainViewModel::class.java]
+
+        setupViews()
+        setupListeners()
+        observeViewModel()
+
+        // 启动并绑定音频服务
         startForegroundService(Intent(this, AudioService::class.java))
         bindService(Intent(this, AudioService::class.java), this, BIND_AUTO_CREATE)
 
-        setupData()
-        setupProgressMenu()
-        setupMoreMenu()
-        setupListener()
-        doGetCirclesList(object : JSONArrayCallback() {
+        // 初始化圆圈列表映射
+        Api.doGetCirclesList(object : AsyncHttpClient.JSONArrayCallback() {
             override fun onCompleted(e: Exception?, asyncHttpResponse: AsyncHttpResponse?, jsonArray: JSONArray) {
                 if (e != null) {
                     App.getInstance().alertException(e)
@@ -112,292 +91,574 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
                 }
             }
         })
-        loadLastOpenWork()
+
+        // 加载上次打开的作品
+        viewModel.loadLastOpenWorks()
     }
 
-    private fun setupView(){
-        // 统一应用状态栏和导航栏的系统边距
-        setSafeArea(viewBinding.appBarLayout, object :InsetReady{
+    // ==================== 视图初始化 ====================
+
+    private fun setupViews() {
+        setSafeArea(binding.appBarLayout,object : BaseActivity.InsetReady{
             override fun onInsetReady(insets: Insets) {
-                viewBinding.recyclerView.setPadding(insets.left, 0, insets.right, 0)
-                viewBinding.linearLayout.setPadding(insets.left, 0, insets.right, insets.bottom)
+                binding.recyclerView.setPadding(insets.left, 0, insets.right, 0)
+                binding.linearLayout.setPadding(insets.left, 0, insets.right, insets.bottom)
             }
         })
-        recyclerView = viewBinding.recyclerView
-        bottomLayout = viewBinding.bottomLayout.root
-        ivCover = bottomLayout!!.findViewById<ImageView>(R.id.imageView)
-        tvTitle = bottomLayout!!.findViewById<TextView>(R.id.textView)
-        tvWorkTitle = bottomLayout!!.findViewById<TextView>(R.id.textView2)
-        ibStatus = bottomLayout!!.findViewById<ImageButton>(R.id.button)
-        ibFloatLrcWindow = bottomLayout!!.findViewById<ImageButton>(R.id.imageButton)
-        itemDecoration = DividerItemDecoration(this, DividerItemDecoration.VERTICAL)
+
+        // 底部播放栏控件
+        ivCover = binding.bottomLayout.imageView
+        tvTitle = binding.bottomLayout.textView
+        tvWorkTitle = binding.bottomLayout.textView2
+        ibStatus = binding.bottomLayout.button
+        ibFloatLrcWindow = binding.bottomLayout.imageButton
+
+        // 动画
         outAnim = AnimationUtils.loadAnimation(this, R.anim.move_bottom_out)
         inAnim = AnimationUtils.loadAnimation(this, R.anim.move_bottom_in)
+
+        // 分割线
+        itemDecoration = DividerItemDecoration(this, DividerItemDecoration.VERTICAL)
+
+        // 初始化布局管理器
+        val storeLayoutType = viewModel.layoutType
+        initLayout(storeLayoutType)
     }
 
-    private fun setupData(){
-        works = arrayListOf()
-        type = App.getInstance().getValue(CONFIG_TYPE, TYPE_ALL_WORK.toLong()).toInt()
-        page = App.getInstance().getValue(CONFIG_PAGE, 1).toInt()
-        totalCount = App.getInstance().getValue(CONFIG_TOTAL, 1).toInt()
-        vaId = App.getInstance().getValue(CONFIG_PARAM_STR, "")
-        tagId = App.getInstance().getValue(CONFIG_PARAM_INT, -1).toInt()
-        lastOpenTitle = App.getInstance().getValue(CONFIG_PARAM_TITLE,getString(R.string.app_name))
-    }
+    // ==================== 监听器设置 ====================
 
-    private fun setupListener(){
-        viewBinding.bt1.setOnClickListener(View.OnClickListener { v: View? ->
-            clearWork()
-            loadFromNetWork(TYPE_ALL_WORK)
-        })
-        viewBinding.bt2.setOnClickListener(View.OnClickListener { v: View? -> progressMenu?.show() })
-        viewBinding.bt3.setOnClickListener(View.OnClickListener { v: View? -> moreMenu?.show() })
-        ibFloatLrcWindow!!.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(v: View?) {
-                if (ctrlBinder!!.isLrcWindowShow()) {
-                    ctrlBinder!!.hideLrcFloatWindow()
-                } else {
-                    ctrlBinder!!.showLrcFloatWindow()
-                }
+    private fun setupListeners() {
+        // 全部作品按钮
+        binding.bt1.setOnClickListener {
+            viewModel.type = MainViewModel.TYPE_ALL_WORK
+            viewModel.clearWorks()
+            viewModel.loadFromNetwork()
+        }
+
+        // 进度筛选按钮
+        binding.bt2.setOnClickListener { showProgressMenu() }
+
+        // 更多按钮
+        binding.bt3.setOnClickListener { showMoreMenu() }
+
+        // 浮动歌词窗口按钮
+        ibFloatLrcWindow.setOnClickListener {
+            ctrlBinder?.let {
+                if (it.isLrcWindowShow()) it.hideLrcFloatWindow() else it.showLrcFloatWindow()
             }
-        })
-        scrollListener = object : RecyclerView.OnScrollListener() {
+        }
+
+        // 滚动加载更多
+        binding.recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
-                if (works.size >= totalCount) {
-                    workAdapter!!.setLoading(false)
-                    return
-                }
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    workAdapter?.let {
-                        if(!it.isLoading()){
-                            if (!recyclerView.canScrollVertically(1)) {
-                                Log.i(TAG, "work size:" + works.size + ", total:" + totalCount)
-                                loadFromNetWork(type)
-                            }
+                    if (!recyclerView.canScrollVertically(1) && !(viewModel.loading.value ?: false)) {
+                        val currentSize = viewModel.works.value?.size ?: 0
+                        if (currentSize < viewModel.totalCount) {
+                            viewModel.loadFromNetwork()
                         }
                     }
                 }
             }
+        })
 
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-            }
-        }
+        // 返回键处理
         onBackPressedDispatcher.addCallback(this, enabled = true) {
-            Toast.makeText(this@WorksActivity, "再次返回以退出", Toast.LENGTH_SHORT).show()
-            try {
-                App.getInstance().setValue(CONFIG_TYPE, type.toLong())
-                App.getInstance().setValue(CONFIG_PAGE, currentPage.toLong())
-                App.getInstance().setValue(CONFIG_PARAM_TITLE, title.toString())
-                if (type == TYPE_TAG_WORK) {
-                    App.getInstance().setValue(CONFIG_PARAM_INT, tagId.toLong())
-                } else if (type == TYPE_VA_WORK) {
-                    App.getInstance().setValue(CONFIG_PARAM_STR, vaId)
+            // 保存状态
+            viewModel.saveState()
+            // 保存滚动位置
+            val lm = binding.recyclerView.layoutManager
+            val pos = when (lm) {
+                is LinearLayoutManager -> lm.findFirstVisibleItemPosition()
+                is GridLayoutManager -> lm.findFirstVisibleItemPosition()
+                is StaggeredGridLayoutManager -> {
+                    val positions = IntArray(lm.spanCount)
+                    lm.findFirstVisibleItemPositions(positions)
+                    positions.maxOrNull() ?: RecyclerView.NO_POSITION
                 }
-                works.let {
-                    val jsonArray = JSONArray()
-                    for (i in 0 until it.size) {
-                        jsonArray.put(it[i])
-                    }
-                    Log.i(TAG,"setupListener:save works info:${it.size}")
-                    val layoutManager = recyclerView?.layoutManager
-                    var lastVisiblePosition: Int = 0
-                    if(layoutManager is GridLayoutManager || layoutManager is LinearLayoutManager) {
-                        lastVisiblePosition = layoutManager.findFirstVisibleItemPosition()
-                    }else if(layoutManager is StaggeredGridLayoutManager){
-                        val lastVisiblePositions = IntArray(layoutManager.spanCount)
-                        layoutManager.findFirstVisibleItemPositions(lastVisiblePositions)
-                        lastVisiblePosition = lastVisiblePositions.maxOrNull() ?: RecyclerView.NO_POSITION
-                    }
-                    App.getInstance().setValue(CONFIG_PARAM_POSITION, lastVisiblePosition.toLong())
-                    App.getInstance().setValue(CONFIG_TOTAL, totalCount.toLong())
-                    Log.i(TAG, "setupListener: save position:${lastVisiblePosition}")
-                    LocalFileCache.getInstance().saveLastOpenWorks(jsonArray)
-                }
-                DownloadUtils.getInstance().close()
-                Log.i(TAG,"setupListener: save player info:")
-            } catch (e: IOException) {
-                e.printStackTrace()
+                else -> RecyclerView.NO_POSITION
             }
+            if (pos != RecyclerView.NO_POSITION) {
+                viewModel.setLastPosition(pos)
+            }
+
+            Toast.makeText(this@WorksActivity, "再次返回以退出", Toast.LENGTH_SHORT).show()
             isEnabled = false
-            viewBinding.root.postDelayed({isEnabled = true},2000)
-            return@addCallback
+            binding.root.postDelayed({ isEnabled = true }, 2000)
         }
     }
 
-    private fun setupMoreMenu(){
-        moreMenu = ListPopupWindow(this)
-        moreMenu?.setAdapter(
-            ArrayAdapter<String?>(
-                this, android.R.layout.simple_list_item_1,
-                listOf<String?>(
-                    getString(R.string.va_voicer),
-                    getString(R.string.tag), getString(R.string.circles),
-                    getString(R.string.local_works)
-                )
-            )
-        )
-        moreMenu?.setModal(true)
-        moreMenu?.setAnchorView( viewBinding.bt3)
-        moreMenu?.setOnItemClickListener(OnItemClickListener { parent: AdapterView<*>?, view: View?, position: Int, id: Long ->
-            moreMenu!!.dismiss()
-            when (position) {
-                0 -> startActivityForResult(Intent(view!!.getContext(), VasActivity::class.java), VA_SELECT_RESULT)
-                1 -> startActivityForResult(Intent(view!!.getContext(), TagsActivity::class.java), TAG_SELECT_RESULT)
-                2 -> startActivityForResult(
-                    Intent(view!!.getContext(), CirclesActivity::class.java),
-                    CIRCLES_SELECT_RESULT
-                )
+    // ==================== 观察 ViewModel ====================
 
-                3 -> {
-                    clearWork()
-                    loadFromNetWork(TYPE_LOCAL_WORK)
+    private fun observeViewModel() {
+        // 作品列表变化
+        viewModel.works.observe(this) { worksList ->
+            if (workAdapter == null) {
+                val layoutType = viewModel.layoutType
+                setupAdapter(worksList, layoutType)
+                binding.recyclerView.adapter = workAdapter
+            } else {
+                workAdapter?.notifyDataSetChanged()
+            }
+        }
+
+        // 标题变化
+        viewModel.title.observe(this) { title ->
+            supportActionBar?.title = title
+        }
+
+        // 加载状态变化
+        viewModel.loading.observe(this) { isLoading ->
+            workAdapter?.setLoading(isLoading)
+        }
+
+        // 错误事件
+        viewModel.errorEvent.observe(this) { throwable ->
+
+        }
+
+        // 滚动位置恢复
+        viewModel.scrollToPosition.observe(this) { position ->
+            if (position != RecyclerView.NO_POSITION) {
+                binding.recyclerView.layoutManager?.scrollToPosition(position)
+            }
+        }
+
+        // 更改布局
+        viewModel.layoutChangeLiveData.observe(this) { change ->
+            val newLayout = viewModel.layoutType
+            val worksList = viewModel.works.value ?:mutableListOf()
+            setupAdapter(worksList, newLayout)
+            initLayout(newLayout)
+            binding.recyclerView.adapter = workAdapter
+        }
+    }
+
+    private fun setupAdapter(worksList:MutableList<JSONObject>, layoutType:Int){
+        workAdapter = WorkAdapter(worksList, layoutType).apply {
+            setTagClickListener(this@WorksActivity)
+            setVaClickListener(vaClickListener)
+            setCirclesClickListener(circlesClickListener)
+            setItemClickListener { v ->
+                val item = v.tag as JSONObject
+                val intent = Intent(v.context, WorkTreeActivity::class.java).apply {
+                    putExtra("work_json_str", item.toString())
+                }
+                val heroView = v.findViewById<View>(R.id.ivCover)
+                val options = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                    this@WorksActivity, heroView, "hero_image"
+                )
+                startActivity(intent, options.toBundle())
+            }
+            setItemLongClickListener { v ->
+                if (viewModel.type != MainViewModel.TYPE_LOCAL_WORK) return@setItemLongClickListener true
+                showDeleteCachePopup(v)
+                true
+            }
+        }
+    }
+
+    // ==================== 布局初始化 ====================
+
+    private fun initLayout(layoutType: Int) {
+        binding.recyclerView.removeItemDecoration(itemDecoration!!)
+        val col: Int
+        val layoutManager: RecyclerView.LayoutManager?
+
+        when (layoutType) {
+            WorkAdapter.LAYOUT_LIST -> {
+                layoutManager = LinearLayoutManager(this)
+                col = 1
+            }
+            WorkAdapter.LAYOUT_SMALL_GRID -> {
+                col = max(resources.displayMetrics.widthPixels / 395, 3)
+                layoutManager = GridLayoutManager(this, col).apply {
+                    spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+                        override fun getSpanSize(position: Int): Int {
+                            return if (position == (viewModel.works.value?.size ?: 0)) col else 1
+                        }
+                    }
                 }
             }
-        })
+            WorkAdapter.LAYOUT_BIG_GRID -> {
+                col = max(resources.displayMetrics.widthPixels / 395, 2)
+                layoutManager = GridLayoutManager(this, col).apply {
+                    spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+                        override fun getSpanSize(position: Int): Int {
+                            return if (position == (viewModel.works.value?.size ?: 0)) col else 1
+                        }
+                    }
+                }
+            }
+            WorkAdapter.LAYOUT_STAGGERED -> {
+                col = max(resources.displayMetrics.widthPixels / 395, 2)
+                layoutManager = StaggeredGridLayoutManager(col, StaggeredGridLayoutManager.VERTICAL)
+            }
+            else -> {
+                layoutManager = LinearLayoutManager(this)
+                col = 1
+            }
+        }
+
+        binding.recyclerView.layoutManager = layoutManager
+        // adapter 已经在 observe 中设置，此处不需要重复设置
     }
 
-    private fun setupProgressMenu() {
-        progressMenu = ListPopupWindow(this)
-        progressMenu!!.setAdapter(
-            ArrayAdapter<String?>(
-                this, android.R.layout.simple_list_item_1,
-                Arrays.asList<String?>(
-                    getString(R.string.marked),
-                    getString(R.string.listening),
-                    getString(R.string.listened),
-                    getString(R.string.replay),
-                    getString(R.string.postponed)
-                )
-            )
-        )
-        progressMenu!!.setModal(true)
-        progressMenu!!.setAnchorView( viewBinding.bt2)
-        progressMenu!!.setOnItemClickListener(OnItemClickListener { parent: AdapterView<*>?, view: View?, position: Int, id: Long ->
-            progressMenu!!.dismiss()
-            clearWork()
-            when (position) {
-                0 -> loadFromNetWork(TYPE_SELF_MARKED)
-                1 -> loadFromNetWork(TYPE_SELF_LISTENING)
-                2 -> loadFromNetWork(TYPE_SELF_LISTENED)
-                3 -> loadFromNetWork(TYPE_SELF_REPLAY)
-                4 -> loadFromNetWork(TYPE_SELF_POSTPONED)
+    // ==================== 弹出菜单 ====================
+
+    private fun showProgressMenu() {
+        if (progressMenu == null) {
+            progressMenu = ListPopupWindow(this).apply {
+                setAdapter(ArrayAdapter(
+                    this@WorksActivity,
+                    android.R.layout.simple_list_item_1,
+                    listOf(
+                        getString(R.string.marked),
+                        getString(R.string.listening),
+                        getString(R.string.listened),
+                        getString(R.string.replay),
+                        getString(R.string.postponed)
+                    )
+                ))
+                isModal = true
+                anchorView = binding.bt2
+                setOnItemClickListener { _, _, position, _ ->
+                    dismiss()
+                    viewModel.clearWorks()
+                    when (position) {
+                        0 -> {
+                            viewModel.type = MainViewModel.TYPE_SELF_MARKED
+                            viewModel.loadFromNetwork()
+                        }
+                        1 -> {
+                            viewModel.type = MainViewModel.TYPE_SELF_LISTENING
+                            viewModel.loadFromNetwork()
+                        }
+                        2 -> {
+                            viewModel.type = MainViewModel.TYPE_SELF_LISTENED
+                            viewModel.loadFromNetwork()
+                        }
+                        3 -> {
+                            viewModel.type = MainViewModel.TYPE_SELF_REPLAY
+                            viewModel.loadFromNetwork()
+                        }
+                        4 -> {
+                            viewModel.type = MainViewModel.TYPE_SELF_POSTPONED
+                            viewModel.loadFromNetwork()
+                        }
+                    }
+                }
             }
-        })
+        }
+        progressMenu?.show()
     }
+
+    private fun showMoreMenu() {
+        if (moreMenu == null) {
+            moreMenu = ListPopupWindow(this).apply {
+                setAdapter(ArrayAdapter(
+                    this@WorksActivity,
+                    android.R.layout.simple_list_item_1,
+                    listOf(
+                        getString(R.string.va_voicer),
+                        getString(R.string.tag),
+                        getString(R.string.circles),
+                        getString(R.string.local_works)
+                    )
+                ))
+                isModal = true
+                anchorView = binding.bt3
+                setOnItemClickListener { _, _, position, _ ->
+                    dismiss()
+                    when (position) {
+                        0 -> startActivityForResult(Intent(this@WorksActivity, VasActivity::class.java), VA_SELECT_RESULT)
+                        1 -> startActivityForResult(Intent(this@WorksActivity, TagsActivity::class.java), TAG_SELECT_RESULT)
+                        2 -> startActivityForResult(Intent(this@WorksActivity, CirclesActivity::class.java), CIRCLES_SELECT_RESULT)
+                        3 -> {
+                            viewModel.clearWorks()
+                            viewModel.type = MainViewModel.TYPE_LOCAL_WORK
+                            viewModel.loadFromNetwork()
+                        }
+                    }
+                }
+            }
+        }
+        moreMenu?.show()
+    }
+
+    // ==================== 底部播放栏控制 ====================
 
     private fun toggleBottom() {
-        if (shouldShowAnim && bottomLayout!!.getVisibility() == View.VISIBLE) {
+        if (shouldShowAnim && binding.bottomLayout.root.visibility == View.VISIBLE) {
             shouldShowAnim = false
-            bottomLayout!!.startAnimation(outAnim)
-            bottomLayout!!.postDelayed(object : Runnable {
-                override fun run() {
-                    bottomLayout!!.setVisibility(View.GONE)
-                    shouldShowAnim = true
-                }
-            }, outAnim!!.getDuration())
-        } else if (shouldShowAnim && bottomLayout!!.getVisibility() == View.GONE) {
+            binding.bottomLayout.root.startAnimation(outAnim)
+            binding.bottomLayout.root.postDelayed({
+                binding.bottomLayout.root.visibility = View.GONE
+                shouldShowAnim = true
+            }, outAnim?.duration ?: 300)
+        } else if (shouldShowAnim && binding.bottomLayout.root.visibility == View.GONE) {
             shouldShowAnim = false
-            bottomLayout!!.setVisibility(View.VISIBLE)
-            bottomLayout!!.startAnimation(inAnim)
-            bottomLayout!!.postDelayed(object : Runnable {
-                override fun run() {
-                    shouldShowAnim = true
-                }
-            }, inAnim!!.getDuration())
+            binding.bottomLayout.root.visibility = View.VISIBLE
+            binding.bottomLayout.root.startAnimation(inAnim)
+            binding.bottomLayout.root.postDelayed({
+                shouldShowAnim = true
+            }, inAnim?.duration ?: 300)
         }
     }
 
-    fun loadLastOpenWork(){
-        if (workAdapter != null) {
-            workAdapter!!.setLoading(true)
-        }
-        try {
-            LocalFileCache.getInstance().readLastOpenWorks(object : JSONArrayCallback(){
-                override fun onCompleted(
-                    e: java.lang.Exception?,
-                    asyncHttpResponse: AsyncHttpResponse?,
-                    lastOpenWorksArray: JSONArray?
-                ) {
-                    if (e != null) {
-                        runOnUiThread {
-                            loadFromNetWork(type)
-                        }
-                        return
-                    }
-                    if (asyncHttpResponse == null || asyncHttpResponse.code() != 200) {
-                        if (lastOpenWorksArray != null) { } else {
-                            return
-                        }
-                    }
-                    runOnUiThread { setTitle(lastOpenTitle) }
-                    lastOpenWorksArray?.let {
-                        updateListWith(it) { scrollToLastOpenPosition() }
-                    }
+    // ==================== 长按删除缓存弹窗 ====================
+
+    private fun showDeleteCachePopup(v: View) {
+        val popup = ListPopupWindow(v.context).apply {
+            isModal = true
+            anchorView = v
+            setAdapter(ArrayAdapter(
+                v.context,
+                android.R.layout.simple_list_item_1,
+                listOf(getString(R.string.delete_cache))
+            ))
+            setOnItemClickListener { _, _, _, _ ->
+                val item = v.tag as JSONObject
+                try {
+                    LocalFileCache.getInstance().removeWork(item.getInt("id"))
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                    alertException(e)
                 }
-            })
-        } catch (e: JSONException) {
-            e.printStackTrace()
-            alertException(e)
+                val index = viewModel.works.value?.indexOf(item) ?: -1
+                if (index != -1) {
+                    viewModel.works.value?.removeAt(index)
+                    workAdapter?.notifyItemRemoved(index)
+                }
+                dismiss()
+            }
+        }
+        popup.show()
+    }
+
+    // ==================== 菜单 ====================
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menu.add(0, 0, 0, "切换账号")
+
+        val layoutMenu = menu.addSubMenu(0, 9, 9, R.string.works_layout).apply {
+            setIcon(R.drawable.ic_baseline_view_column_24)
+            add(2, 10, 10, R.string.list_layout)
+            add(2, 11, 11, R.string.cover_layout)
+            add(2, 12, 12, R.string.detail_layout)
+            add(2, 13, 13, R.string.staggered)
+            item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        }
+
+        val sortMenu = menu.addSubMenu(0, 16, 16, R.string.sort).apply {
+            setIcon(R.drawable.ic_baseline_sort_24)
+            add(3, 17, 17, R.string.release_date)
+            add(3, 18, 18, R.string.rj_number)
+            add(3, 19, 19, R.string.prize)
+            add(3, 20, 20, R.string.last_in_lib)
+            item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        }
+
+        menu.add(0, 22, 22, R.string.download_mission)
+        menu.add(0, 24, 24, R.string.local_history)
+        menu.add(0, 15, 99, R.string.more)
+
+        val searchMenu = menu.add(0, 23, 23, R.string.search).apply {
+            setIcon(R.drawable.ic_baseline_search_24)
+            setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        }
+
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.groupId) {
+            2 -> { // 布局切换
+                val layoutType = when (item.itemId) {
+                    10 -> WorkAdapter.LAYOUT_LIST
+                    11 -> WorkAdapter.LAYOUT_SMALL_GRID
+                    12 -> WorkAdapter.LAYOUT_BIG_GRID
+                    13 -> WorkAdapter.LAYOUT_STAGGERED
+                    else -> WorkAdapter.LAYOUT_STAGGERED
+                }
+                viewModel.changeLayoutType(layoutType)
+                return true
+            }
+            3 -> { // 排序切换
+                var needUpdate = false
+                when (item.itemId) {
+                    17 -> { setOrder("release"); needUpdate = true }
+                    18 -> { setOrder("id"); needUpdate = true }
+                    19 -> { setOrder("price"); needUpdate = true }
+                    20 -> { setOrder("create_date"); needUpdate = true }
+                }
+                if (needUpdate) {
+                    viewModel.clearWorks()
+                    viewModel.loadFromNetwork()
+                }
+                return true
+            }
+        }
+
+        return when (item.itemId) {
+            0 -> {
+                App.getInstance().setValue(App.CONFIG_UPDATE_TIME, 0)
+                startActivity(Intent(this, UserSwitchActivity::class.java))
+                true
+            }
+            15 -> {
+                startActivity(Intent(this, MoreActivity::class.java))
+                true
+            }
+            22 -> {
+                startActivity(Intent(this, DownLoadMissionActivity::class.java))
+                true
+            }
+            23 -> {
+                startActivity(Intent(this, SearchActivity::class.java))
+                true
+            }
+            24 -> {
+                startActivity(Intent(this, LastWatchActivity::class.java))
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 
-    fun loadFromNetWork(type: Int = TYPE_ALL_WORK) {
-        if (workAdapter != null) {
-            workAdapter!!.setLoading(true)
+    // ==================== Activity 结果 ====================
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == TAG_SELECT_RESULT || requestCode == VA_SELECT_RESULT) {
+            if (resultCode == RESULT_OK && data != null) {
+                val resultType = data.getStringExtra("resultType")
+                if (resultType == null) return
+                when (resultType) {
+                    "va" -> {
+                        val vaId = data.getStringExtra("id") ?: return
+                        if (vaId != viewModel.vaId) {
+                            viewModel.vaName = data.getStringExtra("name") ?: ""
+                            viewModel.clearWorks()
+                            viewModel.vaId = vaId
+                        }
+                        viewModel.type = MainViewModel.TYPE_VA_WORK
+                        viewModel.loadFromNetwork()
+                    }
+                    "tag" -> {
+                        val tagId = data.getIntExtra("id", -1)
+                        if (tagId != viewModel.tagId) {
+                            viewModel.tagStr = data.getStringExtra("name") ?: ""
+                            viewModel.clearWorks()
+                            viewModel.tagId = tagId
+                        }
+                        viewModel.type = MainViewModel.TYPE_TAG_WORK
+                        viewModel.loadFromNetwork()
+                    }
+                }
+            }
+        } else if (requestCode == CIRCLES_SELECT_RESULT) {
+            if (resultCode == RESULT_OK && data != null) {
+                val resultType = data.getStringExtra("resultType")
+                if (resultType == "circles") {
+                    val circlesId = data.getLongExtra("id", -1)
+                    if (circlesId != viewModel.circlesId && circlesId != -1L) {
+                        viewModel.circlesName = data.getStringExtra("name") ?: ""
+                        viewModel.clearWorks()
+                        viewModel.circlesId = circlesId
+                        viewModel.type = MainViewModel.TYPE_CIRCLES_WORK
+                        viewModel.loadFromNetwork()
+                    }
+                }
+            }
         }
-        this.type = type
-        if (type == TYPE_ALL_WORK) {
-            setTitle(getString(R.string.app_name))
-            doGetWorks(page, apisCallback)
-        } else if (type == TYPE_SELF_LISTENING) {
-            setTitle(R.string.listening)
-            doGetReview(Api.FILTER_LISTENING, page, apisCallback)
-        } else if (type == TYPE_SELF_LISTENED) {
-            setTitle(R.string.listened)
-            doGetReview(Api.FILTER_LISTENED, page, apisCallback)
-        } else if (type == TYPE_SELF_MARKED) {
-            setTitle(R.string.marked)
-            doGetReview(Api.FILTER_MARKED, page, apisCallback)
-        } else if (type == TYPE_SELF_REPLAY) {
-            setTitle(R.string.replay)
-            doGetReview(Api.FILTER_REPLAY, page, apisCallback)
-        } else if (type == TYPE_SELF_POSTPONED) {
-            setTitle(R.string.postponed)
-            doGetReview(Api.FILTER_POSTPONED, page, apisCallback)
-        } else if (type == TYPE_TAG_WORK) {
-            setTitle(tagStr)
-            doGetWorksByTag(page, tagId, apisCallback)
-        } else if (type == TYPE_VA_WORK) {
-            setTitle(vaName)
-            doGetWorkByVa(page, vaId, apisCallback)
-        } else if (type == TYPE_CIRCLES_WORK) {
-            setTitle(circlesName)
-            doGetWorkByCircles(page, circlesId, apisCallback)
-        } else if (type == TYPE_LOCAL_WORK) {
-            setTitle(String.format("%s", if (App.getInstance().isSaveExternal) "外部公共目录" else "内部私有目录"))
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        val resultType = intent.getStringExtra("resultType")
+        when (resultType) {
+            "va" -> {
+                val vaId = intent.getStringExtra("id") ?: return
+                if (vaId != viewModel.vaId || viewModel.type != MainViewModel.TYPE_VA_WORK) {
+                    viewModel.vaName = intent.getStringExtra("name") ?: ""
+                    viewModel.clearWorks()
+                    viewModel.vaId = vaId
+                }
+                viewModel.type = MainViewModel.TYPE_VA_WORK
+                viewModel.loadFromNetwork()
+            }
+            "tag" -> {
+                val tagId = intent.getIntExtra("id", -1)
+                if (tagId != viewModel.tagId || viewModel.type != MainViewModel.TYPE_TAG_WORK) {
+                    viewModel.tagStr = intent.getStringExtra("name") ?: ""
+                    viewModel.clearWorks()
+                    viewModel.tagId = tagId
+                }
+                viewModel.type = MainViewModel.TYPE_TAG_WORK
+                viewModel.loadFromNetwork()
+            }
+            else -> {
+                viewModel.clearWorks()
+                viewModel.type = MainViewModel.TYPE_ALL_WORK
+                viewModel.loadFromNetwork()
+            }
+        }
+    }
+
+    // ==================== Service 连接 ====================
+
+    override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+        ctrlBinder = service as AudioService.CtrlBinder
+        ibStatus.setOnClickListener {
+            val controller = ctrlBinder?.controller ?: return@setOnClickListener
+            val state = controller.playbackState?.state
+            if (state == null) {
+                controller.transportControls.play()
+            } else if (state == PlaybackStateCompat.STATE_PLAYING) {
+                controller.transportControls.pause()
+            } else {
+                controller.transportControls.play()
+            }
+        }
+
+        binding.bottomLayout.root.setOnClickListener { v ->
             try {
-                LocalFileCache.getInstance().readLocalDownloadWorks(apisCallback)
+                if (ctrlBinder?.currentTitle?.endsWith("mp4") == true) {
+                    startActivity(Intent(this, VideoPlayerActivity::class.java))
+                } else {
+                    val intent = Intent(this, AudioPlayerActivity::class.java)
+                    val heroView = v.findViewById<View>(R.id.imageView)
+                    val options = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                        this, heroView, "hero_bottom"
+                    )
+                    startActivity(intent, options.toBundle())
+                }
             } catch (e: JSONException) {
                 e.printStackTrace()
                 alertException(e)
             }
         }
+
+        ctrlBinder?.addMusicChangeListener(this)
     }
 
-    @SuppressLint("DefaultLocale")
+    override fun onServiceDisconnected(name: ComponentName?) {}
+
+    // ==================== MusicChangeListener 实现 ====================
+
     override fun onAlbumChange(rjNumber: Long) {
-        if (rjNumber != 0L && bottomLayout!!.getVisibility() == View.GONE) {
+        if (rjNumber != 0L && binding.bottomLayout.root.visibility == View.GONE) {
             toggleBottom()
         }
-        Glide.with(this).load(minCoverImageUrl(rjNumber)).apply(App.getInstance().getRadius5Pic()).into(ivCover!!)
+        Glide.with(this).load(Api.minCoverImageUrl(rjNumber)).apply(App.getInstance().radius5Pic).into(ivCover)
     }
 
     override fun onAudioChange(audio: JSONObject) {
         try {
-            tvTitle!!.setText(audio.getString("title"))
-            tvWorkTitle!!.setText(audio.getString("workTitle"))
+            tvTitle.text = audio.getString("title")
+            tvWorkTitle.text = audio.getString("workTitle")
         } catch (e: JSONException) {
             e.printStackTrace()
             alertException(e)
@@ -405,507 +666,79 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
     }
 
     override fun onStatusChange(status: Int) {
-        if (status == 0) {
-            ibStatus!!.setImageResource(R.drawable.ic_baseline_play_arrow_white_24)
-        } else {
-            ibStatus!!.setImageResource(R.drawable.ic_baseline_pause_white_24)
-        }
+        ibStatus.setImageResource(
+            if (status == 0) R.drawable.ic_baseline_play_arrow_white_24
+            else R.drawable.ic_baseline_pause_white_24
+        )
     }
 
-    override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-        ctrlBinder = service as CtrlBinder
-        ibStatus!!.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(v: View?) {
-                if (ctrlBinder!!.getController().getPlaybackState() == null) {
-                    ctrlBinder!!.getController().getTransportControls().play()
-                    return
-                }
-                if (ctrlBinder!!.getController().getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING) {
-                    ctrlBinder!!.getController().getTransportControls().pause()
-                } else {
-                    ctrlBinder!!.getController().getTransportControls().play()
-                }
-            }
-        })
-        bottomLayout!!.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(v: View) {
-                try {
-                    if (ctrlBinder!!.getCurrentTitle().endsWith("mp4")) {
-                        startActivity(Intent(this@WorksActivity, VideoPlayerActivity::class.java))
-                    } else {
-                        val intent = Intent(this@WorksActivity, AudioPlayerActivity::class.java)
-                        val view = v.findViewById<View>(R.id.imageView)
-                        val options = ActivityOptionsCompat.makeSceneTransitionAnimation(
-                            this@WorksActivity, view, "hero_bottom" // 这里的字符串必须匹配 transitionName
-                        )
-                        startActivity(intent, options.toBundle())
-                    }
-                } catch (e: JSONException) {
-                    e.printStackTrace()
-                    alertException(e)
-                }
-            }
-        })
-        ctrlBinder!!.addMusicChangeListener(this)
-    }
-
-    override fun onServiceDisconnected(name: ComponentName?) {
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menu.add(0, 0, 0, "切换账号")
-
-
-        val layoutMenu = menu.addSubMenu(0, 9, 9, R.string.works_layout)
-        layoutMenu.setIcon(R.drawable.ic_baseline_view_column_24)
-        layoutMenu.add(2, 10, 10, R.string.list_layout)
-        layoutMenu.add(2, 11, 11, R.string.cover_layout)
-        layoutMenu.add(2, 12, 12, R.string.detail_layout)
-        layoutMenu.add(2, 13, 13, R.string.staggered)
-        layoutMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
-
-
-        val sortMenu = menu.addSubMenu(0, 16, 16, R.string.sort)
-        sortMenu.setIcon(R.drawable.ic_baseline_sort_24)
-        sortMenu.add(3, 17, 17, R.string.release_date)
-        sortMenu.add(3, 18, 18, R.string.rj_number)
-        sortMenu.add(3, 19, 19, R.string.prize)
-        sortMenu.add(3, 20, 20, R.string.last_in_lib)
-        sortMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
-
-        menu.add(0, 22, 22, R.string.download_mission)
-        menu.add(0, 24, 24, R.string.local_history)
-        menu.add(0, 15, 99, R.string.more)
-
-        val searchMenu = menu.add(0, 23, 23, R.string.search)
-        menu.getItem(4).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
-
-        searchMenu.setIcon(R.drawable.ic_baseline_search_24)
-        searchMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
-        return super.onCreateOptionsMenu(menu)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.getGroupId() == 2) {
-            var layoutType = WorkAdapter.LAYOUT_SMALL_GRID
-            if (item.getItemId() == 10) {
-                layoutType = WorkAdapter.LAYOUT_LIST
-            } else if (item.getItemId() == 12) {
-                layoutType = WorkAdapter.LAYOUT_BIG_GRID
-            } else if (item.getItemId() == 13) {
-                layoutType = WorkAdapter.LAYOUT_STAGGERED
-            }
-            App.getInstance().setValue(App.CONFIG_LAYOUT_TYPE, layoutType.toLong())
-            initLayout(layoutType)
-            return super.onOptionsItemSelected(item)
-        }
-
-        if (item.getGroupId() == 3) {
-            var update = false
-            if (item.getItemId() == 17) {
-                setOrder("release")
-                update = true
-            } else if (item.getItemId() == 18) {
-                setOrder("id")
-                update = true
-            } else if (item.getItemId() == 19) {
-                setOrder("price")
-                update = true
-            } else if (item.getItemId() == 20) {
-                setOrder("create_date")
-                update = true
-            }
-            if (update) {
-                clearWork()
-                loadFromNetWork(type)
-            }
-            return true
-        }
-
-        if (item.getItemId() == 0) {
-            App.getInstance().setValue(App.CONFIG_UPDATE_TIME, 0)
-            startActivity(Intent(this, UserSwitchActivity::class.java))
-        } else if (item.getItemId() == 1) {
-        } else if (item.getItemId() == 15) {
-            startActivity(Intent(this, MoreActivity::class.java))
-        } else if (item.getItemId() == 21) {
-            startActivityForResult(Intent(this, VasActivity::class.java), VA_SELECT_RESULT)
-        } else if (item.getItemId() == 22) {
-            startActivity(Intent(this, DownLoadMissionActivity::class.java))
-        } else if (item.getItemId() == 23) {
-            startActivity(Intent(this, SearchActivity::class.java))
-        } else if (item.getItemId() == 24) {
-            startActivity(Intent(this, LastWatchActivity::class.java))
-        }
-        return super.onOptionsItemSelected(item)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == TAG_SELECT_RESULT || requestCode == VA_SELECT_RESULT) {
-            if (resultCode == RESULT_OK && data != null) {
-                val resultType = data.getStringExtra("resultType")
-                if (resultType == null) {
-                    return
-                }
-                if (resultType == "va") {
-                    val vaId: String = data.getStringExtra("id")!!
-                    if (vaId != this.vaId) {
-                        vaName = data.getStringExtra("name")
-                        clearWork()
-                        this.vaId = vaId
-                    }
-                    loadFromNetWork(TYPE_VA_WORK)
-                } else if (resultType == "tag") {
-                    val tagId = data.getIntExtra("id", -1)
-                    if (tagId != this.tagId) {
-                        tagStr = data.getStringExtra("name")
-                        clearWork()
-                        this.tagId = tagId
-                    }
-                    loadFromNetWork(TYPE_TAG_WORK)
-                }
-
-            }
-        } else if (requestCode == CIRCLES_SELECT_RESULT) {
-            if (resultCode == RESULT_OK && data != null) {
-                val resultType = data.getStringExtra("resultType")
-                if (resultType == null) {
-                    return
-                }
-                if (resultType == "circles") {
-                    val circlesId = data.getLongExtra("id", -1)
-                    if (this.circlesId != circlesId && circlesId != -1L) {
-                        circlesName = data.getStringExtra("name")
-                        clearWork()
-                        this.circlesId = circlesId
-                        loadFromNetWork(TYPE_CIRCLES_WORK)
-                    }
-                }
-            }
-        }
-    }
-
-    private fun scrollToLastOpenPosition(){
-        val manger = recyclerView.layoutManager
-        if(manger is GridLayoutManager || manger is LinearLayoutManager || manger is StaggeredGridLayoutManager) {
-            val index = App.getInstance().getValue(CONFIG_PARAM_POSITION, 0).toInt()
-            if(index!=RecyclerView.NO_POSITION){
-                manger.scrollToPosition(index)
-            }
-        }
-    }
-
-    private fun initLayout(layoutType: Int) {
-        var layoutManager: RecyclerView.LayoutManager? = null
-        recyclerView.removeItemDecoration(itemDecoration!!)
-        val col: Int
-        if (layoutType == WorkAdapter.LAYOUT_LIST) {
-            layoutManager = LinearLayoutManager(this@WorksActivity)
-            col = 1
-        } else if (layoutType == WorkAdapter.LAYOUT_SMALL_GRID) {
-            col = max(getResources().getDisplayMetrics().widthPixels / 395, 3)
-            layoutManager = GridLayoutManager(this@WorksActivity, col)
-        } else if (layoutType == WorkAdapter.LAYOUT_BIG_GRID) {
-            col = max(getResources().getDisplayMetrics().widthPixels / 395, 2)
-            layoutManager = GridLayoutManager(this@WorksActivity, col)
-        } else if (layoutType == WorkAdapter.LAYOUT_STAGGERED) {
-            col = max(getResources().getDisplayMetrics().widthPixels / 395, 2)
-            layoutManager = StaggeredGridLayoutManager(col, StaggeredGridLayoutManager.VERTICAL)
-        } else {
-            col = 1
-        }
-        if (layoutManager is GridLayoutManager) {
-            layoutManager.setSpanSizeLookup(object : SpanSizeLookup() {
-                override fun getSpanSize(position: Int): Int {
-                    if (position == works.size) {
-                        return col
-                    }
-                    return 1
-                }
-            })
-        }
-        works.let {
-            workAdapter = WorkAdapter(it, layoutType)
-            workAdapter!!.setTagClickListener(this)
-            workAdapter!!.setVaClickListener(vaClickListener)
-            workAdapter!!.setCirclesClickListener(circlesClickListener)
-            workAdapter!!.setItemClickListener(object : View.OnClickListener {
-                override fun onClick(v: View) {
-                    val item = v.tag as JSONObject
-                    val intent = Intent(v.context, WorkTreeActivity::class.java)
-                    intent.putExtra("work_json_str", item.toString())
-                    val heroView = v.findViewById<View>(R.id.ivCover)
-                    val options = ActivityOptionsCompat.makeSceneTransitionAnimation(
-                        this@WorksActivity, heroView, "hero_image" // 这里的字符串必须匹配 transitionName
-                    )
-                    startActivity(intent, options.toBundle())
-                }
-            })
-            workAdapter!!.setItemLongClickListener(object : OnLongClickListener {
-                override fun onLongClick(v: View): Boolean {
-                    if (type != TYPE_LOCAL_WORK) {
-                        return true
-                    }
-                    val listPopupWindow = ListPopupWindow(v.getContext())
-                    listPopupWindow.setModal(true)
-                    listPopupWindow.setAnchorView(v)
-                    val _str = getString(R.string.delete_cache)
-                    listPopupWindow.setAdapter(
-                        ArrayAdapter<String?>(
-                            v.getContext(),
-                            android.R.layout.simple_list_item_1,
-                            mutableListOf<String?>(_str)
-                        )
-                    )
-                    listPopupWindow.setOnItemClickListener(object : OnItemClickListener {
-                        override fun onItemClick(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                            val item = v.getTag() as JSONObject
-                            try {
-                                LocalFileCache.getInstance().removeWork(item.getInt("id"))
-                            } catch (e: JSONException) {
-                                e.printStackTrace()
-                                alertException(e)
-                            }
-
-                            val index = works.indexOf(item)
-                            if (index != -1) {
-                                works.removeAt(index)
-                                workAdapter!!.notifyItemRemoved(index)
-                            }
-                            listPopupWindow.dismiss()
-                        }
-                    })
-                    listPopupWindow.show()
-                    return true
-                }
-            })
-            recyclerView.setLayoutManager(layoutManager)
-            recyclerView.setAdapter(workAdapter)
-        }
-    }
-
-    private fun clearWork() {
-        page = 1
-        if (workAdapter == null) return
-        workAdapter?.notifyItemRangeRemoved(0, works.size)
-//        workAdapter?.notifyItemRangeChanged(0, works.size)
-        works.clear()
-    }
-
-    override fun onDestroy() {
-        ctrlBinder!!.removeMusicChangeListener(this)
-
-        val playbackStateCompat = ctrlBinder!!.getController().getPlaybackState()
-        if (playbackStateCompat == null) {
-            stopService(Intent(this, AudioService::class.java))
-        } else {
-            val state = ctrlBinder!!.controller.playbackState.state
-            if (state == PlaybackStateCompat.STATE_STOPPED || state == PlaybackStateCompat.STATE_PAUSED) {
-                stopService(Intent(this, AudioService::class.java))
-            }
-        }
-        unbindService(this)
-        super.onDestroy()
-    }
-
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        val resultType: String? = intent.getStringExtra("resultType")
-        if ("va" == resultType) {
-            val vaId: String = intent.getStringExtra("id")!!
-            if (vaId != this.vaId || type != TYPE_VA_WORK) {
-                vaName = intent.getStringExtra("name")
-                clearWork()
-                this.vaId = vaId
-            }
-            loadFromNetWork(TYPE_VA_WORK)
-        } else if ("tag" == resultType) {
-            val tagId = intent.getIntExtra("id", -1)
-            if (tagId != this.tagId || type != TYPE_TAG_WORK) {
-                tagStr = intent.getStringExtra("name")
-                clearWork()
-                this.tagId = tagId
-            }
-            loadFromNetWork(TYPE_TAG_WORK)
-        } else {
-            clearWork()
-            loadFromNetWork()
-        }
-
-    }
+    // ==================== TagClickListener 实现 ====================
 
     override fun onTagClick(jsonObject: JSONObject?) {
         jsonObject?.let {
             try {
                 val tagId = it.getInt("id")
-                Log.d(TAG, "onTagClick: " + tagId)
-                if (tagId != this.tagId || type != TYPE_TAG_WORK) {
-                    tagStr = it.getString("name")
-                    clearWork()
-                    this.tagId = tagId
+                if (tagId != viewModel.tagId || viewModel.type != MainViewModel.TYPE_TAG_WORK) {
+                    viewModel.tagStr = it.getString("name")
+                    viewModel.clearWorks()
+                    viewModel.tagId = tagId
                 }
-                loadFromNetWork(TYPE_TAG_WORK)
+                viewModel.type = MainViewModel.TYPE_TAG_WORK
+                viewModel.loadFromNetwork()
             } catch (e: JSONException) {
                 e.printStackTrace()
                 alertException(e)
             }
         }
-
     }
 
-    private val vaClickListener: TagClickListener<JSONObject?> = object : TagClickListener<JSONObject?> {
-        override fun onTagClick(jsonObject: JSONObject?) {
-            jsonObject?.let {
-                try {
-                    val vaId = it.getString("id")
-                    if (vaId != this@WorksActivity.vaId || type != TYPE_VA_WORK) {
-                        vaName = it.getString("name")
-                        clearWork()
-                        this@WorksActivity.vaId = vaId
-                    }
-                    loadFromNetWork(TYPE_VA_WORK)
-                } catch (e: JSONException) {
-                    e.printStackTrace()
-                    alertException(e)
-                }
-            }
-
-        }
-    }
-
-    private val circlesClickListener = TagClickListener { circlesName: String? ->
-        //todo
-        //http://localhost:8980/api/circles/
-        //http://localhost:8980/api/circles/54978/works?order=release&sort=desc&page=1&seed=59
-        val circlesId = App.getInstance().mapCirclesId(circlesName)
-        if (circlesId != -1L) {
-            clearWork()
-            this@WorksActivity.circlesName = circlesName
-            this@WorksActivity.circlesId = circlesId
-            loadFromNetWork(TYPE_CIRCLES_WORK)
-        }
-        Log.d(TAG, "onTagClick: " + circlesName)
-    }
-
-    private val apisCallback: JSONObjectCallback = object : JSONObjectCallback() {
-        override fun onCompleted(e: Exception?, asyncHttpResponse: AsyncHttpResponse?, jsonObject: JSONObject?) {
-            runOnUiThread { workAdapter?.setLoading(false) }
-            if (e != null) {
-                e.printStackTrace(System.err)
-                alertException(e)
-                runOnUiThread {
-                    Toast.makeText(this@WorksActivity,e.message, Toast.LENGTH_SHORT).show()
-                }
-                return
-            }
-            if (asyncHttpResponse == null || asyncHttpResponse.code() != 200) {
-                if (jsonObject != null && jsonObject.has("works")) {
-                    Log.d(TAG, "onCompleted: load local cache!")
-                } else {
-                    return
-                }
-            }
+    private val vaClickListener = TagsView.TagClickListener<JSONObject?> { jsonObject ->
+        jsonObject?.let {
             try {
-                val networksResult = jsonObject!!.getJSONArray("works")
-                totalCount = jsonObject.getJSONObject("pagination").getInt("totalCount")
-                currentPage = page
-                page = jsonObject.getJSONObject("pagination").getInt("currentPage") + 1
-
-                if (networksResult.length() != 0) {
-                    page = min(page, totalCount / networksResult.length() + 1)
+                val vaId = it.getString("id")
+                if (vaId != viewModel.vaId || viewModel.type != MainViewModel.TYPE_VA_WORK) {
+                    viewModel.vaName = it.getString("name")
+                    viewModel.clearWorks()
+                    viewModel.vaId = vaId
                 }
-                runOnUiThread { setTitle("${currentTitle} ($totalCount)") }
-                updateListWith(networksResult)
-            } catch (jsonException: JSONException) {
-                jsonException.printStackTrace()
-                alertException(jsonException)
+                viewModel.type = MainViewModel.TYPE_VA_WORK
+                viewModel.loadFromNetwork()
+            } catch (e: JSONException) {
+                e.printStackTrace()
+                alertException(e)
             }
         }
     }
 
-    private fun updateListWith(jsonArray: JSONArray, afterUpdate: Runnable? = null) {
-        runOnUiThread {
-            val resultList = arrayListOf<JSONObject>()
-            for (i in 0..<jsonArray.length()) {
-                try {
-                    resultList.add(jsonArray.getJSONObject(i))
-                } catch (jsonException: JSONException) {
-                    jsonException.printStackTrace(System.err)
-                    alertException(jsonException)
-                }
+    private val circlesClickListener = TagsView.TagClickListener<String?> { circlesName ->
+        circlesName?.let {
+            val circlesId = App.getInstance().mapCirclesId(it)
+            if (circlesId != -1L) {
+                viewModel.clearWorks()
+                viewModel.circlesName = it
+                viewModel.circlesId = circlesId
+                viewModel.type = MainViewModel.TYPE_CIRCLES_WORK
+                viewModel.loadFromNetwork()
             }
-            if (workAdapter == null) {
-                works.addAll(resultList)
-                initLayout(App.getInstance().getValue(App.CONFIG_LAYOUT_TYPE, WorkAdapter.LAYOUT_STAGGERED.toLong()).toInt())
-                recyclerView.addOnScrollListener(scrollListener)
-            } else {
-                works.addAll(resultList)
-                workAdapter!!.notifyItemRangeInserted(
-                    max(0, works.size - jsonArray.length()),
-                    jsonArray.length()
-                )
-                if (works.size == totalCount) {
-                    workAdapter!!.setLoading(false)
-                }
-            }
-            afterUpdate?.run()
         }
     }
 
-    private val currentTitle: String?
-        get() {
-            if (type == TYPE_ALL_WORK) {
-                return getString(R.string.app_name)
-            } else if (type == TYPE_SELF_LISTENING) {
-                return getString(R.string.listening)
-            } else if (type == TYPE_SELF_LISTENED) {
-                return getString(R.string.listened)
-            } else if (type == TYPE_SELF_MARKED) {
-                return getString(R.string.marked)
-            } else if (type == TYPE_SELF_REPLAY) {
-                return getString(R.string.replay)
-            } else if (type == TYPE_SELF_POSTPONED) {
-                return getString(R.string.postponed)
-            } else if (type == TYPE_TAG_WORK) {
-                return tagStr
-            } else if (type == TYPE_VA_WORK) {
-                return vaName
-            } else if (type == TYPE_CIRCLES_WORK) {
-                return circlesName
-            } else if (type == TYPE_LOCAL_WORK) {
-                return String.format(
-                    "%s",
-                    if (App.getInstance()
-                            .isSaveExternal()
-                    ) getString(R.string.extra_path) else getString(R.string.private_path)
-                )
-            }
-            return "--"
+    // ==================== 生命周期 ====================
+
+    override fun onDestroy() {
+        ctrlBinder?.removeMusicChangeListener(this)
+        val state = ctrlBinder?.controller?.playbackState?.state
+        if (state == null || state == PlaybackStateCompat.STATE_STOPPED || state == PlaybackStateCompat.STATE_PAUSED) {
+            stopService(Intent(this, AudioService::class.java))
         }
+        unbindService(this)
+        super.onDestroy()
+    }
 
     companion object {
         private const val TAG = "WorksActivity"
-        private const val CONFIG_TYPE = "last_type"
-        private const val CONFIG_PAGE = "last_page"
-        private const val CONFIG_TOTAL = "total_count"
-        private const val CONFIG_PARAM_INT = "last_param_int"
-        private const val CONFIG_PARAM_STR = "last_param_str"
-        private const val CONFIG_PARAM_TITLE = "last_param_title"
-        private const val CONFIG_PARAM_POSITION = "last_open_work_position"
-        private const val TYPE_ALL_WORK = 491
-        private const val TYPE_SELF_LISTENING = 492
-        private const val TYPE_SELF_LISTENED = 493
-        private const val TYPE_SELF_MARKED = 494
-        private const val TYPE_SELF_REPLAY = 495
-        private const val TYPE_SELF_POSTPONED = 496
-        private const val TYPE_TAG_WORK = 497
-        private const val TYPE_LOCAL_WORK = 498
-        private const val TYPE_VA_WORK = 499
-        private const val TYPE_CIRCLES_WORK = 500
-
-        private const val TAG_SELECT_RESULT = 14
-        private const val VA_SELECT_RESULT = 15
-        private const val CIRCLES_SELECT_RESULT = 16
+        const val TAG_SELECT_RESULT = 14
+        const val VA_SELECT_RESULT = 15
+        const val CIRCLES_SELECT_RESULT = 16
     }
 }
