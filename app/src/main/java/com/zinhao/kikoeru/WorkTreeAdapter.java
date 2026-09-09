@@ -148,19 +148,19 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 if ("folder".equals(item.getString("type"))) {
                     JSONArray jsonArray = item.getJSONArray("children");
                     ((SimpleViewHolder) holder).tvCount.setText(String.format("%d 项", jsonArray.length()));
-                    Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_folder_24).into(((SimpleViewHolder) holder).ivCover);
+                    Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_folder).into(((SimpleViewHolder) holder).ivCover);
                 } else if ("audio".equals(item.getString("type"))) {
                     if (itemTitle.endsWith(".mp4")) {
                         Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_video_library_24).into(((SimpleViewHolder) holder).ivCover);
                     } else {
-                        Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_audiotrack_24).into(((SimpleViewHolder) holder).ivCover);
+                        Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_audiotrack).into(((SimpleViewHolder) holder).ivCover);
                     }
                 } else if ("image".equals(item.getString("type"))) {
-                    Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_image_24).into(((SimpleViewHolder) holder).ivCover);
+                    Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_image).into(((SimpleViewHolder) holder).ivCover);
                 } else if ("text".equals(item.getString("type"))) {
                     Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_text_snippet_24).into(((SimpleViewHolder) holder).ivCover);
                 } else {
-                    Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_insert_drive_file_24).into(((SimpleViewHolder) holder).ivCover);
+                    Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_insert_drive_file).into(((SimpleViewHolder) holder).ivCover);
                 }
 
                 if ("folder".equals(item.getString("type"))) {

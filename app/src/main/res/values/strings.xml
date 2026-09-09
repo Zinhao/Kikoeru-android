@@ -63,7 +63,7 @@
     <string name="cover_image">Cover image</string>
     <string name="https_api_asmr_net" translatable="false">https://api.asmr.net</string>
     <string name="external_storage_tip">
-       Store in a custom external directory, even if the application is deleted, the content you downloaded will not be deleted. Permission has been detected as not open and is required.
+       Store in path:/storage/emulated/0/KikoeruLib, even if the application is deleted, the content you downloaded will not be deleted. Permission has been detected as not open and is required.
     </string>
     <string name="tip">Tip</string>
     <string name="extra_path">Public dir</string>

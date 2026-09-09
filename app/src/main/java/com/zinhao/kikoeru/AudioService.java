@@ -16,7 +16,6 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.Icon;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Binder;
@@ -433,7 +432,7 @@ public class AudioService extends Service {
         }
         notificationBuilder.addAction(R.drawable.ic_baseline_skip_next_24, "next", nextPendingIntent);
         notificationBuilder.setCategory(NotificationCompat.CATEGORY_SERVICE);
-        notificationBuilder.setSmallIcon(R.drawable.ic_baseline_audiotrack_24);
+        notificationBuilder.setSmallIcon(R.drawable.ic_baseline_audiotrack);
         notificationBuilder.setShowWhen(true);
         notificationBuilder.setColorized(true);
         if (ctrlBinder.current != null) {
@@ -619,7 +618,7 @@ public class AudioService extends Service {
             mHandler.postDelayed(stopTask, minute * 60 * 1000L);
             NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(AudioService.this, App.ID_PLAY_SERVICE);
             notificationBuilder.setCategory(NotificationCompat.CATEGORY_STATUS);
-            notificationBuilder.setSmallIcon(R.drawable.ic_baseline_audiotrack_24);
+            notificationBuilder.setSmallIcon(R.drawable.ic_baseline_audiotrack);
             notificationBuilder.setContentTitle("delay stop");
             notificationBuilder.setAutoCancel(true);
             Calendar calendar = Calendar.getInstance();

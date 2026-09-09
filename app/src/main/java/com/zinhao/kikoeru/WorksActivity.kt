@@ -215,7 +215,9 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
 
         // 错误事件
         viewModel.errorEvent.observe(this) { throwable ->
-
+            if(throwable is Exception){
+                alertException(throwable)
+            }
         }
 
         // 滚动位置恢复

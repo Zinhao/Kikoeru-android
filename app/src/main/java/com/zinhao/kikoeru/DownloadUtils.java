@@ -156,12 +156,12 @@ public class DownloadUtils implements Closeable {
 
         public int getTypeCover() {
             if (type.equals("image")) {
-                return R.drawable.ic_baseline_image_24;
+                return R.drawable.ic_baseline_image;
             } else if (type.equals("audio")) {
                 if (title.endsWith(".mp4")) {
                     return R.drawable.ic_baseline_video_library_24;
                 }
-                return R.drawable.ic_baseline_audiotrack_24;
+                return R.drawable.ic_baseline_audiotrack;
             } else if (type.equals("text")) {
                 return R.drawable.ic_baseline_text_snippet_24;
             }

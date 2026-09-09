@@ -169,7 +169,7 @@ class WorkAdapter(
             val girdHolder = holder
             try {
                 Glide.with(holder.itemView.getContext()).load(fullCoverImageUrl(item.optInt("id").toLong()))
-                    .apply(App.getInstance().getRadius5Pic()).into(girdHolder.ivCover)
+                    .apply(App.getInstance().noRadiusPic).into(girdHolder.ivCover)
                 girdHolder.tvRjNumber.setText(String.format("RJ%d", item.getInt("id")))
                 girdHolder.tvDate.setText(item.getString("release"))
                 if (item.has(JSONConst.Work.HOST)) {

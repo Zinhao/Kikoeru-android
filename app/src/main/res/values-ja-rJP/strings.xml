@@ -48,7 +48,7 @@
     <string name="user_sign_up">登録</string>
     <string name="cover_image">Cover image</string>
     <string name="external_storage_tip">
-        存储到自定义外部目录，即使应用被删除，你缓存的内容也不会被删除，检测到权限未打开，需要权限。
+        存储到/storage/emulated/0/KikoeruLib，即使应用被删除，你缓存的内容也不会被删除，检测到权限未打开，需要权限。
     </string>
     <string name="tip">Tip</string>
     <string name="extra_path">Public dir</string>

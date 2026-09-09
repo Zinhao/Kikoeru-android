@@ -1,11 +1,7 @@
 package com.zinhao.kikoeru
 
 import android.app.Application
-import android.util.Log
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import androidx.recyclerview.widget.RecyclerView
 import com.koushikdutta.async.http.AsyncHttpClient
 import com.koushikdutta.async.http.AsyncHttpResponse
@@ -80,7 +76,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         set(value) = app.setValue(CONFIG_PARAM_STR_CIRCLES_NAME, value)
 
     var lastOpenTitle: String
-        get() = app.getValue(CONFIG_PARAM_TITLE, getApplication<Application>().getString(R.string.app_name))
+        get() = app.getValue(CONFIG_PARAM_TITLE, application.getString(R.string.app_name))
         set(value) = app.setValue(CONFIG_PARAM_TITLE, value)
 
     var layoutType: Int
@@ -201,6 +197,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                     jsonArray?.let {
                         appendWorks(it)
+                        _title.postValue(lastOpenTitle)
                         _loading.postValue(false)
                         // 恢复滚动位置
                         val pos = app.getValue(CONFIG_PARAM_POSITION, 0).toInt()
@@ -253,10 +250,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val jsonArray = JSONArray()
             _works.value?.forEach { jsonArray.put(it) }
             LocalFileCache.getInstance().saveLastOpenWorks(jsonArray)
+            lastOpenTitle =title.value?:application.getString(R.string.app_name)
         } catch (e: IOException) {
-            Log.e("WorksViewModel", "saveState error", e)
+            _errorEvent.postValue(e)
         }
-        // SharedPreferences 已在属性 setter 中自动保存
     }
 
     fun setLastPosition(pos: Int) {

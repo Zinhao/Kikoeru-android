@@ -212,10 +212,11 @@ class WorkTreeActivity : BaseActivity(), View.OnClickListener, MusicChangeListen
         tvWorkTitle = viewBinding.bottomLayout.textView2
         ibStatus = viewBinding.bottomLayout.button
         ibFloatLrc = viewBinding.bottomLayout.imageButton
+        viewBinding.swipe.isEnabled = false
     }
 
     private fun saveLocalHis(){
-        val app = getApplication() as App
+        val app = application as App
         try {
             val localWorkHistory = LocalWorkHistory(
                 work.getInt("id").toLong(),
@@ -301,18 +302,20 @@ class WorkTreeActivity : BaseActivity(), View.OnClickListener, MusicChangeListen
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         val subMenu = menu.addSubMenu(0, 0, 0, R.string.mark_action)
-        subMenu.setIcon(R.drawable.ic_baseline_work_24)
-        subMenu.add(1, 1, 1, R.string.marked)
-        subMenu.add(1, 2, 2, R.string.listening)
-        subMenu.add(1, 3, 3, R.string.listened)
-        subMenu.add(1, 4, 4, R.string.replay)
-        subMenu.add(1, 5, 5, R.string.postponed)
+        subMenu.setGroupCheckable(1, true,false)
+        subMenu.setIcon(R.drawable.fav_svgrepo_com)
+        subMenu.add(1, 1, 1, R.string.marked).setCheckable(true).setChecked(false)
+        subMenu.add(1, 2, 2, R.string.listening).setCheckable(true).setChecked(false)
+        subMenu.add(1, 3, 3, R.string.listened).setCheckable(true).setChecked(false)
+        subMenu.add(1, 4, 4, R.string.replay).setCheckable(true).setChecked(false)
+        subMenu.add(1, 5, 5, R.string.postponed).setCheckable(true).setChecked(false)
         subMenu.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
         return super.onCreateOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         try {
+            item.isChecked = true
             if (item.getItemId() == 1) {
                 doPutReview(work.getInt("id").toLong(), Api.FILTER_MARKED, actionCallBack)
             } else if (item.getItemId() == 2) {
@@ -494,8 +497,7 @@ class WorkTreeActivity : BaseActivity(), View.OnClickListener, MusicChangeListen
     }
 
     override fun onAlbumChange(rjNumber: Long) {
-        Glide.with(this).load(minCoverImageUrl(rjNumber))
-            .apply(App.getInstance().getRadius5Pic()).into(ivCover)
+        Glide.with(this).load(minCoverImageUrl(rjNumber)).apply(App.getInstance().getRadius5Pic()).into(ivCover)
     }
 
     override fun onAudioChange(audio: JSONObject) {

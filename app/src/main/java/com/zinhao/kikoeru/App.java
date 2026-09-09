@@ -54,6 +54,7 @@ public class App extends Application implements Application.ActivityLifecycleCal
 
     private RequestOptions radius15Pic;
     private RequestOptions radius5Pic;
+    private RequestOptions noRadiusPic;
     private UserDao userDao;
     private LocalWorkHistoryDao historyDao;
     private AudioLrcBindDao  audioLrcBindDao ;
@@ -133,6 +134,10 @@ public class App extends Application implements Application.ActivityLifecycleCal
         return radius5Pic;
     }
 
+    public RequestOptions getNoRadiusPic() {
+        return noRadiusPic;
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -165,6 +170,7 @@ public class App extends Application implements Application.ActivityLifecycleCal
         radius5Pic = new RequestOptions().placeholder(R.drawable.ic_no_cover).apply(RequestOptions.bitmapTransform(
                 new RoundedCorners((int) dp2px(5.0f,getResources().getDisplayMetrics()))
         ));
+        noRadiusPic =  new RequestOptions().placeholder(R.drawable.ic_no_cover);
 
         DownloadUtils.getInstance().init(this);
         NotificationChannel channelMusicService =
