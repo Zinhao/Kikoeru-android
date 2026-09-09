@@ -22,7 +22,11 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <ScrollView android:layout_width="match_parent" android:layout_height="match_parent">
-        <LinearLayout android:id="@+id/content" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+        <LinearLayout android:id="@+id/content"
+                      android:layout_width="match_parent"
+                      android:layout_height="match_parent"
+                      android:layout_marginStart="8dp"
+                      android:orientation="vertical">
             <RelativeLayout
                     android:id="@+id/relativeLayout"
                     android:layout_width="match_parent"
@@ -51,7 +55,6 @@
                 <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginStart="16dp"
                         android:layout_alignParentBottom="true"
                         android:background="@color/gray_80" />
             </RelativeLayout>
@@ -84,7 +87,6 @@
                 <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginStart="16dp"
                         android:layout_alignParentBottom="true"
                         android:background="@color/gray_80" />
             </RelativeLayout>
@@ -117,7 +119,6 @@
                 <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginStart="16dp"
                         android:layout_alignParentBottom="true"
                         android:background="@color/gray_80" />
             </RelativeLayout>
@@ -140,7 +141,6 @@
                 <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginStart="16dp"
                         android:layout_alignParentBottom="true"
                         android:background="@color/gray_80" />
             </RelativeLayout>
@@ -170,7 +170,6 @@
                 <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginStart="16dp"
                         android:layout_alignParentBottom="true"
                         android:background="@color/gray_80" />
             </RelativeLayout>
@@ -193,7 +192,6 @@
                 <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginStart="16dp"
                         android:layout_alignParentBottom="true"
                         android:background="@color/gray_80" />
             </RelativeLayout>
