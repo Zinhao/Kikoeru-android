@@ -1,23 +1,24 @@
 package com.zinhao.kikoeru
 
 import android.annotation.SuppressLint
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.OnLongClickListener
 import android.view.ViewGroup
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.zinhao.kikoeru.Api.fullCoverImageUrl
 import com.zinhao.kikoeru.TagsView.TagClickListener
 import com.zinhao.kikoeru.TagsView.TextGet
-import com.zinhao.kikoeru.model.toWork
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+
 
 class WorkAdapter(
     private val datas: MutableList<JSONObject>,
@@ -30,19 +31,49 @@ class WorkAdapter(
     private var itemClickListener: View.OnClickListener? = null
     private var itemLongClickListener: OnLongClickListener? = null
 
-    private var isLoading = false // 是否正在加载
-    fun isLoading(): Boolean {
-        return isLoading
+    var isScrollingDown: Boolean = true
+    private val animationPool: MutableList<Animation?> = ArrayList<Animation?>()
+    private var animationIndex = 0
+    private val showAnimation: Boolean = BuildConfig.DEBUG
+
+    private val bottomAnimPool = mutableListOf<Animation?>()
+    private val topAnimPool = mutableListOf<Animation?>()
+    private var poolIndex = 0
+
+    override fun onViewAttachedToWindow(holder: RecyclerView.ViewHolder) {
+        if (!showAnimation) return
+        if(holder.bindingAdapterPosition >= datas.size) {return}
+
+        val pool = if (isScrollingDown) bottomAnimPool else topAnimPool
+        val animRes = if (isScrollingDown) R.anim.from_bottom_slide_in else R.anim.from_top_slide_in
+
+        if (pool.size < 31) {
+            val anim = AnimationUtils.loadAnimation(holder.itemView.context, animRes)
+            pool.add(anim)
+            holder.itemView.startAnimation(anim)
+        } else {
+            val anim = pool[poolIndex]
+            anim?.reset() // 关键：重置动画状态，否则不会再次播放
+            holder.itemView.startAnimation(anim)
+            poolIndex = (poolIndex + 1) % 30
+        }
     }
-    // 辅助方法：显示/隐藏加载动画
-    fun setLoading(loading: Boolean) {
-        if (this.isLoading != loading) {
-            this.isLoading = loading
-            if (loading) {
-                notifyItemInserted(datas.size)
-            } else {
-                notifyItemRemoved(datas.size)
-            }
+
+    fun submitList(newList: List<JSONObject>) {
+        val oldSize = datas.size
+        datas.clear()
+        datas.addAll(newList)
+
+        if (oldSize == 0) {
+            // 首次加载
+            notifyItemRangeInserted(0, datas.size)
+        } else if (newList.size > oldSize) {
+            // 有新增数据，只刷新新增部分
+            val addedCount = newList.size - oldSize
+            notifyItemRangeInserted(oldSize, addedCount)
+        } else {
+            // 数据变少（比如筛选），全量刷新
+            notifyDataSetChanged()
         }
     }
 
@@ -72,6 +103,7 @@ class WorkAdapter(
                 try {
                     return t?.optString("name")?:""
                 } catch (e: JSONException) {
+                    App.getInstance().alertException(e)
                 }
                 return ""
             }
@@ -79,30 +111,23 @@ class WorkAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        if (viewType == TYPE_LOADING) {
-            val view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_loading, parent, false)
-            return LoadingViewHolder(view)
-        }
         if (layoutType == LAYOUT_LIST) {
-            val v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_1, parent, false)
+            val v = LayoutInflater.from(parent.context).inflate(R.layout.item_work_1, parent, false)
             return SimpleViewHolder(v)
         } else if (layoutType == LAYOUT_BIG_GRID) {
-            val v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_2, parent, false)
+            val v = LayoutInflater.from(parent.context).inflate(R.layout.item_work_2, parent, false)
             return GirdViewHolder(v)
         } else if (layoutType == LAYOUT_STAGGERED) {
-            val v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_2, parent, false)
+            val v = LayoutInflater.from(parent.context).inflate(R.layout.item_work_2, parent, false)
             return GirdViewHolder(v)
         } else {
-            val v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_work_3, parent, false)
+            val v = LayoutInflater.from(parent.context).inflate(R.layout.item_work_3, parent, false)
             return SmallGirdViewHolder(v)
         }
     }
 
     @SuppressLint("DefaultLocale")
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        if (position == datas.size) {
-            return
-        }
         val item = datas.get(position)
         holder.itemView.setTag(item)
         holder.itemView.setOnClickListener(itemClickListener)
@@ -164,7 +189,6 @@ class WorkAdapter(
                 App.getInstance().alertException(e)
             }
         }
-
         if (holder is SmallGirdViewHolder) {
             val girdHolder = holder
             try {
@@ -185,16 +209,8 @@ class WorkAdapter(
         }
     }
 
-    override fun getItemViewType(position: Int): Int {
-        // 如果位置是最后一位且处于加载状态，返回加载布局类型
-        if (position == datas.size) {
-            return TYPE_LOADING
-        }
-        return TYPE_ITEM
-    }
-
     override fun getItemCount(): Int {
-        return datas.size + (if(isLoading) 1 else 0)
+        return datas.size
     }
 
     class SimpleViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -241,28 +257,17 @@ class WorkAdapter(
     }
 
     class SmallGirdViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-       val ivCover: ImageView
-       val tvRjNumber: TextView
-       val tvDate: TextView
-       val tvHost: TextView
-
-        init {
-            ivCover = itemView.findViewById<ImageView>(R.id.ivCover)
-            tvRjNumber = itemView.findViewById<TextView>(R.id.tvRjNumber)
-            tvDate = itemView.findViewById<TextView>(R.id.tvDate)
-            tvHost = itemView.findViewById<TextView>(R.id.tvHost)
-        }
+       val ivCover: ImageView = itemView.findViewById<ImageView>(R.id.ivCover)
+        val tvRjNumber: TextView = itemView.findViewById<TextView>(R.id.tvRjNumber)
+        val tvDate: TextView = itemView.findViewById<TextView>(R.id.tvDate)
+        val tvHost: TextView = itemView.findViewById<TextView>(R.id.tvHost)
     }
 
-    internal class LoadingViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
     companion object {
         private const val TAG = "WorkAdapter"
         const val LAYOUT_LIST: Int = 846
         const val LAYOUT_SMALL_GRID: Int = 847
         const val LAYOUT_BIG_GRID: Int = 848
         const val LAYOUT_STAGGERED: Int = 849
-
-        private const val TYPE_ITEM = 0
-        private const val TYPE_LOADING = 1
     }
 }

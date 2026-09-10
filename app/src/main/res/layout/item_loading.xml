@@ -10,9 +10,10 @@
             android:indeterminateTint="@color/main_color" />
 
     <TextView
+            android:id="@+id/tvLoading"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:text="正在加载更多..."
-            android:textColor="#666666" />
+            android:text="@string/load_more"
+            android:textColor="@color/gray" />
 </LinearLayout>

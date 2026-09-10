@@ -40,6 +40,8 @@
                         android:layout_centerVertical="true"
                         android:layout_marginStart="20dp"
                         android:gravity="center"
+                        android:drawableStart="@drawable/ic_baseline_text_fields_24"
+                        android:drawableTint="@color/black"
                         android:text="@string/only_load_has_lrc"
                         android:textSize="16sp" />
 
@@ -71,6 +73,7 @@
                         android:layout_height="wrap_content"
                         android:layout_centerVertical="true"
                         android:layout_marginStart="20dp"
+                        android:drawableStart="@drawable/ic_baseline_storage_24"
                         android:gravity="center"
                         android:text="@string/saveAtExternal"
                         android:textSize="16sp" />
@@ -103,6 +106,8 @@
                         android:layout_height="wrap_content"
                         android:layout_centerVertical="true"
                         android:layout_marginStart="20dp"
+                        android:drawableTint="@color/black"
+                        android:drawableStart="@drawable/ic_baseline_widgets_24"
                         android:gravity="center"
                         android:text="@string/debug_mode"
                         android:textSize="16sp" />
@@ -135,6 +140,8 @@
                         android:layout_height="wrap_content"
                         android:layout_centerVertical="true"
                         android:layout_marginStart="20dp"
+                        android:drawableTint="@color/black"
+                        android:drawableStart="@drawable/ic_baseline_widgets_24"
                         android:text="@string/opensource_license"
                         android:textSize="16sp" />
 
@@ -157,6 +164,8 @@
                         android:layout_centerVertical="true"
                         android:layout_marginStart="20dp"
                         android:text="Home Tab Mode"
+                        android:drawableTint="@color/black"
+                        android:drawableStart="@drawable/ic_baseline_widgets_24"
                         android:textSize="16sp" />
                 <CheckBox
                         android:id="@+id/cbHomeTab"
@@ -187,6 +196,8 @@
                         android:layout_centerVertical="true"
                         android:layout_marginStart="20dp"
                         android:text="@string/about"
+                        android:drawableTint="@color/black"
+                        android:drawableStart="@drawable/ic_baseline_widgets_24"
                         android:textSize="16sp" />
 
                 <View

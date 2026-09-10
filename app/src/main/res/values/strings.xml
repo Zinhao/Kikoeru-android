@@ -80,4 +80,5 @@
     <string name="lrc_from_local">Lrc from phone</string>
     <string name="choose_lrc_file">Choose lrc file</string>
     <string name="select_lrc_or_vtt">Please select lrc or vtt!</string>
+    <string name="load_more">正在加载更多...</string>
 </resources>

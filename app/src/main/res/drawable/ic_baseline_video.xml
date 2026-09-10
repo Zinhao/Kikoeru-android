@@ -3,4 +3,7 @@
     <path android:fillColor="@color/main_color" android:pathData="M853.3,960H170.7V64h469.3l213.3,213.3z"/>
 
     <path android:fillColor="#E1F5FE" android:pathData="M821.3,298.7H618.7V96z"/>
+
+    <path android:fillColor="@color/white" android:pathData="M640,597.3l-213.3,-128v256z"/>
+
 </vector>

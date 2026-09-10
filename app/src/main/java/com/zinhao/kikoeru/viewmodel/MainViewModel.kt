@@ -12,6 +12,7 @@ import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
+import java.lang.Thread.sleep
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -20,6 +21,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // ---- 可观察数据 ----
     private val _works = MutableLiveData<MutableList<JSONObject>>(mutableListOf())
     val works: LiveData<MutableList<JSONObject>> = _works
+    var addSize:Int = 0
 
     private val _loading = MutableLiveData<Boolean>(false)
     val loading: LiveData<Boolean> = _loading
@@ -90,7 +92,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clearWorks() {
         _works.value?.clear()
-        _works.value = _works.value // 触发通知
+        addSize = 0
+        _works.postValue(_works.value)
         page = 1
         currentPage = 1
         totalCount = 0
@@ -109,6 +112,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             withContext(Dispatchers.IO) {
                 // 实际上这里不能直接同步等待，但我们仍使用回调方式
                 // 真正的做法：将回调转换为挂起函数，但为了最小改动，我们保持回调风格
+                if(BuildConfig.DEBUG){
+                    sleep(5500)
+                }
             }
             // 直接在主线程调用原来的 Api 方法（它们内部会异步执行）
             performRequest()
@@ -127,16 +133,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             try {
                 jsonObject?.let { obj ->
-                    val worksArray = obj.getJSONArray("works")
+                    val fromNetWorkArray = obj.getJSONArray("works")
                     totalCount = obj.getJSONObject("pagination").getInt("totalCount")
                     currentPage = page
                     page = obj.getJSONObject("pagination").getInt("currentPage") + 1
-                    if (worksArray.length() > 0) {
-                        page = minOf(page, totalCount / worksArray.length() + 1)
+                    if (fromNetWorkArray.length() > 0) {
+                        page = minOf(page, totalCount / fromNetWorkArray.length() + 1)
                     }
                     // 更新标题
                     _title.postValue("${computeTitle()} ($totalCount)")
-                    appendWorks(worksArray)
+                    if(fromNetWorkArray.length() > 0) {
+                        appendWorks(fromNetWorkArray)
+                    }
                 }
             } catch (je: JSONException) {
                 _errorEvent.postValue(je)
@@ -170,9 +178,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                     jsonObject?.let {
                         try {
-                            val worksArray = it.getJSONArray("works")
-                            totalCount = worksArray.length()
-                            appendWorks(worksArray)
+                            val formLocalArray = it.getJSONArray("works")
+                            totalCount = formLocalArray.length()
+                            appendWorks(formLocalArray)
                             _title.postValue("${computeTitle()} ($totalCount)")
                         } catch (je: JSONException) {
                             _errorEvent.postValue(je)
@@ -215,7 +223,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun appendWorks(jsonArray: JSONArray) {
-        val currentList = _works.value ?: mutableListOf()
+        // 创建新列表，避免同一个对象引用导致 LiveData 不通知
+        val currentList = _works.value?.toMutableList() ?: mutableListOf()
+
         for (i in 0 until jsonArray.length()) {
             try {
                 currentList.add(jsonArray.getJSONObject(i))
@@ -223,7 +233,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _errorEvent.postValue(e)
             }
         }
-        _works.postValue(currentList)
+        _works.postValue(currentList) // 发射新列表，观察者一定会收到
     }
 
     private fun computeTitle(): String {

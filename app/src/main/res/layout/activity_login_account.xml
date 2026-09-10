@@ -66,6 +66,7 @@
                     android:layout_height="wrap_content"
                     android:text="https://www.asmr.one"
                     style="@style/Theme.Kikoeru.TextInputStyle"
+                    android:drawableStart="@drawable/ic_baseline_storage_24"
                     android:hint="Kikoeru server host" />
         </com.google.android.material.textfield.TextInputLayout>
 

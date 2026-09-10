@@ -151,14 +151,14 @@ public class WorkTreeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_folder).into(((SimpleViewHolder) holder).ivCover);
                 } else if ("audio".equals(item.getString("type"))) {
                     if (itemTitle.endsWith(".mp4")) {
-                        Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_video_library_24).into(((SimpleViewHolder) holder).ivCover);
+                        Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_video).into(((SimpleViewHolder) holder).ivCover);
                     } else {
                         Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_audiotrack).into(((SimpleViewHolder) holder).ivCover);
                     }
                 } else if ("image".equals(item.getString("type"))) {
                     Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_image).into(((SimpleViewHolder) holder).ivCover);
                 } else if ("text".equals(item.getString("type"))) {
-                    Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_text_snippet_24).into(((SimpleViewHolder) holder).ivCover);
+                    Glide.with(holder.itemView.getContext()).load(R.drawable.document_svgrepo_com).into(((SimpleViewHolder) holder).ivCover);
                 } else {
                     Glide.with(holder.itemView.getContext()).load(R.drawable.ic_baseline_insert_drive_file).into(((SimpleViewHolder) holder).ivCover);
                 }

@@ -21,7 +21,6 @@ import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.Okio;
 
-import java.io.*;
 import java.util.concurrent.TimeUnit;
 
 public class DownloadUtils implements Closeable {
@@ -159,13 +158,13 @@ public class DownloadUtils implements Closeable {
                 return R.drawable.ic_baseline_image;
             } else if (type.equals("audio")) {
                 if (title.endsWith(".mp4")) {
-                    return R.drawable.ic_baseline_video_library_24;
+                    return R.drawable.ic_baseline_video;
                 }
                 return R.drawable.ic_baseline_audiotrack;
             } else if (type.equals("text")) {
-                return R.drawable.ic_baseline_text_snippet_24;
+                return R.drawable.document_svgrepo_com;
             }
-            return R.drawable.ic_baseline_text_snippet_24;
+            return R.drawable.ic_baseline_insert_drive_file;
         }
 
         public boolean isUpdate() {

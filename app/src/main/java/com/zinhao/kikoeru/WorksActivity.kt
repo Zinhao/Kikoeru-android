@@ -24,6 +24,7 @@ import com.koushikdutta.async.http.AsyncHttpResponse
 import com.zinhao.kikoeru.Api.setOrder
 import com.zinhao.kikoeru.databinding.ActivityMainBinding
 import com.zinhao.kikoeru.ui.WorkPageActivity
+import com.zinhao.kikoeru.utils.LoadingFooterDecoration
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -52,8 +53,7 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
     private var progressMenu: ListPopupWindow? = null
     private var moreMenu: ListPopupWindow? = null
 
-    // 分割线装饰
-    private var itemDecoration: RecyclerView.ItemDecoration? = null
+    private var loadingDecoration: LoadingFooterDecoration? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -118,7 +118,7 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
         inAnim = AnimationUtils.loadAnimation(this, R.anim.move_bottom_in)
 
         // 分割线
-        itemDecoration = DividerItemDecoration(this, DividerItemDecoration.VERTICAL)
+        loadingDecoration = LoadingFooterDecoration(binding.recyclerView)
 
         // 初始化布局管理器
         val storeLayoutType = viewModel.layoutType
@@ -161,6 +161,11 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
                     }
                 }
             }
+
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                workAdapter?.isScrollingDown = dy >= 0
+            }
         })
 
         // 返回键处理
@@ -198,9 +203,9 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
                 val layoutType = viewModel.layoutType
                 setupAdapter(worksList, layoutType)
                 binding.recyclerView.adapter = workAdapter
-            } else {
-                workAdapter?.notifyDataSetChanged()
             }
+            // 无论首次还是后续，统一调 submitList
+            workAdapter?.submitList(worksList)
         }
 
         // 标题变化
@@ -210,7 +215,7 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
 
         // 加载状态变化
         viewModel.loading.observe(this) { isLoading ->
-            workAdapter?.setLoading(isLoading)
+            loadingDecoration?.isLoading = isLoading
         }
 
         // 错误事件
@@ -264,7 +269,8 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
     // ==================== 布局初始化 ====================
 
     private fun initLayout(layoutType: Int) {
-        binding.recyclerView.removeItemDecoration(itemDecoration!!)
+        binding.recyclerView.removeItemDecoration(loadingDecoration!!)
+        binding.recyclerView.addItemDecoration(loadingDecoration!!)
         val col: Int
         val layoutManager: RecyclerView.LayoutManager?
 
@@ -735,6 +741,7 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
         }
         unbindService(this)
         super.onDestroy()
+        loadingDecoration?.destroy()
     }
 
     companion object {
