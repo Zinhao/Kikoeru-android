@@ -71,7 +71,7 @@ public class MissionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     @Override
     public boolean onLongClick(View v) {
         DownloadUtils.Mission item = (DownloadUtils.Mission) v.getTag();
-        AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+        AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext(),R.style.RoundedAlertDialog);
         builder.setTitle("操作");
         builder.setMessage(item.getFormatProgressText());
         builder.setNegativeButton("打开作品页", new DialogInterface.OnClickListener() {
