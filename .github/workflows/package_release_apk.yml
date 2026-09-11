@@ -26,6 +26,14 @@ jobs:
     - name: Check keystore
       run: ls -la app/release-keystore.jks
 
+    - name: Generate google-services.json
+      env:
+        GOOGLE_SERVICE_JSON: ${{ secrets.GOOGLE_SERVICE_JSON }}
+      run: printf "$GOOGLE_SERVICE_JSON" | base64 -d > app/google-services.json
+
+    - name: Check google-services.json
+      run: ls -la app/google-services.json
+
     - name: Build signed release APK
       env:
         KEYSTORE_FILE: release-keystore.jks
