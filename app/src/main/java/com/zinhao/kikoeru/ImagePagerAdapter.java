@@ -55,18 +55,19 @@ public class ImagePagerAdapter<T> extends PagerAdapter {
     public Object instantiateItem(final ViewGroup container, final int position) {
         final View v = LayoutInflater.from(container.getContext()).inflate(R.layout.item_image, container, false);
         final SubsamplingScaleImageView imageView = v.findViewById(R.id.imageView);
-        RoundedCorners roundedCorners = new RoundedCorners(10);
-        final RequestOptions requestOptions = RequestOptions.bitmapTransform(roundedCorners);
+        final View progressView = v.findViewById(R.id.pb1);
         T t = ts.get(position);
         CustomViewTarget<SubsamplingScaleImageView, File> target = new CustomViewTarget<SubsamplingScaleImageView, File>(imageView) {
             @Override
             public void onLoadFailed(@Nullable Drawable drawable) {
+                progressView.setVisibility(View.GONE);
             }
 
             @Override
             public void onResourceReady(@NonNull File file, @Nullable Transition<? super File> transition) {
                 imageView.setImage(ImageSource.uri(Uri.fromFile(file)));
                 pic = file;
+                progressView.setVisibility(View.GONE);
             }
 
             @Override
@@ -76,10 +77,10 @@ public class ImagePagerAdapter<T> extends PagerAdapter {
         };
         if (t instanceof String) {
             if (((String) t).startsWith("http")) {
-                Glide.with(container.getContext()).asFile().load(t).apply(requestOptions)
+                Glide.with(container.getContext()).asFile().load(t)
                         .into(target);
             } else {
-                Glide.with(container.getContext()).asFile().load(new File((String) t)).apply(requestOptions)
+                Glide.with(container.getContext()).asFile().load(new File((String) t))
                         .into(target);
             }
         }

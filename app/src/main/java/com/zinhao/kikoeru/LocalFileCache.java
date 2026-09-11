@@ -516,23 +516,18 @@ public class LocalFileCache implements Runnable, Closeable {
         mission.add(runnable);
     }
 
-
     @Override
     public void run() {
         running = true;
         while (running) {
             synchronized (mission) {
-                if (mission.size() != 0) {
-                    mission.get(0).run();
-                    mission.remove(0);
-                    Log.d(TAG, "run: mission success!");
+                if (!mission.isEmpty()) {
+                    mission.remove(0).run();
                 }
             }
             try {
                 Thread.sleep(1);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            } catch (InterruptedException ignored) {}
         }
     }
 

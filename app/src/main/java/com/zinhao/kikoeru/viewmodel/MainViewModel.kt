@@ -21,7 +21,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // ---- 可观察数据 ----
     private val _works = MutableLiveData<MutableList<JSONObject>>(mutableListOf())
     val works: LiveData<MutableList<JSONObject>> = _works
-    var addSize:Int = 0
 
     private val _loading = MutableLiveData<Boolean>(false)
     val loading: LiveData<Boolean> = _loading
@@ -91,9 +90,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // ---- 方法 ----
 
     fun clearWorks() {
-        _works.value?.clear()
-        addSize = 0
-        _works.postValue(_works.value)
+        _works.postValue(arrayListOf())
         page = 1
         currentPage = 1
         totalCount = 0
@@ -113,7 +110,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 // 实际上这里不能直接同步等待，但我们仍使用回调方式
                 // 真正的做法：将回调转换为挂起函数，但为了最小改动，我们保持回调风格
                 if(BuildConfig.DEBUG){
-                    sleep(5500)
+                    sleep(300)
                 }
             }
             // 直接在主线程调用原来的 Api 方法（它们内部会异步执行）

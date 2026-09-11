@@ -18,6 +18,7 @@ import com.zinhao.kikoeru.TagsView.TextGet
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import kotlin.math.absoluteValue
 
 
 class WorkAdapter(
@@ -31,14 +32,18 @@ class WorkAdapter(
     private var itemClickListener: View.OnClickListener? = null
     private var itemLongClickListener: OnLongClickListener? = null
 
+    var animDuration = 500L
     var isScrollingDown: Boolean = true
-    private val animationPool: MutableList<Animation?> = ArrayList<Animation?>()
-    private var animationIndex = 0
     private val showAnimation: Boolean = BuildConfig.DEBUG
 
     private val bottomAnimPool = mutableListOf<Animation?>()
     private val topAnimPool = mutableListOf<Animation?>()
     private var poolIndex = 0
+
+    fun updateAnimArgs(dx: Int, dy: Int){
+       animDuration = (400 - dy.absoluteValue).coerceAtLeast(100).toLong()
+       isScrollingDown = dy >= 0
+    }
 
     override fun onViewAttachedToWindow(holder: RecyclerView.ViewHolder) {
         if (!showAnimation) return
@@ -47,16 +52,17 @@ class WorkAdapter(
         val pool = if (isScrollingDown) bottomAnimPool else topAnimPool
         val animRes = if (isScrollingDown) R.anim.from_bottom_slide_in else R.anim.from_top_slide_in
 
+        val anim: Animation?
         if (pool.size < 31) {
-            val anim = AnimationUtils.loadAnimation(holder.itemView.context, animRes)
+            anim = AnimationUtils.loadAnimation(holder.itemView.context, animRes)
             pool.add(anim)
-            holder.itemView.startAnimation(anim)
         } else {
-            val anim = pool[poolIndex]
+            anim = pool[poolIndex]
             anim?.reset() // 关键：重置动画状态，否则不会再次播放
-            holder.itemView.startAnimation(anim)
             poolIndex = (poolIndex + 1) % 30
         }
+        anim?.duration = animDuration
+        holder.itemView.startAnimation(anim)
     }
 
     fun submitList(newList: List<JSONObject>) {
@@ -147,8 +153,7 @@ class WorkAdapter(
                         item.getInt("id"),
                         Api.token
                     )
-                )
-                    .apply(App.getInstance().getRadius15Pic()).into(holder.ivCover)
+                ).apply(App.getInstance().getRadius15Pic()).into(holder.ivCover)
             } catch (e: JSONException) {
                 e.printStackTrace()
                 App.getInstance().alertException(e)

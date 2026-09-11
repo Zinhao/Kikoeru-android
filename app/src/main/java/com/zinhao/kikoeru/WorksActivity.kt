@@ -6,6 +6,7 @@ import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
 import android.support.v4.media.session.PlaybackStateCompat
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -28,6 +29,7 @@ import com.zinhao.kikoeru.utils.LoadingFooterDecoration
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import kotlin.math.absoluteValue
 import kotlin.math.max
 
 class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, TagsView.TagClickListener<JSONObject?> {
@@ -164,7 +166,8 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
 
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
-                workAdapter?.isScrollingDown = dy >= 0
+                Log.d(TAG, "onScrolled: "+dy)
+                workAdapter?.updateAnimArgs(dx, dy)
             }
         })
 

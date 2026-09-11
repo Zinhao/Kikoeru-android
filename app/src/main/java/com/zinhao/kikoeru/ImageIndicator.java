@@ -46,7 +46,7 @@ public class ImageIndicator extends RecyclerView implements ViewPager.OnPageChan
         setAdapter(new SuperRecyclerAdapter<String>(list) {
             @Override
             public void bindData(@NonNull SuperVHolder holder, int position) {
-                holder.setImage(data.get(position), R.id.preview);
+                holder.setImageWithProgress(data.get(position), R.id.preview,R.id.pb1);
                 holder.itemView.setOnClickListener(new OnClickListener() {
                     @Override
                     public void onClick(View view) {
