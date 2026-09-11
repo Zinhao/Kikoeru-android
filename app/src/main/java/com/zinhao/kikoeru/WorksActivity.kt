@@ -150,6 +150,12 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
             }
         }
 
+        binding.btRetry.setOnClickListener {
+            binding.recyclerView.visibility = View.VISIBLE
+            binding.llNetErr.visibility = View.GONE
+            viewModel.loadFromNetwork()
+        }
+
         // 滚动加载更多
         binding.recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
@@ -166,7 +172,6 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
 
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
-                Log.d(TAG, "onScrolled: "+dy)
                 workAdapter?.updateAnimArgs(dx, dy)
             }
         })
@@ -202,6 +207,8 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
     private fun observeViewModel() {
         // 作品列表变化
         viewModel.works.observe(this) { worksList ->
+            binding.recyclerView.visibility = View.VISIBLE
+            binding.llNetErr.visibility = View.GONE
             if (workAdapter == null) {
                 val layoutType = viewModel.layoutType
                 setupAdapter(worksList, layoutType)
@@ -225,6 +232,11 @@ class WorksActivity : BaseActivity(), MusicChangeListener, ServiceConnection, Ta
         viewModel.errorEvent.observe(this) { throwable ->
             if(throwable is Exception){
                 alertException(throwable)
+                if(viewModel.works.value?.size == 0){
+                    binding.recyclerView.visibility = View.GONE
+                    binding.llNetErr.visibility = View.VISIBLE
+                    binding.tvNetErr.text = "${throwable.message}"
+                }
             }
         }
 

@@ -24,6 +24,7 @@
     <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView"
             android:layout_width="match_parent"
+            android:visibility="gone"
             android:layout_height="0dp"
             tools:listitem="@layout/item_work_1"
             tools:itemCount="3"
@@ -67,6 +68,31 @@
                      android:src="@drawable/ic_baseline_more_horiz_24"
                      android:background="@drawable/ripple_white_bg"
                      android:layout_weight="1"/>
+    </LinearLayout>
+    <LinearLayout
+            android:id="@+id/llNetErr"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:gravity="center"
+                  android:orientation="vertical" app:layout_constraintTop_toBottomOf="@+id/appBarLayout"
+                  app:layout_constraintBottom_toTopOf="@+id/linearLayout">
+        <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@drawable/high_priority_svgrepo_com"
+                android:id="@+id/imageView5"
+                />
+        <TextView android:id="@+id/tvNetErr" android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:text="Network err"
+                  android:textSize="16sp"
+                  android:layout_marginTop="8dp"
+                  android:gravity="center_horizontal"/>
+        <Button android:id="@+id/btRetry" android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Retry"/>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
