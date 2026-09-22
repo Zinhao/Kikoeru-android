@@ -34,7 +34,7 @@ class WorkAdapter(
 
     var animDuration = 500L
     var isScrollingDown: Boolean = true
-    private val showAnimation: Boolean = BuildConfig.DEBUG
+    private val showAnimation: Boolean = true
 
     private val bottomAnimPool = mutableListOf<Animation?>()
     private val topAnimPool = mutableListOf<Animation?>()
