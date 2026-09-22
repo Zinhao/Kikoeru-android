@@ -43,6 +43,7 @@ import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpResponse;
 import com.zinhao.kikoeru.db.AudioLrcBind;
+import com.zinhao.kikoeru.db.User;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -794,7 +795,14 @@ public class AudioService extends Service {
                     if (path.startsWith("http")) {
                         path = path + "?token=" + Api.token;
                     } else {
-                        path = App.getInstance().currentUser().getHost() + path + "?token=" + Api.token;
+                        User user = App.getInstance().currentUser();
+                        if(user != null){
+                            path = user.getHost() + path + "?token=" + Api.token;
+                        }else{
+                            //todo java.lang.NullPointerException: Attempt to invoke virtual method 'java.lang.String com.zinhao.kikoeru.db.User.getHost()' on a null object reference
+                            continue;
+                        }
+
                     }
                     builder.setUri(path);
                 }
