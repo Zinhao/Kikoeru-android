@@ -7,26 +7,58 @@
     <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@drawable/player_bg"
             android:id="@+id/appBarLayout"
     >
+        <LinearLayout android:layout_width="match_parent"
+                      android:layout_height="50dp"
+                      android:orientation="horizontal">
+
+            <ImageView android:layout_width="42dp"
+                       android:layout_height="42dp"
+                       android:id="@+id/btAccount"
+                       android:layout_gravity="center_vertical"
+                       android:layout_marginStart="16dp"
+                       android:background="@drawable/ripple_white_bg"
+                       android:src="@drawable/ic_baseline_people_24"/>
+
+            <com.google.android.material.search.SearchBar
+                    android:id="@+id/search_bar"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_gravity="center_vertical"
+                    android:layout_height="40dp"
+                    android:text="Search"
+                    app:textCentered="true"
+            />
+
+            <ImageButton android:layout_width="40dp" android:layout_height="40dp"
+                         android:src="@drawable/filter_list_svgrepo_com"
+                         android:id="@+id/btFilter"
+                         android:layout_marginEnd="16dp"
+                         android:layout_gravity="center_vertical"
+                         android:background="@android:color/transparent"/>
+        </LinearLayout>
         <com.google.android.material.tabs.TabLayout
                 android:id="@+id/tabLayout"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingStart="16dp"
+                android:layout_height="40dp"
+                android:paddingStart="8dp"
                 android:paddingTop="0dp"
+                android:paddingBottom="4dp"
                 app:tabIndicator="@drawable/card_bg_tab"
-                app:tabIndicatorColor="@color/forth_color"
-                app:tabIndicatorHeight="35dp"
-                app:tabIndicatorFullWidth="true"
-                app:tabIndicatorGravity="center"
-                app:tabTextColor="@color/forth_color"
+                app:tabIndicatorColor="@color/white"
+                app:tabIndicatorHeight="5dp"
+                app:tabIndicatorAnimationMode="elastic"
+                app:tabIndicatorFullWidth="false"
+                app:tabIndicatorGravity="bottom"
+                android:background="@android:color/transparent"
+                app:tabTextColor="@color/white_tran"
                 app:tabSelectedTextColor="@color/white"
                 app:tabMode="scrollable"
                 app:tabGravity="start"
                 app:tabPaddingEnd="10dp"
                 app:tabPaddingStart="10dp"
-
         >
 
             <com.google.android.material.tabs.TabItem
@@ -46,15 +78,40 @@
         </com.google.android.material.tabs.TabLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent">
+    <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
         <androidx.viewpager2.widget.ViewPager2
                 android:id="@+id/vp"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 />
         <include layout="@layout/layout_current_play"
+                 android:visibility="gone"
                  android:id="@+id/bottomLayout"/>
     </FrameLayout>
+    <LinearLayout android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  app:layout_constraintBottom_toBottomOf="parent"
+                  app:layout_constraintEnd_toEndOf="parent"
+                  android:background="?attr/colorPrimaryVariant"
+                  android:elevation="0dp"
+                  android:orientation="horizontal"
+                  app:layout_constraintStart_toStartOf="parent" android:id="@+id/linearLayout">
+        <ImageButton android:id="@+id/bt1" android:layout_width="match_parent"
+                     android:layout_height="45dp"
+                     android:src="@drawable/ic_baseline_widgets_24"
+                     android:background="@drawable/ripple_white_bg"
+                     android:layout_weight="1"/>
+        <ImageButton android:id="@+id/bt2" android:layout_width="match_parent"
+                     android:layout_height="45dp"
+                     android:src="@drawable/ic_baseline_favorite_24"
+                     android:background="@drawable/ripple_white_bg"
+                     android:layout_weight="1"/>
+        <ImageButton android:id="@+id/bt3" android:layout_width="match_parent"
+                     android:layout_height="45dp"
+                     android:src="@drawable/ic_baseline_more_horiz_24"
+                     android:background="@drawable/ripple_white_bg"
+                     android:layout_weight="1"/>
+    </LinearLayout>
 
 
 
