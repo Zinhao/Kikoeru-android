@@ -3,7 +3,6 @@ package com.zinhao.kikoeru.ui
 import android.content.Intent
 import android.graphics.Outline
 import android.os.Bundle
-import android.util.Log.v
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -11,27 +10,23 @@ import android.view.ViewOutlineProvider
 import androidx.core.graphics.Insets
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.tabs.TabLayoutMediator
-import com.zinhao.kikoeru.BaseActivity
-import com.zinhao.kikoeru.R
-import com.zinhao.kikoeru.SearchActivity
-import com.zinhao.kikoeru.UserSwitchActivity
+import com.zinhao.kikoeru.*
 import com.zinhao.kikoeru.databinding.ActivityWorkPageBinding
-import com.zinhao.kikoeru.ui.fragment.ListenedFragment
-import com.zinhao.kikoeru.ui.fragment.ListeningFragment
-import com.zinhao.kikoeru.ui.fragment.MarkedFragment
-import com.zinhao.kikoeru.ui.fragment.MoreFragment
-import com.zinhao.kikoeru.ui.fragment.PostponedFragment
-import com.zinhao.kikoeru.ui.fragment.ReplayFragment
-import com.zinhao.kikoeru.ui.fragment.WorkFragment
-import com.zinhao.kikoeru.viewmodel.WorksViewModel
+import com.zinhao.kikoeru.ui.fragment.*
 
 class WorkPageActivity : BaseActivity() {
+    private val favTitleList:List<String> by lazy {
+        arrayListOf<String>(getString(R.string.listening),
+            getString(R.string.listened),getString(R.string.marked),getString(R.string.replay),getString(R.string.postponed))
+    }
+    private val mainTitleList:List<String> by lazy {
+        arrayListOf<String>(getString(R.string.all_works),getString(R.string.more))
+    }
     private lateinit var binding: ActivityWorkPageBinding
-    private val firstPagerAdapter: FirstPagerAdapter by lazy { FirstPagerAdapter(this) }
-    private val workPagerAdapter: WorkPagerAdapter by lazy { WorkPagerAdapter(this) }
+    private val mainPagerAdapter: MainPagerAdapter by lazy { MainPagerAdapter(this) }
+    private val favPagerAdapter: FavPagerAdapter by lazy { FavPagerAdapter(this) }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityWorkPageBinding.inflate(layoutInflater)
@@ -43,11 +38,9 @@ class WorkPageActivity : BaseActivity() {
         })
 
         setupListener()
-
-        val tabTitles = arrayListOf<String>(getString(R.string.all_works),getString(R.string.more))
-        binding.vp.adapter = firstPagerAdapter
+        binding.vp.adapter = mainPagerAdapter
         TabLayoutMediator(binding.tabLayout, binding.vp) { tab, position ->
-            tab.text = tabTitles[position]
+            tab.text = mainTitleList[position]
         }.attach()
 
     }
@@ -66,20 +59,22 @@ class WorkPageActivity : BaseActivity() {
             startActivity(Intent(it.context, SearchActivity::class.java))
         }
         binding.bt1.setOnClickListener {
-            val tabTitles = arrayListOf<String>(getString(R.string.all_works),getString(R.string.more))
-            binding.vp.adapter = firstPagerAdapter
+
+            binding.vp.adapter = mainPagerAdapter
             TabLayoutMediator(binding.tabLayout, binding.vp) { tab, position ->
-                tab.text = tabTitles[position]
+                tab.text = mainTitleList[position]
             }.attach()
         }
 
         binding.bt2.setOnClickListener {
-            val tabTitles = arrayListOf<String>(getString(R.string.listening),
-                getString(R.string.listened),getString(R.string.marked),getString(R.string.replay),getString(R.string.postponed))
-            binding.vp.adapter = workPagerAdapter
+
+            binding.vp.adapter = favPagerAdapter
             TabLayoutMediator(binding.tabLayout, binding.vp) { tab, position ->
-                tab.text = tabTitles[position]
+                tab.text = favTitleList[position]
             }.attach()
+        }
+        binding.bt3.setOnClickListener {
+            startActivity(Intent(it.context, MoreActivity::class.java))
         }
     }
 
@@ -90,7 +85,7 @@ class WorkPageActivity : BaseActivity() {
         return super.onCreateOptionsMenu(menu)
     }
 
-    class FirstPagerAdapter(activity: FragmentActivity) : FragmentStateAdapter(activity) {
+    class MainPagerAdapter(activity: FragmentActivity) : FragmentStateAdapter(activity) {
         override fun getItemCount(): Int = TOTAL_PAGE_COUNT
 
         override fun createFragment(position: Int): Fragment {
@@ -107,7 +102,7 @@ class WorkPageActivity : BaseActivity() {
     }
 
 
-    class WorkPagerAdapter(activity: FragmentActivity) : FragmentStateAdapter(activity) {
+    class FavPagerAdapter(activity: FragmentActivity) : FragmentStateAdapter(activity) {
         override fun getItemCount(): Int = TOTAL_PAGE_COUNT
 
         override fun createFragment(position: Int): Fragment {

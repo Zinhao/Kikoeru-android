@@ -1,16 +1,24 @@
 package com.zinhao.kikoeru.ui.fragment
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.app.ActivityOptionsCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
+import com.zinhao.kikoeru.R
+import com.zinhao.kikoeru.WorkTreeActivity
 import com.zinhao.kikoeru.databinding.LayoutWorkFragmentBinding
+import com.zinhao.kikoeru.model.Work
+import com.zinhao.kikoeru.model.gson
 import com.zinhao.kikoeru.ui.adapter.WorksAdapter
 import com.zinhao.kikoeru.viewmodel.WorksViewModel
+import org.json.JSONObject
 import kotlin.math.max
 
 open class WorkFragment : Fragment(){
@@ -51,11 +59,29 @@ open class WorkFragment : Fragment(){
         }
     }
 
+    fun bindItemAction(){
+        worksAdapter?.setItemClickListener {
+            val tag = it.tag as Work
+            val intent = Intent(it.context, WorkTreeActivity::class.java).apply {
+                putExtra("work_json_str", gson.toJson(tag))
+            }
+            val heroView = it.findViewById<View>(R.id.ivCover)
+            val options = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                requireActivity(), heroView, "hero_image"
+            )
+            startActivity(intent, options.toBundle())
+        }
+        worksAdapter?.setTagClickListener {
+
+        }
+    }
+
     open fun setupObserve(){
-        viewModel.allWorksList.observe(viewLifecycleOwner, { works ->
+       liveData().observe(viewLifecycleOwner, { works ->
             works?.let {
                 if(worksAdapter == null){
                     worksAdapter = WorksAdapter()
+                    bindItemAction()
                     worksAdapter?.submitList(works)
                     binding.recyclerView.adapter = worksAdapter
                     binding.recyclerView.layoutManager = layoutManager
@@ -65,7 +91,7 @@ open class WorkFragment : Fragment(){
             }
             binding.swipe.isRefreshing = false
         })
-        if(viewModel.allWorksList.value.isNullOrEmpty()){
+        if(liveData().value.isNullOrEmpty()){
             loadMore()
         }
     }
@@ -75,132 +101,89 @@ open class WorkFragment : Fragment(){
         binding.swipe.isRefreshing = loading
     }
 
+    open fun liveData(): LiveData<List<Work>> {
+        return viewModel.allWorksList
+    }
+
+    open fun getPageTitle(): CharSequence? {
+        return requireContext().getString(R.string.all_works)
+    }
+
 }
 
 class ListeningFragment : WorkFragment() {
-    override fun setupObserve() {
-        viewModel.listeningWorksList.observe(viewLifecycleOwner, { works ->
-            works?.let {
-                if(worksAdapter == null){
-                    worksAdapter = WorksAdapter()
-                    worksAdapter?.submitList(works)
-                    binding.recyclerView.adapter = worksAdapter
-                    binding.recyclerView.layoutManager = layoutManager
-                }else{
-                    worksAdapter?.submitList(works)
-                }
-            }
-            binding.swipe.isRefreshing = false
-        })
-        if(viewModel.listeningWorksList.value.isNullOrEmpty()){
-            loadMore()
-        }
+    override fun liveData(): LiveData<List<Work>> {
+        return viewModel.listeningWorksList
     }
 
     override fun loadMore() {
         val loading = viewModel.loadListeningWorks()
         binding.swipe.isRefreshing = loading
     }
+
+    override fun getPageTitle(): CharSequence? {
+        return requireContext().getString(R.string.listening)
+    }
 }
 
 class ListenedFragment : WorkFragment() {
-    override fun setupObserve() {
-        viewModel.listenedWorksList.observe(viewLifecycleOwner, { works ->
-            works?.let {
-                if(worksAdapter == null){
-                    worksAdapter = WorksAdapter()
-                    binding.recyclerView.adapter = worksAdapter
-                    binding.recyclerView.layoutManager = layoutManager
-                }else{
-                    worksAdapter?.submitList(works)
-                }
-            }
-        })
-        if(viewModel.listenedWorksList.value.isNullOrEmpty()){
-            loadMore()
-        }
+    override fun liveData(): LiveData<List<Work>> {
+        return viewModel.listenedWorksList
     }
 
     override fun loadMore() {
         val loading = viewModel.loadListenedWorks()
         binding.swipe.isRefreshing = loading
     }
+
+    override fun getPageTitle(): CharSequence? {
+        return requireContext().getString(R.string.listened)
+    }
 }
 
 class MarkedFragment : WorkFragment() {
-    override fun setupObserve() {
-        viewModel.markedWorksList.observe(viewLifecycleOwner, { works ->
-            works?.let {
-                if(worksAdapter == null){
-                    worksAdapter = WorksAdapter()
-                    binding.recyclerView.adapter = worksAdapter
-                    binding.recyclerView.layoutManager = layoutManager
-                }else{
-                    worksAdapter?.submitList(works)
-                }
-            }
-        })
-        if(viewModel.markedWorksList.value.isNullOrEmpty()){
-            loadMore()
-        }
+    override fun liveData(): LiveData<List<Work>> {
+        return viewModel.markedWorksList
     }
 
     override fun loadMore() {
         val loading = viewModel.loadMarkedWorks()
         binding.swipe.isRefreshing = loading
     }
+
+    override fun getPageTitle(): CharSequence? {
+        return requireContext().getString(R.string.marked)
+    }
 }
 
 class ReplayFragment : WorkFragment() {
-    override fun setupObserve() {
-        viewModel.replayWorksList.observe(viewLifecycleOwner, { works ->
-            works?.let {
-                if(worksAdapter == null){
-                    worksAdapter = WorksAdapter()
-                    worksAdapter?.submitList(works)
-                    binding.recyclerView.adapter = worksAdapter
-                    binding.recyclerView.layoutManager = layoutManager
-                }else{
-                    worksAdapter?.submitList(works)
-                }
-            }
-        })
-        if(viewModel.replayWorksList.value.isNullOrEmpty()){
-            loadMore()
-        }
-
+    override fun liveData(): LiveData<List<Work>> {
+        return viewModel.replayWorksList
     }
 
     override fun loadMore() {
         val loading = viewModel.loadReplayWorks()
         binding.swipe.isRefreshing = loading
     }
+
+    override fun getPageTitle(): CharSequence? {
+        return requireContext().getString(R.string.replay)
+    }
 }
 
 class PostponedFragment : WorkFragment() {
 
-    override fun setupObserve() {
-        viewModel.postponedWorksList.observe(viewLifecycleOwner, { works ->
-            works?.let {
-                if(worksAdapter == null){
-                    worksAdapter = WorksAdapter()
-                    worksAdapter?.submitList(works)
-                    binding.recyclerView.adapter = worksAdapter
-                    binding.recyclerView.layoutManager = layoutManager
-                }else{
-                    worksAdapter?.submitList(works)
-                }
-            }
-        })
-        if(viewModel.postponedWorksList.value.isNullOrEmpty()){
-            loadMore()
-        }
-
+    override fun liveData(): LiveData<List<Work>> {
+        return viewModel.postponedWorksList
     }
 
     override fun loadMore() {
         val loading = viewModel.loadPostponedWorks()
         binding.swipe.isRefreshing = loading
+    }
+
+    override fun getPageTitle(): CharSequence? {
+        return requireContext().getString(R.string.postponed)
     }
 }
 
